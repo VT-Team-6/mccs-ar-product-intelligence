@@ -38,3 +38,16 @@ INSERT INTO products (name, brand, product_type, rating, description) VALUES
     ('Trail Running Shoe', 'Acme Sports', 'Running Shoe', 4.3, 'Lightweight mesh shoe with grippy soles for trails.'),
     ('Everyday Sneaker', 'Acme Sports', 'Sneaker', 4.0, 'Cushioned sneaker for daily wear.'),
     ('Leather Boot', 'Acme Boots', 'Boot', 4.6, 'Waterproof leather boot for cold weather.');
+
+
+INSERT INTO stores (name, address, latitude, longitude) VALUES
+    ('MCCS Main Exchange',  '100 Sample Ave, Quantico, VA 22134', 38.52210000, -77.30520000),
+    ('MCCS Outlet Store',   '250 Example Rd, Arlington, VA 22204', 38.86810000, -77.08270000);
+
+-- One row per product per store: how many are in stock and what it costs there
+INSERT INTO inventory (product_id, store_id, quantity, price) VALUES
+    (1, 1, 12,  89.99),
+    (1, 2,  5,  84.99),
+    (2, 1, 20,  64.50),
+    (2, 2,  0,  59.99),
+    (3, 1,  8, 129.00);
