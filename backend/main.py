@@ -3,7 +3,11 @@ from fastapi import FastAPI, HTTPException, Response
 from database import get_product
 from qr import make_qr_png
 
+from routers import products
+
 app = FastAPI()
+
+app.include_router(products.router)
 
 
 @app.get("/health")
