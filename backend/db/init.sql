@@ -3,6 +3,7 @@ CREATE TABLE products (
     name            VARCHAR(200) NOT NULL,
     brand           VARCHAR(100),
     product_type    VARCHAR(100) NOT NULL,
+    price           NUMERIC(10,2) CHECK (price >= 0),  -- temporary: moves to inventory when per-store pricing is added
     rating          NUMERIC(2,1) CHECK (rating BETWEEN 0 AND 5),
     description     TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -34,10 +35,10 @@ CREATE INDEX idx_products_name ON products(name);
 CREATE INDEX idx_inventory_product_id ON inventory(product_id);
 CREATE INDEX idx_inventory_store_id ON inventory(store_id);
 
-INSERT INTO products (name, brand, product_type, rating, description) VALUES
-    ('Trail Running Shoe', 'Acme Sports', 'Running Shoe', 4.3, 'Lightweight mesh shoe with grippy soles for trails.'),
-    ('Everyday Sneaker', 'Acme Sports', 'Sneaker', 4.0, 'Cushioned sneaker for daily wear.'),
-    ('Leather Boot', 'Acme Boots', 'Boot', 4.6, 'Waterproof leather boot for cold weather.');
+INSERT INTO products (name, brand, product_type, price, rating, description) VALUES
+    ('Trail Running Shoe', 'Acme Sports', 'Running Shoe', 89.99, 4.3, 'Lightweight mesh shoe with grippy soles for trails.'),
+    ('Everyday Sneaker', 'Acme Sports', 'Sneaker', 64.50, 4.0, 'Cushioned sneaker for daily wear.'),
+    ('Leather Boot', 'Acme Boots', 'Boot', 129.00, 4.6, 'Waterproof leather boot for cold weather.');
 
 
 INSERT INTO stores (name, address, latitude, longitude) VALUES
