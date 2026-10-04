@@ -1,14 +1,27 @@
 from fastapi import FastAPI, HTTPException, Response
-
+from fastapi.middleware.cors import CORSMiddleware
 from database import get_product
 from qr import make_qr_png
+from pathlib import Path
+
+from fastapi.staticfiles import StaticFiles
 
 from routers import products
 
 app = FastAPI()
 
+# Lets the app's browser version call this API during development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(products.router)
 
+# Serves the files in backend/static, such as product images
+app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 @app.get("/health")
 def health():

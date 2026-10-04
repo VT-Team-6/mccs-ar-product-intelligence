@@ -10,6 +10,7 @@ class ProductCreate(BaseModel):
     price: float | None = Field(default=None, ge=0)
     rating: float | None = Field(default=None, ge=0, le=5)
     description: str | None = None
+    image_url: str | None = Field(default=None, max_length=500)
 
 
 class ProductUpdate(BaseModel):
@@ -21,6 +22,7 @@ class ProductUpdate(BaseModel):
     price: float | None = Field(default=None, ge=0)
     rating: float | None = Field(default=None, ge=0, le=5)
     description: str | None = None
+    image_url: str | None = Field(default=None, max_length=500)
 
 
 class Product(BaseModel):
@@ -31,5 +33,6 @@ class Product(BaseModel):
     product_type: str
     rating: float | None
     description: str | None
+    image_url: str | None
     created_at: datetime
     updated_at: datetime

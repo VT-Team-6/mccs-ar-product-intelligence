@@ -7,7 +7,8 @@ CREATE TABLE products (
     rating          NUMERIC(2,1) CHECK (rating BETWEEN 0 AND 5),
     description     TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    image_url       VARCHAR(500) -- a link to the image, not the image itself
 );
 
 CREATE TABLE stores (
@@ -35,10 +36,10 @@ CREATE INDEX idx_products_name ON products(name);
 CREATE INDEX idx_inventory_product_id ON inventory(product_id);
 CREATE INDEX idx_inventory_store_id ON inventory(store_id);
 
-INSERT INTO products (name, brand, product_type, price, rating, description) VALUES
-    ('Trail Running Shoe', 'Acme Sports', 'Running Shoe', 89.99, 4.3, 'Lightweight mesh shoe with grippy soles for trails.'),
-    ('Everyday Sneaker', 'Acme Sports', 'Sneaker', 64.50, 4.0, 'Cushioned sneaker for daily wear.'),
-    ('Leather Boot', 'Acme Boots', 'Boot', 129.00, 4.6, 'Waterproof leather boot for cold weather.');
+INSERT INTO products (name, brand, product_type, price, rating, description, image_url) VALUES
+    ('Timberland 6" Premium Waterproof Boots', 'Timberland', 'Boot', 220.00, 4.5, 'Waterproof leather boot with a padded collar and a rugged lug sole.', '/static/products/timberland-6-inch-boot.png'),
+    ('Nike Air Force 1 Low', 'Nike', 'Sneaker', 90.00, 4.6, 'Classic low-top leather sneaker with Air cushioning.', '/static/products/nike-air-force-1-low.png'),
+    ('Crocs Classic Clogs', 'Crocs', 'Clog', 50.00, 4.8, 'Lightweight foam clog with ventilation holes and a pivoting heel strap.', '/static/products/crocs-classic-clog.png');
 
 
 INSERT INTO stores (name, address, latitude, longitude) VALUES
@@ -47,8 +48,8 @@ INSERT INTO stores (name, address, latitude, longitude) VALUES
 
 -- One row per product per store: how many are in stock and what it costs there
 INSERT INTO inventory (product_id, store_id, quantity, price) VALUES
-    (1, 1, 12,  89.99),
-    (1, 2,  5,  84.99),
-    (2, 1, 20,  64.50),
-    (2, 2,  0,  59.99),
-    (3, 1,  8, 129.00);
+    (1, 1, 12, 220.00),
+    (1, 2,  5, 220.00),
+    (2, 1, 20,  90.00),
+    (2, 2,  0,  90.00),
+    (3, 1,  8,  50.00);

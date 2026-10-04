@@ -38,9 +38,9 @@ def test_seed_data_loaded(conn):
         "SELECT name FROM products ORDER BY product_id"
     ).fetchall()
     assert [r[0] for r in rows] == [
-        "Trail Running Shoe",
-        "Everyday Sneaker",
-        "Leather Boot",
+        'Timberland 6" Premium Waterproof Boots',
+        "Nike Air Force 1 Low",
+        "Crocs Classic Clogs",
     ]
 
 
