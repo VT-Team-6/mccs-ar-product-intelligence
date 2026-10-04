@@ -22,7 +22,7 @@ def get_product(product_id: int):
     """Return one product as a dict, or None if that ID doesn't exist."""
     with get_connection() as conn:
         return conn.execute(
-            "SELECT product_id, name, brand, product_type, rating, description "
+            "SELECT product_id, name, brand, product_type, price, rating, description "
             "FROM products WHERE product_id = %s",
             (product_id,),
         ).fetchone()
