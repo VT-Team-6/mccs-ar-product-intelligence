@@ -5,6 +5,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getProduct, productImageUrl, type Product } from '@/api/products';
+import { QrCodeModal } from '@/components/qr-code-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -15,6 +16,7 @@ export default function ProductScreen() {
   const router = useRouter();
 
   const [product, setProduct] = useState<Product | null>(null);
+  const [qrVisible, setQrVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Loads this product from the backend when the page opens
@@ -82,11 +84,43 @@ export default function ProductScreen() {
               <Fact label="Product ID" value={String(product.product_id)} />
             </ThemedView>
 
-            {product.description && <ThemedText>{product.description}</ThemedText>}
+                        {product.description && <ThemedText>{product.description}</ThemedText>}
+
+            <ThemedView style={styles.actions}>
+              {/* Edit and Delete are switched on in later steps */}
+              <ActionButton label="Edit" disabled />
+              <ActionButton label="QR code" onPress={() => setQrVisible(true)} />
+              <ActionButton label="Delete" disabled />
+            </ThemedView>
           </ScrollView>
         )}
       </SafeAreaView>
+
+      {product && (
+        <QrCodeModal product={product} visible={qrVisible} onClose={() => setQrVisible(false)} />
+      )}
     </ThemedView>
+  );
+}
+
+function ActionButton({
+  label,
+  onPress,
+  disabled = false,
+}: {
+  label: string;
+  onPress?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [styles.action, (pressed || disabled) && styles.pressed]}>
+      <ThemedView type="backgroundElement" style={styles.actionView}>
+        <ThemedText type="smallBold">{label}</ThemedText>
+      </ThemedView>
+    </Pressable>
   );
 }
 
@@ -117,7 +151,20 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   pressed: {
-    opacity: 0.6,
+    opacity: 0.4,
+  },
+  // The row of buttons under the description. It scrolls with the rest of the page.
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  action: {
+    flex: 1,
+  },
+  actionView: {
+    alignItems: 'center',
+    paddingVertical: Spacing.two + Spacing.half,
+    borderRadius: Spacing.three,
   },
   content: {
     gap: Spacing.three,
