@@ -1,6 +1,14 @@
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, StyleSheet, TextInput } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TextInput,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { listProducts, productImageUrl, type Product } from '@/api/products';
@@ -86,26 +94,37 @@ function ProductRow({ product }: { product: Product }) {
   const details = [product.brand, product.product_type].filter(Boolean).join(' · ');
   const price = product.price === null ? 'No price' : `$${product.price.toFixed(2)}`;
   const imageUrl = productImageUrl(product);
+  const router = useRouter();
+
+  // Opens this product's page, e.g. /admin/2
+  const openProduct = () =>
+    router.push({ pathname: '/admin/[id]', params: { id: String(product.product_id) } });
 
   return (
-    <ThemedView type="backgroundElement" style={styles.row}>
-      {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.thumbnail} contentFit="contain" />
-      ) : (
-        <ThemedView type="backgroundSelected" style={styles.thumbnail} />
-      )}
-      <ThemedView type="backgroundElement" style={styles.rowText}>
-        <ThemedText type="smallBold">{product.name}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {details}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          ID {product.product_id}
-          {product.rating !== null && ` · ${product.rating.toFixed(1)} rating`}
-        </ThemedText>
+    <Pressable onPress={openProduct} style={({ pressed }) => pressed && styles.pressed}>
+      <ThemedView type="backgroundElement" style={styles.row}>
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={[styles.thumbnail, styles.whiteBackground]}
+            contentFit="contain"
+          />
+        ) : (
+          <ThemedView type="backgroundSelected" style={styles.thumbnail} />
+        )}
+        <ThemedView type="backgroundElement" style={styles.rowText}>
+          <ThemedText type="smallBold">{product.name}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {details}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            ID {product.product_id}
+            {product.rating !== null && ` · ${product.rating.toFixed(1)} rating`}
+          </ThemedText>
+        </ThemedView>
+        <ThemedText type="smallBold">{price}</ThemedText>
       </ThemedView>
-      <ThemedText type="smallBold">{price}</ThemedText>
-    </ThemedView>
+    </Pressable>
   );
 }
 
@@ -141,10 +160,16 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.three,
   },
+    pressed: {
+    opacity: 0.6,
+  },
   thumbnail: {
     width: 56,
     height: 56,
     borderRadius: Spacing.two,
+  },
+  // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
+  whiteBackground: {
     backgroundColor: '#ffffff',
   },
   rowText: {
