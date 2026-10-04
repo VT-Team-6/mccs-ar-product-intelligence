@@ -23,6 +23,12 @@ def _fetch_product(conn, product_id: int) -> dict:
         )
     return row
 
+@router.get("", response_model=list[Product])
+def list_products() -> list[dict]:
+    with get_connection() as conn:
+        return conn.execute(
+            f"SELECT {_RETURNING} FROM products ORDER BY product_id"
+        ).fetchall()
 
 @router.post("", response_model=Product, status_code=status.HTTP_201_CREATED)
 def create_product(product: ProductCreate) -> dict:
