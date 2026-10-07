@@ -6,7 +6,7 @@ from pathlib import Path
 
 from fastapi.staticfiles import StaticFiles
 
-from routers import products
+from routers import products, search
 
 app = FastAPI()
 
@@ -19,6 +19,7 @@ app.add_middleware(
 )
 
 app.include_router(products.router)
+app.include_router(search.router)
 
 # Serves the files in backend/static, such as product images
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
