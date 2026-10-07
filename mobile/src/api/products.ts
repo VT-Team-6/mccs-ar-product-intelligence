@@ -33,6 +33,18 @@ export async function getProduct(productId: number): Promise<Product> {
   return response.json();
 }
 
+// Shopper-facing lookup: same product, but from the public endpoint
+export async function getShopperProduct(productId: number): Promise<Product> {
+  const response = await fetch(`${API_URL}/api/products/${productId}`);
+  if (response.status === 404) {
+    throw new Error('Product not found');
+  }
+  if (!response.ok) {
+    throw new Error(`Could not load the product (error ${response.status})`);
+  }
+  return response.json();
+}
+
 // Turns a product's image_url into a full link the app can load.
 // Paths like "/static/..." are files on our backend, so the backend address goes in front.
 export function productImageUrl(product: Product): string | null {

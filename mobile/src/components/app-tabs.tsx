@@ -35,6 +35,9 @@ export default function AppTabs() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
+
+      {/* Registers the shopper product page without adding a visible tab */}
+      <NativeTabs.Trigger name="product" hidden />
     </NativeTabs>
   );
 }
