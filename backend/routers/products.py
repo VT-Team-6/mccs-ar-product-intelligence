@@ -7,7 +7,7 @@ router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 
 # Client-writable columns only; product_id, created_at, and updated_at are server-managed.
 _RETURNING = (
-    "product_id, name, brand, product_type, rating, description, created_at, updated_at"
+    "product_id, name, brand, product_type, price, rating, description, image_url, created_at, updated_at"
 )
 _NON_NULLABLE = ("name", "product_type")
 
@@ -23,22 +23,36 @@ def _fetch_product(conn, product_id: int) -> dict:
         )
     return row
 
+@router.get("", response_model=list[Product])
+def list_products() -> list[dict]:
+    with get_connection() as conn:
+        return conn.execute(
+            f"SELECT {_RETURNING} FROM products ORDER BY product_id"
+        ).fetchall()
 
+
+@router.get("/{product_id}", response_model=Product)
+def read_product(product_id: int) -> dict:
+    with get_connection() as conn:
+        return _fetch_product(conn, product_id)
+    
 @router.post("", response_model=Product, status_code=status.HTTP_201_CREATED)
 def create_product(product: ProductCreate) -> dict:
     with get_connection() as conn:
         row = conn.execute(
             """
-            INSERT INTO products (name, brand, product_type, rating, description)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO products (name, brand, product_type, price, rating, description, image_url)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING {returning}
             """.format(returning=_RETURNING),
             (
                 product.name,
                 product.brand,
                 product.product_type,
+                product.price,
                 product.rating,
                 product.description,
+                product.image_url,
             ),
         ).fetchone()
     return row
