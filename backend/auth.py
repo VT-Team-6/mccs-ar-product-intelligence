@@ -31,7 +31,6 @@ def verify_access_token(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
 ) -> dict:
     token = credentials.credentials
-    print("1")
     try:
         signing_key = jwk_client.get_signing_key_from_jwt(token)
 

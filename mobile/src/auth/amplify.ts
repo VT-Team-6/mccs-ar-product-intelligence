@@ -1,18 +1,36 @@
-import { Amplify } from 'aws-amplify'
+import { Amplify } from "aws-amplify";
+import { Platform } from "react-native";
+
+const redirectSignIn =
+  Platform.OS === "web" ? "http://localhost:8081" : "mobile://";
+
+const redirectSignOut =
+  Platform.OS === "web" ? "http://localhost:8081" : "mobile://";
 
 // configures amplify
-
 Amplify.configure({
   Auth: {
     Cognito: {
-      userPoolId: 'us-east-2_hrmKv95ev',
-      userPoolClientId: '2b5rc445sdhleckv3ml35ol5ad',
+      userPoolId: process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID!,
+      userPoolClientId: process.env.EXPO_PUBLIC_COGNITO_CLIENT_ID!,
 
       loginWith: {
-        email: true,
-      },
+        oauth: {
+          domain: process.env.EXPO_PUBLIC_COGNITO_DOMAIN!,
 
-      signUpVerificationMethod: 'code',
+          scopes: [
+            "openid",
+            "email",
+            "profile",
+            "aws.cognito.signin.user.admin",
+          ],
+
+          redirectSignIn: [redirectSignIn],
+          redirectSignOut: [redirectSignOut],
+
+          responseType: "code",
+        },
+      },
 
       userAttributes: {
         email: {

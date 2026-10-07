@@ -3,6 +3,7 @@
 import { adminTest, getUser, User } from "@/api/general";
 import { useState } from "react";
 import { Button, Text, View } from "react-native";
+import { ThemedText } from "../themed-text";
 
 export default function UserTest() {
   const [userInfo, setUserInfo] = useState<User | null>();
@@ -11,7 +12,6 @@ export default function UserTest() {
   async function getUserCall() {
     try {
       const user = await getUser();
-      console.log(`working: ${user}`);
       setUserInfo(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
@@ -29,10 +29,24 @@ export default function UserTest() {
 
   return (
     <View>
-      <Text>{error}</Text>
-      {userInfo && <Text>{JSON.stringify(userInfo, null, 2)}</Text>}
-      <Button title="Get user" onPress={getUserCall} />
-      <Button title="Get admin" onPress={getAdmin} />
+      <ThemedText>{error}</ThemedText>
+      {userInfo && <ThemedText>{JSON.stringify(userInfo, null, 2)}</ThemedText>}
+      <Button
+        title="Get user"
+        onPress={() => {
+          setUserInfo(null);
+          getUserCall();
+          setError("");
+        }}
+      />
+      <Button
+        title="Get admin"
+        onPress={() => {
+          setUserInfo(null);
+          getAdmin();
+          setError("");
+        }}
+      />
     </View>
   );
 }

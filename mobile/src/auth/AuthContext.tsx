@@ -5,6 +5,8 @@ import {
   SignInOutput,
 } from "aws-amplify/auth";
 
+import { Hub } from "aws-amplify/utils";
+
 import {
   createContext,
   ReactNode,
@@ -38,7 +40,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    const unsubscribe = Hub.listen("auth", ({ payload }) => {
+      console.log("Auth event:", payload.event);
+
+      if (
+        payload.event === "signInWithRedirect" ||
+        payload.event === "signedIn"
+      ) {
+        refreshUser();
+      }
+
+      if (payload.event === "signInWithRedirect_failure") {
+        console.error("Google redirect sign-in failed:", payload.data);
+      }
+
+      if (payload.event === "signedOut") {
+        setUser(null);
+      }
+    });
+
     refreshUser();
+
+    return unsubscribe;
   }, []);
 
   async function signIn(email: string, password: string) {

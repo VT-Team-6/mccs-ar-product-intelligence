@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { useAuth } from "@/auth/AuthContext";
+import { signInWithRedirect } from "aws-amplify/auth";
 
 type LoginProps = {
   onToRegistration: () => void;
@@ -42,8 +43,13 @@ export default function LoginForm({
     }
   }
 
-  function handleGoogleLogin() {
-    return;
+  async function handleGoogleLogin() {
+    try {
+      await signInWithRedirect({ provider: "Google" });
+    } catch (err) {
+      setError("Google sign-in failed.");
+      console.error("Google sign-in failed:", err);
+    }
   }
 
   return (
@@ -58,7 +64,9 @@ export default function LoginForm({
       </Text>
 
       <Pressable style={styles.googleButton} onPress={handleGoogleLogin}>
-        <Text style={styles.googleButtonText}>▢ Continue with Google</Text>
+        <Text style={styles.googleButtonText} onPress={handleGoogleLogin}>
+          ▢ Continue with Google
+        </Text>
       </Pressable>
 
       <View style={styles.dividerContainer}>

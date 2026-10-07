@@ -14,8 +14,9 @@ export async function getUser(): Promise<User> {
   if (!response.ok) {
     throw new Error(`Could not fetch user: (error ${response.status})`);
   }
-  console.log(response.json());
-  return response.json();
+  const user = await response.json();
+  console.log(user);
+  return user;
 }
 
 // we can remove this later, it's just for testing purposes since we don't have the admin stuff setup yet
@@ -27,6 +28,7 @@ export async function adminTest(): Promise<User> {
       `Could not fetch user, likely not admin: (error ${response.status})`,
     );
   }
-
-  return response.json();
+  const user = await response.json();
+  console.log(user);
+  return user;
 }
