@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,22 +21,24 @@ export default function ProductScreen() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Loads this product from the backend when the page opens
-  useEffect(() => {
-    let cancelled = false;
-    setProduct(null);
-    setError(null);
-    getProduct(Number(id))
-      .then((loaded) => {
-        if (!cancelled) setProduct(loaded);
-      })
-      .catch((problem: Error) => {
-        if (!cancelled) setError(problem.message);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
+  // Loads this product from the backend every time the page comes into view,
+  // so it shows the new values after an edit
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      setError(null);
+      getProduct(Number(id))
+        .then((loaded) => {
+          if (!cancelled) setProduct(loaded);
+        })
+        .catch((problem: Error) => {
+          if (!cancelled) setError(problem.message);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [id]),
+  );
 
   // Goes back to the list. If there's nothing to go back to, opens the list directly.
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/admin'));
@@ -111,7 +113,15 @@ export default function ProductScreen() {
 
             <ThemedView style={styles.actions}>
               {/* Edit is switched on in a later step */}
-              <ActionButton label="Edit" disabled />
+                <ActionButton
+                    label="Edit"
+                    onPress={() =>
+                    router.push({
+                        pathname: '/admin/edit/[id]',
+                        params: { id: String(product.product_id) },
+                    })
+                    }
+                />
               <ActionButton label="QR code" onPress={() => setQrVisible(true)} />
               <ActionButton
                 label={deleting ? 'Deleting…' : 'Delete'}
