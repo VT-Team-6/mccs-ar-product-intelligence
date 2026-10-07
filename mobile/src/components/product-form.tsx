@@ -12,7 +12,7 @@ import {
 import { type Product, type ProductInput } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
@@ -161,7 +161,8 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: Spacing.three,
-    paddingBottom: Spacing.four,
+    // Room at the end of the form so the last button can scroll clear of the tabs
+    paddingBottom: BottomTabInset + Spacing.four,
   },
   field: {
     gap: Spacing.one,

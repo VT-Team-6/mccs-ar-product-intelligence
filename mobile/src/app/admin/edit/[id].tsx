@@ -7,7 +7,7 @@ import { getProduct, updateProduct, type Product } from '@/api/products';
 import { ProductForm } from '@/components/product-form';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function EditProductScreen() {
   // /admin/edit/2 gives id = "2"
@@ -75,7 +75,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     // On web the tab bar sits at the top, so leave room for it
     paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },

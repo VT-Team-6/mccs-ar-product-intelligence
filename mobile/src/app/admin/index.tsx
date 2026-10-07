@@ -20,6 +20,7 @@ import { useTheme } from '@/hooks/use-theme';
 export default function AdminScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const theme = useTheme();
@@ -37,6 +38,13 @@ export default function AdminScreen() {
       setLoading(false);
     }
   }, []);
+
+  // Runs when the admin pulls the list down. Only this shows the pull-down spinner.
+  const refresh = async () => {
+    setRefreshing(true);
+    await loadProducts();
+    setRefreshing(false);
+  };
 
   // Runs every time this screen comes into view, so the list is up to date
   // after a product is added, edited, or deleted
@@ -63,7 +71,9 @@ export default function AdminScreen() {
             onPress={() => router.push('/admin/new')}
             style={({ pressed }) => pressed && styles.pressed}>
             <ThemedView type="backgroundElement" style={styles.addButton}>
-              <ThemedText type="smallBold">+ Add</ThemedText>
+              <ThemedText type="smallBold" style={styles.addText}>
+                + Add
+              </ThemedText>
             </ThemedView>
           </Pressable>
         </ThemedView>
@@ -85,8 +95,8 @@ export default function AdminScreen() {
         <FlatList
           data={visibleProducts}
           keyExtractor={(product) => String(product.product_id)}
-          refreshing={loading}
-          onRefresh={loadProducts}
+          refreshing={refreshing}
+          onRefresh={refresh}
           contentContainerStyle={styles.list}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => <ProductRow product={item} />}
@@ -165,6 +175,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,
+  },
+  addText: {
+    color: '#19f189',
   },
   search: {
     fontSize: 16,
