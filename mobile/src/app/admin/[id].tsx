@@ -218,8 +218,13 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    aspectRatio: 1.4,
     borderRadius: Spacing.three,
+    // On a phone the image keeps its shape. In a browser the window is much wider,
+    // so the image gets a fixed height there to leave room for the details below.
+    ...Platform.select({
+      web: { height: 300 },
+      default: { aspectRatio: 1.4 },
+    }),
   },
   // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
   whiteBackground: {
