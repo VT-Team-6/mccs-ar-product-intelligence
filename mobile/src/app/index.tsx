@@ -9,6 +9,7 @@ import { ThemedView } from "@/components/themed-view";
 import { WebBadge } from "@/components/web-badge";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import SignoutButton from "@/components/authentication/SignoutButton";
+import UserTest from "@/components/authentication/UserTest";
 
 function getDevMenuHint() {
   if (Platform.OS === "web") {
@@ -57,6 +58,8 @@ export default function HomeScreen() {
         </ThemedView>
 
         <SignoutButton />
+
+        <UserTest />
 
         {Platform.OS === "web" && <WebBadge />}
       </SafeAreaView>

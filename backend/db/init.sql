@@ -2,9 +2,10 @@ CREATE TABLE users (
     user_id         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cognito_sub     VARCHAR(255) UNIQUE NOT NULL,
     email           VARCHAR(255) UNIQUE NOT NULL,
+    is_admin        BOOLEAN NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
+);
 
 CREATE TABLE products (
     product_id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,  -- the ID stored in the QR code
