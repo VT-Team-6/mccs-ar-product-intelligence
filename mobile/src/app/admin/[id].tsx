@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getProduct, productImageUrl, type Product } from '@/api/products';
+import { deleteProduct, getProduct, productImageUrl, type Product } from '@/api/products';
 import { QrCodeModal } from '@/components/qr-code-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { confirmAction } from '@/utils/confirm';
 
 export default function ProductScreen() {
   // The [id] in this file's name: /admin/2 gives id = "2"
@@ -18,6 +19,7 @@ export default function ProductScreen() {
   const [product, setProduct] = useState<Product | null>(null);
   const [qrVisible, setQrVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Loads this product from the backend when the page opens
   useEffect(() => {
@@ -38,6 +40,27 @@ export default function ProductScreen() {
 
   // Goes back to the list. If there's nothing to go back to, opens the list directly.
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/admin'));
+
+  // Asks for confirmation, deletes the product, then returns to the list
+  async function handleDelete() {
+    if (!product) return;
+    const confirmed = await confirmAction(
+      `Delete ${product.name}?`,
+      "This can't be undone.",
+      'Delete',
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteProduct(product.product_id);
+      goBack();
+    } catch {
+      setError('Could not delete the product. Try again.');
+      setDeleting(false);
+    }
+  }
 
   const imageUrl = product ? productImageUrl(product) : null;
 
@@ -84,13 +107,18 @@ export default function ProductScreen() {
               <Fact label="Product ID" value={String(product.product_id)} />
             </ThemedView>
 
-                        {product.description && <ThemedText>{product.description}</ThemedText>}
+            {product.description && <ThemedText>{product.description}</ThemedText>}
 
             <ThemedView style={styles.actions}>
-              {/* Edit and Delete are switched on in later steps */}
+              {/* Edit is switched on in a later step */}
               <ActionButton label="Edit" disabled />
               <ActionButton label="QR code" onPress={() => setQrVisible(true)} />
-              <ActionButton label="Delete" disabled />
+              <ActionButton
+                label={deleting ? 'Deleting…' : 'Delete'}
+                onPress={handleDelete}
+                disabled={deleting}
+                destructive
+              />
             </ThemedView>
           </ScrollView>
         )}
@@ -107,10 +135,12 @@ function ActionButton({
   label,
   onPress,
   disabled = false,
+  destructive = false,
 }: {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
+  destructive?: boolean;
 }) {
   return (
     <Pressable
@@ -118,7 +148,9 @@ function ActionButton({
       disabled={disabled}
       style={({ pressed }) => [styles.action, (pressed || disabled) && styles.pressed]}>
       <ThemedView type="backgroundElement" style={styles.actionView}>
-        <ThemedText type="smallBold">{label}</ThemedText>
+        <ThemedText type="smallBold" style={destructive && styles.destructiveText}>
+          {label}
+        </ThemedText>
       </ThemedView>
     </Pressable>
   );
@@ -165,6 +197,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.two + Spacing.half,
     borderRadius: Spacing.three,
+  },
+  // Red text for buttons that remove something
+  destructiveText: {
+    color: '#E5484D',
   },
   content: {
     gap: Spacing.three,

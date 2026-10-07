@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -23,6 +23,7 @@ export default function AdminScreen() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const theme = useTheme();
+  const router = useRouter();
 
   // Asks the backend for the product list and saves it on the screen
   const loadProducts = useCallback(async () => {
@@ -37,10 +38,13 @@ export default function AdminScreen() {
     }
   }, []);
 
-  // Runs once when the screen first opens
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+  // Runs every time this screen comes into view, so the list is up to date
+  // after a product is added, edited, or deleted
+  useFocusEffect(
+    useCallback(() => {
+      loadProducts();
+    }, [loadProducts]),
+  );
 
   // Only keep the products whose name or brand contains what was typed
   const query = search.trim().toLowerCase();
@@ -53,7 +57,16 @@ export default function AdminScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="subtitle">Admin</ThemedText>
+                <ThemedView style={styles.header}>
+          <ThemedText type="subtitle">Admin</ThemedText>
+          <Pressable
+            onPress={() => router.push('/admin/new')}
+            style={({ pressed }) => pressed && styles.pressed}>
+            <ThemedView type="backgroundElement" style={styles.addButton}>
+              <ThemedText type="smallBold">+ Add</ThemedText>
+            </ThemedView>
+          </Pressable>
+        </ThemedView>
 
         <TextInput
           value={search}
@@ -142,6 +155,16 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  addButton: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
   },
   search: {
     fontSize: 16,
