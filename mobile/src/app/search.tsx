@@ -76,7 +76,7 @@ export default function SearchResultsScreen() {
           data={results}
           keyExtractor={(product) => String(product.product_id)}
           contentContainerStyle={styles.list}
-          renderItem={({ item }) => <ResultRow product={item} />}
+          renderItem={({ item }) => <ResultRow product={item} query={query} />}
           ListEmptyComponent={
             query !== '' && !loading && !error ? (
               <ThemedText themeColor="textSecondary">{`No products match "${query}".`}</ThemedText>
@@ -88,14 +88,18 @@ export default function SearchResultsScreen() {
   );
 }
 
-function ResultRow({ product }: { product: Product }) {
+function ResultRow({ product, query }: { product: Product; query: string }) {
   const router = useRouter();
   const details = [product.brand, product.product_type].filter(Boolean).join(' · ');
   const price = product.price === null ? 'No price' : `$${product.price.toFixed(2)}`;
   const imageUrl = productImageUrl(product);
 
-  // Opens the product details page, e.g. /product/2
-  const openProduct = () => router.push(`/product/${product.product_id}` as Href);
+  // Opens the product details page, e.g. /product/2.
+  // "from" tells that page to come back to these search results when Back is pressed.
+  const openProduct = () => {
+    const searchPage = `/search?q=${encodeURIComponent(query)}`;
+    router.push(`/product/${product.product_id}?from=${encodeURIComponent(searchPage)}` as Href);
+  };
 
   return (
     <Pressable onPress={openProduct} style={({ pressed }) => pressed && styles.pressed}>
