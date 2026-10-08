@@ -46,8 +46,6 @@ export default function RegisterForm({
         },
       });
 
-      console.log(result);
-
       onToVerification(email.trim());
     } catch (err) {
       console.error(err);
@@ -73,6 +71,7 @@ export default function RegisterForm({
       <TextInput
         style={styles.input}
         placeholder="username@example.com"
+        placeholderTextColor="#999999"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -84,6 +83,7 @@ export default function RegisterForm({
       <TextInput
         style={styles.input}
         placeholder="••••••••"
+        placeholderTextColor="#999999"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -93,6 +93,7 @@ export default function RegisterForm({
       <TextInput
         style={styles.input}
         placeholder="••••••••"
+        placeholderTextColor="#999999"
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
@@ -176,6 +177,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 12,
     fontSize: 14,
+    color: "#181818",
   },
 
   error: {

@@ -41,8 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = Hub.listen("auth", ({ payload }) => {
-      console.log("Auth event:", payload.event);
-
       if (
         payload.event === "signInWithRedirect" ||
         payload.event === "signedIn"
@@ -69,7 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       username: email,
       password,
     });
-    console.log(result);
     if (result.isSignedIn) {
       await refreshUser();
     }

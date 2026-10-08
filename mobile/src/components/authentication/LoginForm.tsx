@@ -14,11 +14,13 @@ import { signInWithRedirect } from "aws-amplify/auth";
 type LoginProps = {
   onToRegistration: () => void;
   onToVerification: (email: string) => void;
+  onToPasswordReset: () => void;
 };
 
 export default function LoginForm({
   onToRegistration,
   onToVerification,
+  onToPasswordReset,
 }: LoginProps) {
   const { signIn } = useAuth();
 
@@ -79,6 +81,7 @@ export default function LoginForm({
       <TextInput
         style={styles.input}
         placeholder="username@example.com"
+        placeholderTextColor="#999999"
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -90,12 +93,13 @@ export default function LoginForm({
       <TextInput
         style={styles.input}
         placeholder="••••••••"
+        placeholderTextColor="#999999"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
 
-      <Pressable style={styles.forgotPassword}>
+      <Pressable style={styles.forgotPassword} onPress={onToPasswordReset}>
         <Text style={styles.forgotPasswordText}>Forgot password?</Text>
       </Pressable>
 
@@ -218,6 +222,7 @@ const styles = StyleSheet.create({
     height: 42,
     borderWidth: 1,
     borderColor: "#cccccc",
+    color: "#181818",
     borderRadius: 5,
     backgroundColor: "#ffffff",
     paddingHorizontal: 12,
