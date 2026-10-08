@@ -30,10 +30,7 @@ export default function AppTabs() {
 
       <NativeTabs.Trigger name="admin">
         <NativeTabs.Trigger.Label>Admin</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
+        <NativeTabs.Trigger.Icon sf="pencil" md="edit" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );
