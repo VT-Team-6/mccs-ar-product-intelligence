@@ -16,11 +16,16 @@ export default function SearchResultsScreen() {
 
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // Goes up by one each time "Try again" is pressed, which runs the search again
+  const [attempt, setAttempt] = useState(0);
 
-  // Runs the search whenever the search text changes
+  // Runs the search whenever the search text changes or "Try again" is pressed
   useEffect(() => {
+    setError(null);
     if (!query) {
       setResults([]);
+      setLoading(false);
       return;
     }
     let cancelled = false;
@@ -30,8 +35,10 @@ export default function SearchResultsScreen() {
         if (!cancelled) setResults(found);
       })
       .catch(() => {
-        // Error messages are added in task 4.4
-        if (!cancelled) setResults([]);
+        if (!cancelled) {
+          setResults([]);
+          setError('Could not reach the backend. Is it running?');
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -39,23 +46,42 @@ export default function SearchResultsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [query]);
+  }, [query, attempt]);
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ThemedText type="subtitle">Search results</ThemedText>
-        {query !== '' && (
+
+        {query === '' ? (
+          <ThemedText themeColor="textSecondary">Type a search to see matching products.</ThemedText>
+        ) : (
           <ThemedText themeColor="textSecondary">{`Showing results for "${query}"`}</ThemedText>
         )}
 
         {loading && <ActivityIndicator />}
+
+        {error && (
+          <ThemedView style={styles.message}>
+            <ThemedText themeColor="textSecondary">{error}</ThemedText>
+            <Pressable
+              onPress={() => setAttempt((count) => count + 1)}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedText type="linkPrimary">Try again</ThemedText>
+            </Pressable>
+          </ThemedView>
+        )}
 
         <FlatList
           data={results}
           keyExtractor={(product) => String(product.product_id)}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => <ResultRow product={item} />}
+          ListEmptyComponent={
+            query !== '' && !loading && !error ? (
+              <ThemedText themeColor="textSecondary">{`No products match "${query}".`}</ThemedText>
+            ) : null
+          }
         />
       </SafeAreaView>
     </ThemedView>
@@ -114,6 +140,9 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
+  },
+  message: {
+    gap: Spacing.one,
   },
   list: {
     gap: Spacing.two,
