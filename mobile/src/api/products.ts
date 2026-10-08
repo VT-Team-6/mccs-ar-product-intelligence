@@ -33,6 +33,15 @@ export async function listProducts(): Promise<Product[]> {
   return response.json();
 }
 
+// Shopper search: products whose name, brand, type or description contain the text
+export async function searchProducts(query: string): Promise<Product[]> {
+  const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(query)}`);
+  if (!response.ok) {
+    throw new Error(`Could not search products (error ${response.status})`);
+  }
+  return response.json();
+}
+
 export async function getProduct(productId: number): Promise<Product> {
   const response = await fetch(`${API_URL}/api/admin/products/${productId}`);
   if (response.status === 404) {
