@@ -32,6 +32,9 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Admin</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="pencil" md="edit" />
       </NativeTabs.Trigger>
+
+      {/* Registers the shopper product page without adding a visible tab */}
+      <NativeTabs.Trigger name="product" hidden />
     </NativeTabs>
   );
 }

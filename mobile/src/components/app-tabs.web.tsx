@@ -30,6 +30,8 @@ export default function AppTabs() {
           <TabTrigger name="admin" href="/admin" asChild>
             <TabButton>Admin</TabButton>
           </TabTrigger>
+          {/* Registers the shopper product page without adding a visible tab */}
+          <TabTrigger name="product" href="/product" style={{ display: 'none' }} />
         </CustomTabList>
       </TabList>
     </Tabs>
