@@ -1,13 +1,59 @@
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
+import { API_URL } from '@/api/config';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, Spacing } from '@/constants/theme';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
+  const [isScanning, setIsScanning] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
+    console.log('Scanned QR:', data);
+    console.log('API URL:', API_URL);
+    
+    if (!isScanning || isLoading) {
+      return;
+    }
+
+    setIsScanning(false);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/scan?code=${encodeURIComponent(data)}`
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        Alert.alert(
+          'Product not found',
+          result.detail ?? 'This QR code could not be recognized.'
+        );
+        return;
+      }
+
+      Alert.alert(
+        'Product found',
+      `  ${result.name}${result.brand ? `\n${result.brand}` : ''}`
+      );
+    } catch (error) {
+      Alert.alert(
+        'Connection error',
+        'Unable to connect to the product server.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -43,6 +89,10 @@ export default function ScanScreen() {
                 <CameraView
                   style={styles.camera}
                   facing="back"
+                  barcodeScannerSettings={{
+                    barcodeTypes: ['qr'],
+                  }}
+                  onBarcodeScanned={handleBarcodeScanned}
                 />
             ) : permission.canAskAgain ? (
               <View style={styles.permissionPlaceholder}>
@@ -92,13 +142,24 @@ export default function ScanScreen() {
 
         {/* Actions */}
         <View style={styles.actions}>
-          <Pressable style={styles.primaryButton}>
+          <Pressable 
+            style={styles.primaryButton}
+            onPress={() => setIsScanning(true)}
+            disabled={isLoading}
+          >
             <ThemedText style={styles.primaryButtonText}>
-              Scan product
+              {isLoading
+                ? 'Finding product...'
+                : isScanning
+                  ? 'Scanning...'
+                  : 'Scan product'}
             </ThemedText>
           </Pressable>
 
-          <Pressable style={styles.secondaryButton}>
+          <Pressable 
+            style={styles.secondaryButton}
+            onPress={() => router.push('/search')}
+          >
             <ThemedText style={styles.secondaryButtonText}>
               Enter product manually
             </ThemedText>
