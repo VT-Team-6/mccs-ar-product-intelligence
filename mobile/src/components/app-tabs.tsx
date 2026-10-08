@@ -35,6 +35,9 @@ export default function AppTabs() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
+
+      {/* Registers the search results page without adding a visible tab */}
+      <NativeTabs.Trigger name="search" hidden />
     </NativeTabs>
   );
 }

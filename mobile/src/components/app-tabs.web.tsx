@@ -30,6 +30,8 @@ export default function AppTabs() {
           <TabTrigger name="admin" href="/admin" asChild>
             <TabButton>Admin</TabButton>
           </TabTrigger>
+          {/* Registers the search results page without adding a visible tab */}
+          <TabTrigger name="search" href="/search" style={{ display: 'none' }} />
         </CustomTabList>
       </TabList>
     </Tabs>
