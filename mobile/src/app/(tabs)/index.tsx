@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, type Href } from 'expo-router';
 
 import { API_URL } from '@/api/config';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { BottomTabInset, Spacing, type ThemeColor } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const styles = createStyles(theme);
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     console.log('Scanned QR:', data);
@@ -139,7 +143,7 @@ export default function ScanScreen() {
         </View>
 
         {/* Actions */}
-        <View style={styles.actions}>
+        <View style={[styles.actions, { paddingBottom: insets.bottom + BottomTabInset + Spacing.one }]}>
           <Pressable 
             style={styles.primaryButton}
             onPress={() => setIsScanning(true)}
@@ -168,166 +172,159 @@ export default function ScanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F7F7F5',
-  },
+// Styles are made from the theme colors, so the screen follows light and dark mode
+function createStyles(theme: Record<ThemeColor, string>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+    },
 
-  safeArea: {
-    flex: 1,
-    paddingBottom: BottomTabInset,
-  },
+    safeArea: {
+      flex: 1,
+    },
 
-  header: {
-    height: 54,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
-    paddingHorizontal: Spacing.four,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
+    header: {
+      height: 54,
+      backgroundColor: theme.background,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.backgroundSelected,
+      paddingHorizontal: Spacing.four,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
 
-  logoText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
-  },
+    logoText: {
+      fontSize: 16,
+      fontWeight: '700',
+    },
 
-  signedInBadge: {
-    backgroundColor: '#EAEAEA',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
+    signedInBadge: {
+      backgroundColor: theme.backgroundSelected,
+      borderRadius: 12,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
 
-  signedInText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
+    signedInText: {
+      fontSize: 10,
+      fontWeight: '600',
+    },
 
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-  },
+    content: {
+      flex: 1,
+      paddingHorizontal: Spacing.four,
+      paddingTop: Spacing.four,
+    },
 
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 4,
-    color: '#000000',
-  },
+    title: {
+      fontSize: 22,
+      fontWeight: '700',
+      marginBottom: 4,
+    },
 
-  subtitle: {
-    fontSize: 13,
-    color: '#000000',
-    opacity: 0.6,
-    marginBottom: Spacing.four,
-  },
+    subtitle: {
+      fontSize: 13,
+      color: theme.textSecondary,
+      marginBottom: Spacing.four,
+    },
 
-  cameraContainer: {
-    flex: 1,
-    backgroundColor: '#E8E8E6',
-    borderRadius: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
+    cameraContainer: {
+      flex: 1,
+      backgroundColor: theme.backgroundElement,
+      borderRadius: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+    },
 
-  camera: {
-    width: '100%',
-    height: '100%',
-  },
+    camera: {
+      width: '100%',
+      height: '100%',
+    },
 
-  permissionPlaceholder: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
+    permissionPlaceholder: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 12,
+    },
 
-  permissionText: {
-    fontSize: 13,
-    color: '#000000',
-  },
+    permissionText: {
+      fontSize: 13,
+    },
 
-  permissionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#000000',
-    textAlign: 'center',
-  },
+    permissionTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      textAlign: 'center',
+    },
 
-  permissionDescription: {
-    fontSize: 13,
-    color: '#000000',
-    textAlign: 'center',
-    maxWidth: 260,
-    lineHeight: 19,
-  },
+    permissionDescription: {
+      fontSize: 13,
+      textAlign: 'center',
+      maxWidth: 260,
+      lineHeight: 19,
+    },
 
-  permissionButton: {
-    backgroundColor: '#171411',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 7,
-  },
+    // Dark button on light mode, light button on dark mode
+    permissionButton: {
+      backgroundColor: theme.text,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderRadius: 7,
+    },
 
-  permissionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-  },
+    permissionButtonText: {
+      color: theme.background,
+      fontSize: 14,
+      fontWeight: '700',
+    },
 
-  scanHint: {
-    fontSize: 12,
-    textAlign: 'center',
-    color: '#000000',
-    opacity: 0.55,
-    marginTop: 12,
-    marginBottom: 18,
-  },
+    scanHint: {
+      fontSize: 12,
+      textAlign: 'center',
+      color: theme.textSecondary,
+      marginTop: 12,
+      marginBottom: 18,
+    },
 
-  actions: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    paddingHorizontal: Spacing.four,
-    paddingTop: 12,
-    paddingBottom: Spacing.three,
-    gap: 8,
-  },
+    actions: {
+      backgroundColor: theme.background,
+      borderTopWidth: 1,
+      borderTopColor: theme.backgroundSelected,
+      paddingHorizontal: Spacing.four,
+      paddingTop: 12,
+      gap: 8,
+    },
 
-  primaryButton: {
-    height: 48,
-    backgroundColor: '#171411',
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    primaryButton: {
+      height: 48,
+      backgroundColor: theme.text,
+      borderRadius: 7,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
+    primaryButtonText: {
+      color: theme.background,
+      fontSize: 15,
+      fontWeight: '700',
+    },
 
-  secondaryButton: {
-    height: 48,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#BDBDBD',
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+    secondaryButton: {
+      height: 48,
+      backgroundColor: theme.background,
+      borderWidth: 1,
+      borderColor: theme.textSecondary,
+      borderRadius: 7,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  secondaryButtonText: {
-    color: '#171411',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-});
+    secondaryButtonText: {
+      fontSize: 15,
+      fontWeight: '700',
+    },
+  });
+}
