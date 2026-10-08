@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,8 +10,9 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function ShopperProductScreen() {
-  // The [id] in this file's name: /product/2 gives id = "2"
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // The [id] in this file's name: /product/2 gives id = "2".
+  // "from" is the page to return to, such as /search?q=nike (optional).
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -34,12 +35,11 @@ export default function ShopperProductScreen() {
     };
   }, [id]);
 
-  // Goes back to the page the shopper came from, such as the search results.
-  // On the web, the browser's own history remembers that page. If there is
-  // nothing to go back to, opens the home page.
+  // Goes back to the page this one was opened from, such as the search results.
+  // If we don't know where that was, goes back normally, or to the home page.
   const goBack = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.history.length > 1) {
-      window.history.back();
+    if (from && from.startsWith('/')) {
+      router.replace(from as Href);
     } else if (router.canGoBack()) {
       router.back();
     } else {
