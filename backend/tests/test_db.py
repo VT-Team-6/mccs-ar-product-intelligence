@@ -1,13 +1,32 @@
 # AI-gen tests for the database schema and constraints.
 
-from pathlib import Path
+import re
 from urllib.parse import quote
 
 import psycopg
 import pytest
 from testcontainers.community.postgres import PostgresContainer
 
-INIT_SQL = Path(__file__).parents[1] / "db" / "init.sql"
+from conftest import DB_DIR, apply_init_sql
+
+PRODUCTS_SEED = DB_DIR / "seeds" / "001-products.sql"
+# Each seed tuple is one line, and its first literal is the product name.
+_SEEDED_NAME = re.compile(r"^\s*\('((?:[^']|'')*)'", re.MULTILINE)
+
+# Guards against a truncated seed file silently satisfying the comparison in
+# test_seed_data_loaded: both sides of that comparison derive from this file, so
+# losing rows would otherwise go unnoticed. Update this when seeds change.
+EXPECTED_SEED_COUNT = 52
+
+
+def _seeded_product_names() -> list[str]:
+    """Product names from the seed file, in file order.
+
+    Parsed from the SQL so the test tracks the seed data rather than
+    duplicating it as a second hard-coded list that silently goes stale.
+    """
+    text = PRODUCTS_SEED.read_text(encoding="utf-8")
+    return [name.replace("''", "'") for name in _SEEDED_NAME.findall(text)]
 
 
 def _connection_url(pg):
@@ -23,7 +42,7 @@ def db_url():
     with PostgresContainer("postgres:17") as pg:
         url = _connection_url(pg)
         with psycopg.connect(url, autocommit=True) as conn:
-            conn.execute(INIT_SQL.read_text())
+            apply_init_sql(conn)
         yield url
 
 
@@ -34,14 +53,14 @@ def conn(db_url):
 
 
 def test_seed_data_loaded(conn):
-    rows = conn.execute(
-        "SELECT name FROM products ORDER BY product_id"
-    ).fetchall()
-    assert [r[0] for r in rows] == [
-        'Timberland 6" Premium Waterproof Boots',
-        "Nike Air Force 1 Low",
-        "Crocs Classic Clogs",
-    ]
+    expected = _seeded_product_names()
+    assert len(expected) == EXPECTED_SEED_COUNT, (
+        f"parsed {len(expected)} product names from {PRODUCTS_SEED.name}, "
+        f"expected {EXPECTED_SEED_COUNT}"
+    )
+
+    rows = conn.execute("SELECT name FROM products ORDER BY product_id").fetchall()
+    assert [r[0] for r in rows] == expected
 
 
 def test_rating_range_enforced(conn):

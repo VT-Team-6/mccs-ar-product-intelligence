@@ -14,6 +14,17 @@ export type Product = {
   updated_at: string;
 };
 
+// What the admin fills in when adding or editing a product.
+// The ID and the dates are set by the backend, so they aren't here.
+export type ProductInput = {
+  name: string;
+  brand: string | null;
+  product_type: string;
+  price: number | null;
+  rating: number | null;
+  description: string | null;
+};
+
 export async function listProducts(): Promise<Product[]> {
   const response = await fetch(`${API_URL}/api/admin/products`);
   if (!response.ok) {
@@ -22,8 +33,71 @@ export async function listProducts(): Promise<Product[]> {
   return response.json();
 }
 
+// Shopper search: products whose name, brand, type or description contain the text
+export async function searchProducts(query: string): Promise<Product[]> {
+  const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(query)}`);
+  if (!response.ok) {
+    throw new Error(`Could not search products (error ${response.status})`);
+  }
+  return response.json();
+}
+
 export async function getProduct(productId: number): Promise<Product> {
   const response = await fetch(`${API_URL}/api/admin/products/${productId}`);
+  if (response.status === 404) {
+    throw new Error('Product not found');
+  }
+  if (!response.ok) {
+    throw new Error(`Could not load the product (error ${response.status})`);
+  }
+  return response.json();
+}
+
+export async function createProduct(input: ProductInput): Promise<Product> {
+  const response = await fetch(`${API_URL}/api/admin/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (response.status === 422) {
+    throw new Error('The backend did not accept those values. Check the fields and try again.');
+  }
+  if (!response.ok) {
+    throw new Error(`Could not add the product (error ${response.status})`);
+  }
+  return response.json();
+}
+
+export async function updateProduct(productId: number, input: ProductInput): Promise<Product> {
+  const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (response.status === 404) {
+    throw new Error('Product not found');
+  }
+  if (response.status === 422) {
+    throw new Error('The backend did not accept those values. Check the fields and try again.');
+  }
+  if (!response.ok) {
+    throw new Error(`Could not save the product (error ${response.status})`);
+  }
+  return response.json();
+}
+
+export async function deleteProduct(productId: number): Promise<void> {
+  const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    throw new Error(`Could not delete the product (error ${response.status})`);
+  }
+}
+
+// Shopper-facing lookup: same product, but from the public endpoint
+export async function getShopperProduct(productId: number): Promise<Product> {
+  const response = await fetch(`${API_URL}/api/products/${productId}`);
   if (response.status === 404) {
     throw new Error('Product not found');
   }
