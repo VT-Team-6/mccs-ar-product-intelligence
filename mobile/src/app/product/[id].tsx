@@ -34,7 +34,18 @@ export default function ShopperProductScreen() {
     };
   }, [id]);
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
+  // Goes back to the page the shopper came from, such as the search results.
+  // On the web, the browser's own history remembers that page. If there is
+  // nothing to go back to, opens the home page.
+  const goBack = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  };
 
   const imageUrl = product ? productImageUrl(product) : null;
 
@@ -141,7 +152,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: Spacing.three,
     padding: Spacing.three,
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   fact: {
     flex: 1,
