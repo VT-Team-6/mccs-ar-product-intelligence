@@ -37,11 +37,11 @@ export default function ShopperProductScreen() {
 
   // Goes back to the page this one was opened from, such as the search results.
   // If we don't know where that was, goes back normally, or to the home page.
-  const goBack = () => {
-    if (from && from.startsWith('/')) {
-      router.replace(from as Href);
-    } else if (router.canGoBack()) {
+    const goBack = () => {
+    if (router.canGoBack()) {
       router.back();
+    } else if (from && from.startsWith('/')) {
+      router.replace(from as Href);
     } else {
       router.replace('/');
     }

@@ -1,18 +1,23 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { productImageUrl, searchProducts, type Product } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 export default function SearchResultsScreen() {
   // The text after "?q=" in the address: /search?q=boot gives q = "boot"
   const { q } = useLocalSearchParams<{ q?: string }>();
   const query = (q ?? '').trim();
+  const router = useRouter();
+  const theme = useTheme();
+  // What's typed in the search box. Starts with the current search, if any.
+  const [text, setText] = useState(query);
 
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,9 +56,27 @@ export default function SearchResultsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+                <Pressable onPress={() => router.back()} style={({ pressed }) => pressed && styles.pressed}>
+          <ThemedText type="linkPrimary">‹ Back</ThemedText>
+        </Pressable>
+
         <ThemedText type="subtitle">Search results</ThemedText>
 
-        {query === '' ? (
+        {/* Pressing Search on the keyboard puts the text in ?q=, which runs the search */}
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          onSubmitEditing={() => router.setParams({ q: text.trim() })}
+          placeholder="Search products"
+          placeholderTextColor={theme.textSecondary}
+          returnKeyType="search"
+          autoFocus={query === ''}
+          autoCapitalize="none"
+          autoCorrect={false}
+          clearButtonMode="while-editing"
+          style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+        />
+                {query === '' ? (
           <ThemedText themeColor="textSecondary">Type a search to see matching products.</ThemedText>
         ) : (
           <ThemedText themeColor="textSecondary">{`Showing results for "${query}"`}</ThemedText>
@@ -144,6 +167,12 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
+  },
+  search: {
+    fontSize: 16,
+    paddingVertical: Spacing.two + Spacing.half,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
   },
   message: {
     gap: Spacing.one,

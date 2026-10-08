@@ -13,25 +13,9 @@ export default function AppTabs() {
       indicatorColor={colors.backgroundElement}
       labelStyle={{ selected: { color: colors.text } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/home.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
-          renderingMode="template"
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="scan">
         <NativeTabs.Trigger.Label>Scan</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          src={require('@/assets/images/tabIcons/explore.png')}
+          src={require('@/assets/images/tabIcons/home.png')}
           renderingMode="template"
         />
       </NativeTabs.Trigger>
@@ -40,11 +24,6 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Label>Admin</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="pencil" md="edit" />
       </NativeTabs.Trigger>
-
-      {/* Registers the search results page without adding a visible tab */}
-      <NativeTabs.Trigger name="search" hidden />
-      {/* Registers the shopper product page without adding a visible tab */}
-      <NativeTabs.Trigger name="product" hidden />
     </NativeTabs>
   );
 }
