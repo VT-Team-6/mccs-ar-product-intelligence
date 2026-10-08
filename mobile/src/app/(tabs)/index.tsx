@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 
 import { API_URL } from '@/api/config';
 import { ThemedText } from '@/components/themed-text';
@@ -41,10 +41,8 @@ export default function ScanScreen() {
         return;
       }
 
-      Alert.alert(
-        'Product found',
-      `  ${result.name}${result.brand ? `\n${result.brand}` : ''}`
-      );
+      // Opens the shopper product page. "from" makes its Back button return here.
+      router.push(`/product/${result.product_id}?from=/` as Href);
     } catch (error) {
       Alert.alert(
         'Connection error',

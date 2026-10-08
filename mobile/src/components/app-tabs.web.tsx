@@ -22,18 +22,11 @@ export default function AppTabs() {
       <TabList asChild>
         <CustomTabList>
           <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
-          </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton>Explore</TabButton>
+            <TabButton>Scan</TabButton>
           </TabTrigger>
           <TabTrigger name="admin" href="/admin" asChild>
             <TabButton>Admin</TabButton>
           </TabTrigger>
-          {/* Registers the search results page without adding a visible tab */}
-          <TabTrigger name="search" href="/search" style={{ display: 'none' }} />
-          {/* Registers the shopper product page without adding a visible tab */}
-          <TabTrigger name="product" href="/product/[id]" style={{ display: 'none' }} />
         </CustomTabList>
       </TabList>
     </Tabs>
