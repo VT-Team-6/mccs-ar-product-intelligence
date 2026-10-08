@@ -7,7 +7,7 @@ router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 
 # Client-writable columns only; product_id, created_at, and updated_at are server-managed.
 _RETURNING = (
-    "product_id, name, brand, product_type, rating, description, created_at, updated_at"
+    "product_id, name, brand, product_type, price, rating, description, image_url, created_at, updated_at"
 )
 _NON_NULLABLE = ("name", "product_type")
 
@@ -29,16 +29,18 @@ def create_product(product: ProductCreate) -> dict:
     with get_connection() as conn:
         row = conn.execute(
             """
-            INSERT INTO products (name, brand, product_type, rating, description)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO products (name, brand, product_type, price, rating, description, image_url)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING {returning}
             """.format(returning=_RETURNING),
             (
                 product.name,
                 product.brand,
                 product.product_type,
+                product.price,
                 product.rating,
                 product.description,
+                product.image_url,
             ),
         ).fetchone()
     return row
