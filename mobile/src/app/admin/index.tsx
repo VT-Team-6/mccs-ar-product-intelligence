@@ -9,7 +9,7 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { listProducts, productImageUrl, type Product } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
@@ -25,6 +25,7 @@ export default function AdminScreen() {
   const [search, setSearch] = useState('');
   const theme = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   // Asks the backend for the product list and saves it on the screen
   const loadProducts = useCallback(async () => {
@@ -64,7 +65,7 @@ export default function AdminScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
                 <ThemedView style={styles.header}>
           <ThemedText type="subtitle">Admin</ThemedText>
           <Pressable
@@ -97,7 +98,10 @@ export default function AdminScreen() {
           keyExtractor={(product) => String(product.product_id)}
           refreshing={refreshing}
           onRefresh={refresh}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={[
+            styles.list,
+            { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
+          ]}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => <ProductRow product={item} />}
           ListEmptyComponent={
@@ -159,10 +163,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.three,
     // On web the tab bar sits at the top, so leave room for it
     paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
@@ -187,7 +190,7 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: Spacing.two,
-    paddingVertical: Spacing.two,
+    paddingTop: Spacing.two,
   },
   row: {
     flexDirection: 'row',
