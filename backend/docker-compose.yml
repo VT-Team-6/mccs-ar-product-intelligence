@@ -8,7 +8,8 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Mount the whole db/ folder, so every .sql file underneath it is picked up.
+      - ./db:/docker-entrypoint-initdb.d:ro
       - pgdata:/var/lib/postgresql/data
 
 volumes:

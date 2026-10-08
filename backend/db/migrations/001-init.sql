@@ -35,21 +35,3 @@ CREATE TABLE inventory (
 CREATE INDEX idx_products_name ON products(name);
 CREATE INDEX idx_inventory_product_id ON inventory(product_id);
 CREATE INDEX idx_inventory_store_id ON inventory(store_id);
-
-INSERT INTO products (name, brand, product_type, price, rating, description, image_url) VALUES
-    ('Timberland 6" Premium Waterproof Boots', 'Timberland', 'Boot', 220.00, 4.5, 'Waterproof leather boot with a padded collar and a rugged lug sole.', '/static/products/timberland-6-inch-boot.png'),
-    ('Nike Air Force 1 Low', 'Nike', 'Sneaker', 90.00, 4.6, 'Classic low-top leather sneaker with Air cushioning.', '/static/products/nike-air-force-1-low.png'),
-    ('Crocs Classic Clogs', 'Crocs', 'Clog', 50.00, 4.8, 'Lightweight foam clog with ventilation holes and a pivoting heel strap.', '/static/products/crocs-classic-clog.png');
-
-
-INSERT INTO stores (name, address, latitude, longitude) VALUES
-    ('MCCS Main Exchange',  '100 Sample Ave, Quantico, VA 22134', 38.52210000, -77.30520000),
-    ('MCCS Outlet Store',   '250 Example Rd, Arlington, VA 22204', 38.86810000, -77.08270000);
-
--- One row per product per store: how many are in stock and what it costs there
-INSERT INTO inventory (product_id, store_id, quantity, price) VALUES
-    (1, 1, 12, 220.00),
-    (1, 2,  5, 220.00),
-    (2, 1, 20,  90.00),
-    (2, 2,  0,  90.00),
-    (3, 1,  8,  50.00);

@@ -32,6 +32,8 @@ export default function AppTabs() {
           </TabTrigger>
           {/* Registers the search results page without adding a visible tab */}
           <TabTrigger name="search" href="/search" style={{ display: 'none' }} />
+          {/* Registers the shopper product page without adding a visible tab */}
+          <TabTrigger name="product" href="/product/[id]" style={{ display: 'none' }} />
         </CustomTabList>
       </TabList>
     </Tabs>
