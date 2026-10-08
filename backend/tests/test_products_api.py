@@ -2,7 +2,6 @@
 
 import os
 from datetime import datetime, timedelta
-from pathlib import Path
 from urllib.parse import quote
 
 import psycopg
@@ -10,10 +9,8 @@ import pytest
 from fastapi.testclient import TestClient
 from testcontainers.community.postgres import PostgresContainer
 
-from database import get_database_url
+from conftest import apply_init_sql
 from main import app
-
-INIT_SQL = Path(__file__).parents[1] / "db" / "init.sql"
 
 
 def _connection_url(pg):
@@ -29,16 +26,21 @@ def client():
     with PostgresContainer("postgres:17") as pg:
         url = _connection_url(pg)
         with psycopg.connect(url, autocommit=True) as conn:
-            conn.execute(INIT_SQL.read_text())
+            apply_init_sql(conn)
 
         # Point the app at the throwaway database instead of the dev container.
-        previous_url = get_database_url()
+        # Capture the raw value (possibly absent) so the environment is restored
+        # exactly as found, rather than pinning a resolved fallback URL into it.
+        previous_url = os.environ.get("DATABASE_URL")
         os.environ["DATABASE_URL"] = url
         try:
             with TestClient(app) as test_client:
                 yield test_client
         finally:
-            os.environ["DATABASE_URL"] = previous_url
+            if previous_url is None:
+                os.environ.pop("DATABASE_URL", None)
+            else:
+                os.environ["DATABASE_URL"] = previous_url
 
 
 def test_create_product(client):
