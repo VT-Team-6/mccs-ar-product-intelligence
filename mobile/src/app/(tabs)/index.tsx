@@ -1,14 +1,18 @@
-import { useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, type Href } from 'expo-router';
+import { useState } from "react";
+import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { useRouter, type Href } from "expo-router";
 
-import { API_URL } from '@/api/config';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Spacing, type ThemeColor } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { API_URL } from "@/api/config";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { BottomTabInset, Spacing, type ThemeColor } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import SignoutButton from "@/components/authentication/SignoutButton";
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -20,9 +24,9 @@ export default function ScanScreen() {
   const styles = createStyles(theme);
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
-    console.log('Scanned QR:', data);
-    console.log('API URL:', API_URL);
-    
+    console.log("Scanned QR:", data);
+    console.log("API URL:", API_URL);
+
     if (!isScanning || isLoading) {
       return;
     }
@@ -32,15 +36,15 @@ export default function ScanScreen() {
 
     try {
       const response = await fetch(
-        `${API_URL}/api/scan?code=${encodeURIComponent(data)}`
+        `${API_URL}/api/scan?code=${encodeURIComponent(data)}`,
       );
 
       const result = await response.json();
 
       if (!response.ok) {
         Alert.alert(
-          'Product not found',
-          result.detail ?? 'This QR code could not be recognized.'
+          "Product not found",
+          result.detail ?? "This QR code could not be recognized.",
         );
         return;
       }
@@ -49,8 +53,8 @@ export default function ScanScreen() {
       router.push(`/product/${result.product_id}?from=/` as Href);
     } catch (error) {
       Alert.alert(
-        'Connection error',
-        'Unable to connect to the product server.'
+        "Connection error",
+        "Unable to connect to the product server.",
       );
     } finally {
       setIsLoading(false);
@@ -59,14 +63,12 @@ export default function ScanScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={["top"]}>
         {/* Top header */}
         <View style={styles.header}>
           <ThemedText style={styles.logoText}>MCCS</ThemedText>
 
-          <View style={styles.signedInBadge}>
-            <ThemedText style={styles.signedInText}>SIGNED IN</ThemedText>
-          </View>
+          <SignoutButton />
         </View>
 
         {/* Main content */}
@@ -88,14 +90,14 @@ export default function ScanScreen() {
                 </ThemedText>
               </View>
             ) : permission.granted ? (
-                <CameraView
-                  style={styles.camera}
-                  facing="back"
-                  barcodeScannerSettings={{
-                    barcodeTypes: ['qr'],
-                  }}
-                  onBarcodeScanned={handleBarcodeScanned}
-                />
+              <CameraView
+                style={styles.camera}
+                facing="back"
+                barcodeScannerSettings={{
+                  barcodeTypes: ["qr"],
+                }}
+                onBarcodeScanned={handleBarcodeScanned}
+              />
             ) : permission.canAskAgain ? (
               <View style={styles.permissionPlaceholder}>
                 <ThemedText style={styles.permissionTitle}>
@@ -108,7 +110,7 @@ export default function ScanScreen() {
 
                 <Pressable
                   style={styles.permissionButton}
-                onPress={requestPermission}
+                  onPress={requestPermission}
                 >
                   <ThemedText style={styles.permissionButtonText}>
                     Enable camera
@@ -122,7 +124,8 @@ export default function ScanScreen() {
                 </ThemedText>
 
                 <ThemedText style={styles.permissionDescription}>
-                  Camera access is disabled. Enable it in your device settings to scan products.
+                  Camera access is disabled. Enable it in your device settings
+                  to scan products.
                 </ThemedText>
 
                 <Pressable
@@ -143,24 +146,29 @@ export default function ScanScreen() {
         </View>
 
         {/* Actions */}
-        <View style={[styles.actions, { paddingBottom: insets.bottom + BottomTabInset + Spacing.one }]}>
-          <Pressable 
+        <View
+          style={[
+            styles.actions,
+            { paddingBottom: insets.bottom + BottomTabInset + Spacing.one },
+          ]}
+        >
+          <Pressable
             style={styles.primaryButton}
             onPress={() => setIsScanning(true)}
             disabled={isLoading}
           >
             <ThemedText style={styles.primaryButtonText}>
               {isLoading
-                ? 'Finding product...'
+                ? "Finding product..."
                 : isScanning
-                  ? 'Scanning...'
-                  : 'Scan product'}
+                  ? "Scanning..."
+                  : "Scan product"}
             </ThemedText>
           </Pressable>
 
-          <Pressable 
+          <Pressable
             style={styles.secondaryButton}
-            onPress={() => router.push('/search')}
+            onPress={() => router.push("/search")}
           >
             <ThemedText style={styles.secondaryButtonText}>
               Enter product manually
@@ -189,26 +197,14 @@ function createStyles(theme: Record<ThemeColor, string>) {
       borderBottomWidth: 1,
       borderBottomColor: theme.backgroundSelected,
       paddingHorizontal: Spacing.four,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
     },
 
     logoText: {
       fontSize: 16,
-      fontWeight: '700',
-    },
-
-    signedInBadge: {
-      backgroundColor: theme.backgroundSelected,
-      borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingVertical: 4,
-    },
-
-    signedInText: {
-      fontSize: 10,
-      fontWeight: '600',
+      fontWeight: "700",
     },
 
     content: {
@@ -219,7 +215,7 @@ function createStyles(theme: Record<ThemeColor, string>) {
 
     title: {
       fontSize: 22,
-      fontWeight: '700',
+      fontWeight: "700",
       marginBottom: 4,
     },
 
@@ -233,20 +229,20 @@ function createStyles(theme: Record<ThemeColor, string>) {
       flex: 1,
       backgroundColor: theme.backgroundElement,
       borderRadius: 6,
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
     },
 
     camera: {
-      width: '100%',
-      height: '100%',
+      width: "100%",
+      height: "100%",
     },
 
     permissionPlaceholder: {
       flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       gap: 12,
     },
 
@@ -256,13 +252,13 @@ function createStyles(theme: Record<ThemeColor, string>) {
 
     permissionTitle: {
       fontSize: 16,
-      fontWeight: '700',
-      textAlign: 'center',
+      fontWeight: "700",
+      textAlign: "center",
     },
 
     permissionDescription: {
       fontSize: 13,
-      textAlign: 'center',
+      textAlign: "center",
       maxWidth: 260,
       lineHeight: 19,
     },
@@ -278,12 +274,12 @@ function createStyles(theme: Record<ThemeColor, string>) {
     permissionButtonText: {
       color: theme.background,
       fontSize: 14,
-      fontWeight: '700',
+      fontWeight: "700",
     },
 
     scanHint: {
       fontSize: 12,
-      textAlign: 'center',
+      textAlign: "center",
       color: theme.textSecondary,
       marginTop: 12,
       marginBottom: 18,
@@ -302,14 +298,14 @@ function createStyles(theme: Record<ThemeColor, string>) {
       height: 48,
       backgroundColor: theme.text,
       borderRadius: 7,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
 
     primaryButtonText: {
       color: theme.background,
       fontSize: 15,
-      fontWeight: '700',
+      fontWeight: "700",
     },
 
     secondaryButton: {
@@ -318,13 +314,13 @@ function createStyles(theme: Record<ThemeColor, string>) {
       borderWidth: 1,
       borderColor: theme.textSecondary,
       borderRadius: 7,
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
     },
 
     secondaryButtonText: {
       fontSize: 15,
-      fontWeight: '700',
+      fontWeight: "700",
     },
   });
 }
