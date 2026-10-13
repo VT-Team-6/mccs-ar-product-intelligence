@@ -1,7 +1,5 @@
 import { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -73,10 +71,14 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
   }
 
   return (
-    <KeyboardAvoidingView
+    // iOS makes room for the keyboard and scrolls the tapped field into view.
+    // Swiping down on the form hides the keyboard (the number pad has no Done key).
+    <ScrollView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+      contentContainerStyle={styles.form}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+      keyboardDismissMode="interactive">
         <Field label="Name" required value={name} onChangeText={setName} />
         <Field label="Brand" value={brand} onChangeText={setBrand} />
         <Field label="Type" required value={productType} onChangeText={setProductType} />
@@ -117,7 +119,6 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
           </ThemedView>
         </Pressable>
       </ScrollView>
-    </KeyboardAvoidingView>
   );
 }
 
