@@ -44,7 +44,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
 }
 
 export async function getProduct(productId: number): Promise<Product> {
-  const response = await publicFetch("/api/admin/products/${productId}");
+  const response = await publicFetch(`/api/admin/products/${productId}`);
   if (response.status === 404) {
     throw new Error("Product not found");
   }
