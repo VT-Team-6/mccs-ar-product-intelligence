@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: mccs
+      POSTGRES_PASSWORD: mccs
+      POSTGRES_DB: mccs
+    ports:
+      - "5433:5432"
+    volumes:
+      # Mount the whole db/ folder, so every .sql file underneath it is picked up.
+      - ./db:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
