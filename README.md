@@ -36,7 +36,7 @@ Copy `mobile/.env.example` to `mobile/.env` and **delete the `EXPO_PUBLIC_API_UR
 
 ---
 
-## 2. Install the app on your device (one time)
+## 2. Test Application on your device
 
 ### Android
 _TODO: Android setup steps (to be added by an Android teammate)._
