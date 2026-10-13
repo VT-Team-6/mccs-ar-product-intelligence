@@ -6,6 +6,7 @@ import {
 } from "aws-amplify/auth";
 
 import { Hub } from "aws-amplify/utils";
+import { getUser } from "../api/general";
 
 import {
   createContext,
@@ -18,6 +19,7 @@ import {
 type AuthContextType = {
   user: unknown | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<SignInOutput>;
   signOut: () => Promise<void>;
 };
@@ -27,13 +29,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   async function refreshUser() {
     try {
-      const currentUser = await getCurrentUser();
+            const currentUser = await getCurrentUser();
       setUser(currentUser);
+      // Asks our backend who this is. This also creates their row in the users table on first login.
+      try {
+        const profile = await getUser();
+        setIsAdmin(profile.is_admin);
+      } catch {
+        setIsAdmin(false);
+      }
     } catch {
       setUser(null);
+      setIsAdmin(false);
     } finally {
       setLoading(false);
     }
@@ -54,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (payload.event === "signedOut") {
         setUser(null);
+        setIsAdmin(false);
       }
     });
 
@@ -77,10 +89,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     await amplifySignOut();
     setUser(null);
+    setIsAdmin(false);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

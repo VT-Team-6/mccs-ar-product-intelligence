@@ -1,11 +1,13 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
+import { useAuth } from '@/auth/AuthContext';
 
 import { Colors } from '@/constants/theme';
 
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
+  const { isAdmin } = useAuth();
 
   return (
     <NativeTabs
@@ -20,7 +22,7 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="admin">
+      <NativeTabs.Trigger name="admin" hidden={!isAdmin}>
         <NativeTabs.Trigger.Label>Admin</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="pencil" md="edit" />
       </NativeTabs.Trigger>
