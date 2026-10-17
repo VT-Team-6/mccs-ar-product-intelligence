@@ -22,6 +22,11 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="preferences">
+        <NativeTabs.Trigger.Label>Preferences</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="slider.horizontal.3" md="tune" />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="admin" hidden={!isAdmin}>
         <NativeTabs.Trigger.Label>Admin</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="pencil" md="edit" />
