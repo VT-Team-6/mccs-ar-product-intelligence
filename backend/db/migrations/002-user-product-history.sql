@@ -10,7 +10,7 @@ CREATE TABLE user_product_history (
     history_id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_id      INTEGER NOT NULL,
     user_id         INTEGER NOT NULL,
-    interaction          product_interaction NOT NULL,
+    interaction     product_interaction NOT NULL,
     occurred_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
