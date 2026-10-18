@@ -7,13 +7,13 @@ CREATE TABLE user_product_history (
     product_id      INTEGER NOT NULL,
     user_id         INTEGER NOT NULL,
     action          VARCHAR(50) NOT NULL CHECK (action IN ('scanned', 'viewed', 'purchased', 'liked', 'disliked')),
-    occured_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    occurred_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 -- Index user's most recent product history for faster lookups
-CREATE INDEX idx_user_product_history_recent ON user_product_history(user_id, occured_at DESC, history_id DESC);
+CREATE INDEX idx_user_product_history_recent ON user_product_history(user_id, occurred_at DESC, history_id DESC);
 
 -- Current state of user likes. Absense means not liked.
 CREATE TABLE user_product_likes (
@@ -22,7 +22,7 @@ CREATE TABLE user_product_likes (
     liked_at        TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id , product_id),
+    PRIMARY KEY (user_id , product_id)
 );
 
 CREATE INDEX idx_user_product_likes_recent ON user_product_likes(user_id, liked_at DESC);   -- User's most recent likes
