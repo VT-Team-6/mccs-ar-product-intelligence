@@ -39,10 +39,10 @@ export default function SearchResultsScreen() {
       .then((found) => {
         if (!cancelled) setResults(found);
       })
-      .catch(() => {
+      .catch((problem: unknown) => {
         if (!cancelled) {
           setResults([]);
-          setError('Could not reach the backend. Is it running?');
+          setError(searchErrorMessage(problem));
         }
       })
       .finally(() => {
@@ -109,6 +109,20 @@ export default function SearchResultsScreen() {
       </SafeAreaView>
     </ThemedView>
   );
+}
+
+// fetch rejects with a TypeError when the request never reached the server.
+// Anything else means the backend answered with an error status, so show that message.
+// Increases error handling.
+// Could change to be more user-friendly and move the technical details to a log file, but for now this is fine.
+function searchErrorMessage(problem: unknown): string {
+  if (problem instanceof TypeError) {
+    return 'Could not reach the backend. Is it running?';
+  }
+  if (problem instanceof Error) {
+    return problem.message;
+  }
+  return 'Could not search products.';
 }
 
 function ResultRow({ product, query }: { product: Product; query: string }) {
