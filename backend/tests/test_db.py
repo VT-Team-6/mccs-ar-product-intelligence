@@ -141,31 +141,33 @@ def test_product_deleted_at_is_nullable_and_defaults_to_null(conn):
 def test_history_accepts_every_action(conn):
     user_id = _new_user(conn)
     product_id = _new_product(conn)
-    for action in ("scanned", "viewed", "purchased", "liked", "disliked"):
+    for interaction in ("scanned", "viewed", "viewed-from-search", "purchased", "liked", "unliked"):
         conn.execute(
-            "INSERT INTO user_product_history (product_id, user_id, action)"
+            "INSERT INTO user_product_history (product_id, user_id, interaction)"
             " VALUES (%s, %s, %s)",
-            (product_id, user_id, action),
+            (product_id, user_id, interaction),
         )
     rows = conn.execute(
-        "SELECT action FROM user_product_history WHERE user_id = %s ORDER BY history_id",
+        "SELECT interaction FROM user_product_history WHERE user_id = %s ORDER BY history_id",
         (user_id,),
     ).fetchall()
     assert [r[0] for r in rows] == [
         "scanned",
         "viewed",
+        "viewed-from-search",
         "purchased",
         "liked",
-        "disliked",
+        "unliked",
     ]
 
 
 def test_history_rejects_unknown_action(conn):
     user_id = _new_user(conn)
     product_id = _new_product(conn)
-    with pytest.raises(psycopg.errors.CheckViolation):
+    # An unknown value is rejected by the enum type itself.
+    with pytest.raises(psycopg.errors.InvalidTextRepresentation):
         conn.execute(
-            "INSERT INTO user_product_history (product_id, user_id, action)"
+            "INSERT INTO user_product_history (product_id, user_id, interaction)"
             " VALUES (%s, %s, 'abandoned')",
             (product_id, user_id),
         )
@@ -175,7 +177,7 @@ def test_history_occurred_at_defaults_to_now(conn):
     user_id = _new_user(conn)
     product_id = _new_product(conn)
     occurred_at = conn.execute(
-        "INSERT INTO user_product_history (product_id, user_id, action)"
+        "INSERT INTO user_product_history (product_id, user_id, interaction)"
         " VALUES (%s, %s, 'viewed') RETURNING occurred_at",
         (product_id, user_id),
     ).fetchone()[0]
@@ -185,7 +187,7 @@ def test_history_occurred_at_defaults_to_now(conn):
 def test_history_requires_existing_user(conn):
     with pytest.raises(psycopg.errors.ForeignKeyViolation):
         conn.execute(
-            "INSERT INTO user_product_history (product_id, user_id, action)"
+            "INSERT INTO user_product_history (product_id, user_id, interaction)"
             " VALUES (%s, %s, 'viewed')",
             (_new_product(conn), _missing_id(conn, "users", "user_id")),
         )
@@ -194,7 +196,7 @@ def test_history_requires_existing_user(conn):
 def test_history_requires_existing_product(conn):
     with pytest.raises(psycopg.errors.ForeignKeyViolation):
         conn.execute(
-            "INSERT INTO user_product_history (product_id, user_id, action)"
+            "INSERT INTO user_product_history (product_id, user_id, interaction)"
             " VALUES (%s, %s, 'viewed')",
             (_missing_id(conn, "products", "product_id"), _new_user(conn)),
         )
@@ -204,7 +206,7 @@ def test_history_blocks_deleting_referenced_product(conn):
     user_id = _new_user(conn)
     product_id = _new_product(conn)
     conn.execute(
-        "INSERT INTO user_product_history (product_id, user_id, action)"
+        "INSERT INTO user_product_history (product_id, user_id, interaction)"
         " VALUES (%s, %s, 'purchased')",
         (product_id, user_id),
     )
@@ -279,7 +281,7 @@ def test_deleting_user_cascades_to_history_and_likes(conn):
     user_id = _new_user(conn)
     product_id = _new_product(conn)
     conn.execute(
-        "INSERT INTO user_product_history (product_id, user_id, action)"
+        "INSERT INTO user_product_history (product_id, user_id, interaction)"
         " VALUES (%s, %s, 'liked')",
         (product_id, user_id),
     )
