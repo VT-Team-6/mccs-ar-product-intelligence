@@ -1,12 +1,16 @@
 -- Shouldn't delete products, but we want to be able to mark them as deleted for historical purposes
 ALTER TABLE products ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
 
--- History to track user interactions with products (scans, views, purchases, likes, dislikes)
+-- Different types of interactions a user can have with a product.
+-- 'viewed' is a generic product-page open; 'viewed-from-search' is an open that came from search results.
+CREATE TYPE product_interaction AS ENUM ('scanned', 'viewed', 'viewed-from-search', 'purchased', 'liked', 'unliked', 'viewed-from-recommendation', 'shared', 'reviewed');
+
+-- History to track user interactions with products
 CREATE TABLE user_product_history (
     history_id      INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     product_id      INTEGER NOT NULL,
     user_id         INTEGER NOT NULL,
-    action          VARCHAR(50) NOT NULL CHECK (action IN ('scanned', 'viewed', 'purchased', 'liked', 'disliked')),
+    interaction          product_interaction NOT NULL,
     occurred_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE RESTRICT,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
