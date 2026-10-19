@@ -22,6 +22,16 @@ export default function AppTabs() {
         />
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="likes">
+        <NativeTabs.Trigger.Label>Likes</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="heart" md="favorite" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="history">
+        <NativeTabs.Trigger.Label>History</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="clock" md="history" />
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="preferences">
         <NativeTabs.Trigger.Label>Preferences</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="slider.horizontal.3" md="tune" />
