@@ -42,8 +42,7 @@ export default function ShopperProductScreen() {
     };
   }, [id]);
 
-  // Records that this product was opened, for the History tab. Opens that came
-  // from the search results say so.
+  // Records that this product was opened in user history.
   useEffect(() => {
     const productId = Number(id);
     if (recorded.current || !Number.isInteger(productId)) return;
@@ -55,8 +54,7 @@ export default function ShopperProductScreen() {
     );
   }, [id, from]);
 
-  // Goes back to the page this one was opened from, such as the search results.
-  // If we don't know where that was, goes back normally, or to the home page.
+  // Go to the previous page, else the "from" page, else the home page. 
   const goBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -67,8 +65,8 @@ export default function ShopperProductScreen() {
     }
   };
 
-  // Fills or empties the heart straight away, then saves the change. If saving
-  // fails the heart goes back and the user sees why.
+  // Toggles the state of the heart icon and sends to backend.
+  // If the backend fails, the heart is restored to its previous state.
   const toggleLike = async () => {
     if (!product || savingLike) return;
     const liked = !product.is_liked;
