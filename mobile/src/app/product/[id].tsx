@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getShopperProduct, productImageUrl, type Product } from '@/api/products';
+import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
+import { productImageUrl } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -15,17 +16,23 @@ export default function ShopperProductScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadedId, setLoadedId] = useState<number | null>(null);
+  // True while a like request is running, so the heart cannot be double-tapped
+  const [savingLike, setSavingLike] = useState(false);
+  // Stops one visit from being recorded more than once
+  const recorded = useRef(false);
 
-  // Loads this product from the shopper endpoint when the page opens
+  // Loads this product and the caller's like state when the page opens.
+  // A product from a different page is ignored while the new one loads.
   useEffect(() => {
     let cancelled = false;
-    setProduct(null);
-    setError(null);
-    getShopperProduct(Number(id))
+    getMyProduct(Number(id))
       .then((loaded) => {
-        if (!cancelled) setProduct(loaded);
+        if (cancelled) return;
+        setProduct(loaded);
+        setLoadedId(loaded.product_id);
       })
       .catch((problem: Error) => {
         if (!cancelled) setError(problem.message);
@@ -35,15 +42,50 @@ export default function ShopperProductScreen() {
     };
   }, [id]);
 
+  // Records that this product was opened, for the History tab. Opens that came
+  // from the search results say so.
+  useEffect(() => {
+    const productId = Number(id);
+    if (recorded.current || !Number.isInteger(productId)) return;
+    recorded.current = true;
+    const fromSearch = (from ?? '').startsWith('/search');
+    // Fire and forget: history must never block showing the product
+    recordInteraction(productId, fromSearch ? 'viewed-from-search' : 'viewed').catch(
+      () => undefined,
+    );
+  }, [id, from]);
+
   // Goes back to the page this one was opened from, such as the search results.
   // If we don't know where that was, goes back normally, or to the home page.
-    const goBack = () => {
+  const goBack = () => {
     if (router.canGoBack()) {
       router.back();
     } else if (from && from.startsWith('/')) {
       router.replace(from as Href);
     } else {
       router.replace('/');
+    }
+  };
+
+  // Fills or empties the heart straight away, then saves the change. If saving
+  // fails the heart goes back and the user sees why.
+  const toggleLike = async () => {
+    if (!product || savingLike) return;
+    const liked = !product.is_liked;
+    setProduct({ ...product, is_liked: liked });
+    setSavingLike(true);
+    setError(null);
+    try {
+      if (liked) {
+        await likeProduct(product.product_id);
+      } else {
+        await unlikeProduct(product.product_id);
+      }
+    } catch (problem) {
+      setProduct((current) => (current ? { ...current, is_liked: !liked } : current));
+      setError(likeErrorMessage(problem));
+    } finally {
+      setSavingLike(false);
     }
   };
 
@@ -57,9 +99,9 @@ export default function ShopperProductScreen() {
         </Pressable>
 
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
-        {!product && !error && <ActivityIndicator />}
+        {(!product || loadedId !== Number(id)) && !error && <ActivityIndicator />}
 
-        {product && (
+        {product && loadedId === Number(id) && (
           <ScrollView contentContainerStyle={styles.content}>
             {imageUrl ? (
               <Image
@@ -80,6 +122,29 @@ export default function ShopperProductScreen() {
               </ThemedText>
             </ThemedView>
 
+            <Pressable
+              onPress={toggleLike}
+              disabled={savingLike}
+              accessibilityRole="button"
+              accessibilityLabel={
+                product.is_liked
+                  ? `Remove ${product.name} from Likes`
+                  : `Save ${product.name} to Likes`
+              }
+              accessibilityState={{ selected: product.is_liked, busy: savingLike }}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedView
+                type={product.is_liked ? 'backgroundSelected' : 'backgroundElement'}
+                style={styles.likeButton}>
+                <ThemedText type="subtitle" style={styles.heart}>
+                  {product.is_liked ? '♥' : '♡'}
+                </ThemedText>
+                <ThemedText type="smallBold">
+                  {product.is_liked ? 'Saved to Likes' : 'Save to Likes'}
+                </ThemedText>
+              </ThemedView>
+            </Pressable>
+
             <ThemedView type="backgroundElement" style={styles.facts}>
               <Fact
                 label="Price"
@@ -97,6 +162,16 @@ export default function ShopperProductScreen() {
       </SafeAreaView>
     </ThemedView>
   );
+}
+
+function likeErrorMessage(problem: unknown): string {
+  if (problem instanceof TypeError) {
+    return 'Could not reach the backend. Is it running?';
+  }
+  if (problem instanceof Error) {
+    return problem.message;
+  }
+  return 'Could not save your like.';
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -147,6 +222,18 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 26,
     lineHeight: 32,
+  },
+  likeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  heart: {
+    fontSize: 26,
+    lineHeight: 30,
   },
   facts: {
     flexDirection: 'row',
