@@ -3,13 +3,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import get_product
 from qr import make_qr_png
 from pathlib import Path
+from contextlib import asynccontextmanager
+from product_features import refresh_recommendation_data
 
 from fastapi.staticfiles import StaticFiles
 
 from routers import me, products, scan, search, shopper_products
 import auth
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app):
+    refresh_recommendation_data()  # build scores (and later the models) when the backend starts
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Lets the app's browser version call this API during development
 app.add_middleware(

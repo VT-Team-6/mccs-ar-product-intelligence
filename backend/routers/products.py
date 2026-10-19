@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
 from database import get_connection
 from schemas import Product, ProductCreate, ProductUpdate
+from product_features import refresh_recommendation_data
 
 router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 
@@ -37,7 +38,7 @@ def read_product(product_id: int) -> dict:
         return _fetch_product(conn, product_id)
     
 @router.post("", response_model=Product, status_code=status.HTTP_201_CREATED)
-def create_product(product: ProductCreate) -> dict:
+def create_product(product: ProductCreate, background_tasks: BackgroundTasks) -> dict:
     with get_connection() as conn:
         row = conn.execute(
             """
@@ -55,11 +56,12 @@ def create_product(product: ProductCreate) -> dict:
                 product.image_url,
             ),
         ).fetchone()
+    background_tasks.add_task(refresh_recommendation_data)
     return row
 
 
 @router.put("/{product_id}", response_model=Product)
-def update_product(product_id: int, product: ProductUpdate) -> dict:
+def update_product(product_id: int, product: ProductUpdate, background_tasks: BackgroundTasks) -> dict:
     updates = product.model_dump(exclude_unset=True)
 
     for column in _NON_NULLABLE:
@@ -83,11 +85,13 @@ def update_product(product_id: int, product: ProductUpdate) -> dict:
                 (*updates.values(), product_id),
             )
 
-        return _fetch_product(conn, product_id)
+            row = _fetch_product(conn, product_id)
+        background_tasks.add_task(refresh_recommendation_data)
+        return row
 
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int) -> dict:
+def delete_product(product_id: int, background_tasks: BackgroundTasks) -> dict:
     with get_connection() as conn:
         cursor = conn.execute(
             "DELETE FROM products WHERE product_id = %s", (product_id,)
@@ -97,4 +101,7 @@ def delete_product(product_id: int) -> dict:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Product {product_id} not found",
             )
+    background_tasks.add_task(refresh_recommendation_data)
     return {"deleted": True, "product_id": product_id}
+
+
