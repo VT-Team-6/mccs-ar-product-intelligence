@@ -35,8 +35,7 @@ export function ProductCard({
   const imageUrl = productImageUrl(product);
 
   return (
-    // The row is a plain container: the tappable area and the heart are
-    // siblings, so web never renders a button inside a button.
+    // Card format sourced from search page.
     <ThemedView type="backgroundElement" style={[styles.row, style]}>
       <Pressable
         onPress={onPress}
