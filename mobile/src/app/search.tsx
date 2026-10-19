@@ -1,10 +1,10 @@
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { productImageUrl, searchProducts, type Product } from '@/api/products';
+import { searchProducts, type Product } from '@/api/products';
+import { ProductCard } from '@/components/product-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -39,10 +39,10 @@ export default function SearchResultsScreen() {
       .then((found) => {
         if (!cancelled) setResults(found);
       })
-      .catch(() => {
+      .catch((problem: unknown) => {
         if (!cancelled) {
           setResults([]);
-          setError('Could not reach the backend. Is it running?');
+          setError(searchErrorMessage(problem));
         }
       })
       .finally(() => {
@@ -111,11 +111,22 @@ export default function SearchResultsScreen() {
   );
 }
 
+// fetch rejects with a TypeError when the request never reached the server.
+// Anything else means the backend answered with an error status, so show that message.
+// Increases error handling.
+// Could change to be more user-friendly and move the technical details to a log file, but for now this is fine.
+function searchErrorMessage(problem: unknown): string {
+  if (problem instanceof TypeError) {
+    return 'Could not reach the backend. Is it running?';
+  }
+  if (problem instanceof Error) {
+    return problem.message;
+  }
+  return 'Could not search products.';
+}
+
 function ResultRow({ product, query }: { product: Product; query: string }) {
   const router = useRouter();
-  const details = [product.brand, product.product_type].filter(Boolean).join(' · ');
-  const price = product.price === null ? 'No price' : `$${product.price.toFixed(2)}`;
-  const imageUrl = productImageUrl(product);
 
   // Opens the product details page, e.g. /product/2.
   // "from" tells that page to come back to these search results when Back is pressed.
@@ -124,33 +135,7 @@ function ResultRow({ product, query }: { product: Product; query: string }) {
     router.push(`/product/${product.product_id}?from=${encodeURIComponent(searchPage)}` as Href);
   };
 
-  return (
-    <Pressable onPress={openProduct} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundElement" style={styles.row}>
-        {imageUrl ? (
-          <Image
-            source={{ uri: imageUrl }}
-            style={[styles.thumbnail, styles.whiteBackground]}
-            contentFit="contain"
-          />
-        ) : (
-          <ThemedView type="backgroundSelected" style={styles.thumbnail} />
-        )}
-        <ThemedView type="backgroundElement" style={styles.rowText}>
-          <ThemedText type="smallBold">{product.name}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {details}
-          </ThemedText>
-          {product.rating !== null && (
-            <ThemedText type="small" themeColor="textSecondary">
-              {`${product.rating.toFixed(1)} rating`}
-            </ThemedText>
-          )}
-        </ThemedView>
-        <ThemedText type="smallBold">{price}</ThemedText>
-      </ThemedView>
-    </Pressable>
-  );
+  return <ProductCard product={product} onPress={openProduct} />;
 }
 
 const styles = StyleSheet.create({
@@ -181,27 +166,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingVertical: Spacing.two,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    padding: Spacing.three,
-    borderRadius: Spacing.three,
-  },
   pressed: {
     opacity: 0.6,
-  },
-  thumbnail: {
-    width: 56,
-    height: 56,
-    borderRadius: Spacing.two,
-  },
-  // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
-  whiteBackground: {
-    backgroundColor: '#ffffff',
-  },
-  rowText: {
-    flex: 1,
-    gap: Spacing.half,
   },
 });

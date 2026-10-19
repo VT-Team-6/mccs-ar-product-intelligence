@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -36,3 +37,47 @@ class Product(BaseModel):
     image_url: str | None
     created_at: datetime
     updated_at: datetime
+
+
+# --- Shopper screens (likes and history) ---------------------------------
+
+
+class MyProduct(Product):
+    """A product seen by a signed-in shopper, with their current like state."""
+
+    is_liked: bool
+
+
+class LikedProduct(Product):
+    """A product in the user's Likes tab, with when they liked it."""
+
+    liked_at: datetime
+
+
+class LikedProductPage(BaseModel):
+    items: list[LikedProduct]
+    next_cursor: str | None
+
+
+class HistoryItem(BaseModel):
+    """One interaction event. The same product can appear more than once."""
+
+    history_id: int
+    interaction: str
+    occurred_at: datetime
+    product: MyProduct
+
+
+class HistoryPage(BaseModel):
+    items: list[HistoryItem]
+    next_cursor: str | None
+
+
+# Interactions the client is allowed to report. 'liked'/'unliked' are written
+# by the server when the like state actually changes, so they are not listed.
+ClientInteraction = Literal["scanned", "viewed", "viewed-from-search"]
+
+
+class InteractionCreate(BaseModel):
+    product_id: int
+    interaction: ClientInteraction
