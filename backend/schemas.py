@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductCreate(BaseModel):
@@ -77,7 +77,44 @@ class HistoryPage(BaseModel):
 # by the server when the like state actually changes, so they are not listed.
 ClientInteraction = Literal["scanned", "viewed", "viewed-from-search"]
 
-
 class InteractionCreate(BaseModel):
     product_id: int
     interaction: ClientInteraction
+
+
+
+class Review(BaseModel):
+    review_id: int
+    product_id: int
+    rating: float | None
+    source: str
+    source_review_id: str | None
+    title: str | None
+    body: str
+    review_date: datetime | None
+    fetched_at: datetime
+
+class ReviewShortened(BaseModel):
+    rating: float | None
+    title: str | None
+    body: str
+    review_date: datetime | None
+
+class ReviewAggregate(BaseModel):
+    review_count: int
+    average_rating: float | None
+    rating_distribution: dict[str, int]
+    reviews: list[ReviewShortened]
+
+class Preferences(BaseModel):
+    """How much each criterion matters: 0 = Skip, 1 = Low, 2 = Medium, 3 = High."""
+
+    # Reject unknown criteria so a typo can't be silently ignored
+    model_config = ConfigDict(extra="forbid")
+
+    price: int = Field(default=2, ge=0, le=3)
+    rating: int = Field(default=2, ge=0, le=3)
+    brand: int = Field(default=2, ge=0, le=3)
+    quality: int = Field(default=2, ge=0, le=3)
+    durability: int = Field(default=2, ge=0, le=3)
+    comfort: int = Field(default=2, ge=0, le=3)

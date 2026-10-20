@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { getPreferences, savePreferences } from '@/api/preferences';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -11,16 +11,11 @@ import {
   CRITERIA,
   DEFAULT_PREFERENCES,
   IMPORTANCE_LEVELS,
-  parsePreferences,
   samePreferences,
   type CriterionKey,
   type Importance,
   type Preferences,
 } from '@/preferences/criteria';
-
-// Preferences are only kept on this device for now.
-// Later they will be saved to the user's account through the backend.
-const STORAGE_KEY = 'preferences';
 
 // The blue used for links elsewhere in the app
 const ACCENT = '#3c87f7';
@@ -29,23 +24,27 @@ export default function PreferencesScreen() {
   const theme = useTheme();
   // What is currently selected on screen
   const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
-  // What was last saved, so we know whether there is anything to save
+  // What is saved on the account, so we know whether there is anything to save
   const [saved, setSaved] = useState<Preferences>(DEFAULT_PREFERENCES);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Loads the saved preferences when the screen first opens
-  useEffect(() => {
+  // Loads the saved preferences from the account. Runs on first open and on "Try again".
+  const load = useCallback(() => {
     let cancelled = false;
-    AsyncStorage.getItem(STORAGE_KEY)
-      .then((raw) => {
+    setLoading(true);
+    setLoadFailed(false);
+    getPreferences()
+      .then((loaded) => {
         if (cancelled) return;
-        const loaded = parsePreferences(raw);
         setPreferences(loaded);
         setSaved(loaded);
       })
       .catch(() => {
-        // If reading fails we just start from the defaults
+        // Keep the defaults on screen, but don't let them overwrite the account
+        if (!cancelled) setLoadFailed(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -55,6 +54,8 @@ export default function PreferencesScreen() {
     };
   }, []);
 
+  useEffect(() => load(), [load]);
+
   const hasChanges = !samePreferences(preferences, saved);
 
   const choose = (key: CriterionKey, value: Importance) => {
@@ -63,12 +64,17 @@ export default function PreferencesScreen() {
   };
 
   const save = async () => {
+    setSaving(true);
+    setMessage(null);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
-      setSaved(preferences);
-      setMessage('Saved on this device.');
+      const result = await savePreferences(preferences);
+      setPreferences(result);
+      setSaved(result);
+      setMessage('Saved to your account.');
     } catch {
       setMessage('Could not save your preferences. Try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -79,7 +85,7 @@ export default function PreferencesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <ThemedText type="subtitle">Preferences</ThemedText>
         <ThemedText themeColor="textSecondary">
           Choose how much each of these matters to you when comparing products.
@@ -87,6 +93,15 @@ export default function PreferencesScreen() {
 
         {loading ? (
           <ActivityIndicator />
+        ) : loadFailed ? (
+          <ThemedView style={styles.actions}>
+            <ThemedText themeColor="textSecondary">
+              Could not load your preferences.
+            </ThemedText>
+            <Pressable onPress={load} style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedText type="linkPrimary">Try again</ThemedText>
+            </Pressable>
+          </ThemedView>
         ) : (
           <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
             {CRITERIA.map(({ key, label, hint }) => (
@@ -128,15 +143,15 @@ export default function PreferencesScreen() {
             <ThemedView style={styles.actions}>
               <Pressable
                 onPress={save}
-                disabled={!hasChanges}
+                disabled={!hasChanges || saving}
                 style={({ pressed }) => [
                   styles.saveButton,
                   { backgroundColor: ACCENT },
-                  !hasChanges && styles.disabled,
+                  (!hasChanges || saving) && styles.disabled,
                   pressed && styles.pressed,
                 ]}>
                 <ThemedText type="smallBold" style={{ color: '#ffffff' }}>
-                  Save preferences
+                  {saving ? 'Saving…' : 'Save preferences'}
                 </ThemedText>
               </Pressable>
 

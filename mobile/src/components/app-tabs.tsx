@@ -1,13 +1,13 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useColorScheme } from 'react-native';
-import { useAuth } from '@/auth/AuthContext';
 
 import { Colors } from '@/constants/theme';
 
+// Three tabs: Home (scan), Products (likes + history), Account.
+// Admin is no longer a tab; admins reach it from the Account screen.
 export default function AppTabs() {
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'unspecified' ? 'light' : scheme];
-  const { isAdmin } = useAuth();
 
   return (
     <NativeTabs
@@ -15,31 +15,21 @@ export default function AppTabs() {
       indicatorColor={colors.backgroundElement}
       labelStyle={{ selected: { color: colors.text } }}>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Scan</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
           src={require('@/assets/images/tabIcons/home.png')}
           renderingMode="template"
         />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="likes">
-        <NativeTabs.Trigger.Label>Likes</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="heart" md="favorite" />
+      <NativeTabs.Trigger name="products">
+        <NativeTabs.Trigger.Label>Products</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="bag" md="shopping_bag" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="history">
-        <NativeTabs.Trigger.Label>History</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="clock" md="history" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="preferences">
-        <NativeTabs.Trigger.Label>Preferences</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="slider.horizontal.3" md="tune" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="admin" hidden={!isAdmin}>
-        <NativeTabs.Trigger.Label>Admin</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="pencil" md="edit" />
+      <NativeTabs.Trigger name="account">
+        <NativeTabs.Trigger.Label>Account</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="person.crop.circle" md="account_circle" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

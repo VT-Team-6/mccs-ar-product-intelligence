@@ -9,7 +9,8 @@ import { AuthProvider } from "../auth/AuthContext";
 import AuthenticatedApp from "../auth/AuthenticatedApp";
 
 SplashScreen.preventAutoHideAsync();
-// Keeps the tabs underneath pages like /product/1, so Back has somewhere to go
+// Keeps the tabs underneath pushed pages like /product/1 and /admin, so Back
+// has somewhere to go
 export const unstable_settings = { anchor: "(tabs)" };
 
 export default function TabLayout() {
