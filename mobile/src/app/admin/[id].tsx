@@ -8,7 +8,7 @@ import { deleteProduct, getProduct, productImageUrl, type Product } from '@/api/
 import { QrCodeModal } from '@/components/qr-code-modal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { confirmAction } from '@/utils/confirm';
 
 export default function ProductScreen() {
@@ -188,7 +188,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     // On web the tab bar sits at the top, so leave room for it
     paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
+    // No tab bar underneath: admin is pushed over the tabs
+    paddingBottom: Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },

@@ -6,7 +6,7 @@ import {
 } from "aws-amplify/auth";
 
 import { Hub } from "aws-amplify/utils";
-import { getUser } from "../api/general";
+import { getUser, type User } from "../api/general";
 
 import {
   createContext,
@@ -20,6 +20,8 @@ type AuthContextType = {
   user: unknown | null;
   loading: boolean;
   isAdmin: boolean;
+  /** The signed-in user's row from our backend, once it has loaded. */
+  profile: User | null;
   signIn: (email: string, password: string) => Promise<SignInOutput>;
   signOut: () => Promise<void>;
 };
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [profile, setProfile] = useState<User | null>(null);
 
   async function refreshUser() {
     try {
@@ -37,13 +40,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(currentUser);
       // Asks our backend who this is. This also creates their row in the users table on first login.
       try {
-        const profile = await getUser();
-        setIsAdmin(profile.is_admin);
+        const loaded = await getUser();
+        setProfile(loaded);
+        setIsAdmin(loaded.is_admin);
       } catch {
+        setProfile(null);
         setIsAdmin(false);
       }
     } catch {
       setUser(null);
+      setProfile(null);
       setIsAdmin(false);
     } finally {
       setLoading(false);
@@ -65,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (payload.event === "signedOut") {
         setUser(null);
+        setProfile(null);
         setIsAdmin(false);
       }
     });
@@ -89,11 +96,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() {
     await amplifySignOut();
     setUser(null);
+    setProfile(null);
     setIsAdmin(false);
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin, profile, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
