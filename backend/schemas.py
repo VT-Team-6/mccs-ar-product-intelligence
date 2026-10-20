@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductCreate(BaseModel):
@@ -105,3 +105,16 @@ class ReviewAggregate(BaseModel):
     average_rating: float | None
     rating_distribution: dict[str, int]
     reviews: list[ReviewShortened]
+
+class Preferences(BaseModel):
+    """How much each criterion matters: 0 = Skip, 1 = Low, 2 = Medium, 3 = High."""
+
+    # Reject unknown criteria so a typo can't be silently ignored
+    model_config = ConfigDict(extra="forbid")
+
+    price: int = Field(default=2, ge=0, le=3)
+    rating: int = Field(default=2, ge=0, le=3)
+    brand: int = Field(default=2, ge=0, le=3)
+    quality: int = Field(default=2, ge=0, le=3)
+    durability: int = Field(default=2, ge=0, le=3)
+    comfort: int = Field(default=2, ge=0, le=3)

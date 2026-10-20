@@ -9,6 +9,7 @@ client, and no query in ``user_products`` can reach another user's rows.
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 import auth
+import preferences
 import user_products
 from database import get_connection
 from schemas import (
@@ -18,6 +19,7 @@ from schemas import (
     LikedProduct,
     LikedProductPage,
     MyProduct,
+    Preferences,
 )
 from user_products import UserProductError
 
@@ -132,3 +134,22 @@ def record_interaction(
             )
         except UserProductError as error:
             raise _http_error(error) from error
+
+
+@router.get("/preferences", response_model=Preferences)
+def read_preferences(user=Depends(auth.require_authenticated_user)):
+    """This user's preferences, or the defaults if they have not saved any."""
+    with get_connection() as conn:
+        return preferences.get_preferences(conn, user["user_id"])
+
+
+@router.put("/preferences", response_model=Preferences)
+def save_preferences(
+    body: Preferences,
+    user=Depends(auth.require_authenticated_user),
+):
+    """Replace this user's preferences. Sending the same values again is a no-op."""
+    with get_connection() as conn:
+        return preferences.save_preferences(
+            conn, user["user_id"], body.model_dump()
+        )
