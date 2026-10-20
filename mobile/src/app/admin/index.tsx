@@ -14,7 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { listProducts, productImageUrl, type Product } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function AdminScreen() {
@@ -66,8 +66,15 @@ export default function AdminScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-                <ThemedView style={styles.header}>
-          <ThemedText type="subtitle">Admin</ThemedText>
+        {/* Admin is pushed over the tabs, so it needs a way back to the user view.
+            The tabs are anchored in the root stack, so "/" is always below us. */}
+        <ThemedView style={styles.topBar}>
+          <Pressable
+            onPress={() => router.dismissTo('/')}
+            hitSlop={12}
+            style={({ pressed }) => pressed && styles.pressed}>
+            <ThemedText type="linkPrimary">‹ User view</ThemedText>
+          </Pressable>
           <Pressable
             onPress={() => router.push('/admin/new')}
             style={({ pressed }) => pressed && styles.pressed}>
@@ -77,6 +84,10 @@ export default function AdminScreen() {
               </ThemedText>
             </ThemedView>
           </Pressable>
+        </ThemedView>
+
+        <ThemedView style={styles.header}>
+          <ThemedText type="subtitle">Admin</ThemedText>
         </ThemedView>
 
         <TextInput
@@ -100,7 +111,7 @@ export default function AdminScreen() {
           onRefresh={refresh}
           contentContainerStyle={[
             styles.list,
-            { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
+            { paddingBottom: insets.bottom + Spacing.three },
           ]}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => <ProductRow product={item} />}
@@ -168,6 +179,11 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   header: {
     flexDirection: 'row',

@@ -31,8 +31,11 @@ run `docker compose down -v` then `docker compose up -d` to rebuild the volume.
 If someone with running on iphone could update this that would be great
 
 ## Admin users
-The Admin tab is visibly only if your user in the database has the `is_admin` field set to true.
-To make yourself and admin:
+Admin controls are reached from the **Account** tab, which shows an **Admin** row only when your
+user in the database has the `is_admin` field set to true. Admin is not its own bottom tab, so
+admins sign in to the normal user view and open `/admin` from Account. The Admin screen has a
+**User view** action that returns to the tabs.
+To make yourself an admin:
 
 1. Sign into the app once. The backend creates your `users` row on your first authenticated
    request, so it must exist before it can be made an admin.
@@ -41,4 +44,5 @@ To make yourself and admin:
    docker exec backend-db-1 psql -U mccs -d mccs -c "UPDATE users SET is_admin = TRUE, updated_at = CURRENT_TIMESTAMP WHERE email = 'YOUR_EMAIL@email.com' RETURNING user_id, email, is_admin;"
    ```
    If not using the local db, run the same UPDATE command with psql.
-3. Sign out and back in (or reload the app) to see updates. 
+3. Sign out and back in (or reload the app) to see updates. The Admin row appears in the Account
+   tab.
