@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -211,9 +210,8 @@ export default function LikesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
         <ThemedView style={styles.header}>
-          <ThemedText type="subtitle">Liked Products</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {countLabel()}
           </ThemedText>
@@ -280,7 +278,7 @@ export default function LikesScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/product/[id]',
-                  params: { id: String(item.product_id), from: '/likes' },
+                  params: { id: String(item.product_id), from: '/products' },
                 })
               }
             />
@@ -395,8 +393,8 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.three,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
+    // The segment control above this stack already handles the top inset
+    paddingTop: Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
