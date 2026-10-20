@@ -38,20 +38,14 @@ function isImportance(value: unknown): value is Importance {
   return value === 0 || value === 1 || value === 2 || value === 3;
 }
 
-// Turns saved text back into preferences. Anything missing or invalid
-// falls back to the default, so old or damaged saved data can't break the screen.
-export function parsePreferences(raw: string | null): Preferences {
+// Turns data from the backend into preferences. Anything missing or invalid
+// falls back to the default, so a bad response can't break the screen.
+export function readPreferences(data: unknown): Preferences {
   const result: Preferences = { ...DEFAULT_PREFERENCES };
-  if (!raw) return result;
-  try {
-    const saved: unknown = JSON.parse(raw);
-    if (typeof saved !== 'object' || saved === null) return result;
-    for (const { key } of CRITERIA) {
-      const value = (saved as Record<string, unknown>)[key];
-      if (isImportance(value)) result[key] = value;
-    }
-  } catch {
-    // Not valid JSON, so use the defaults
+  if (typeof data !== 'object' || data === null) return result;
+  for (const { key } of CRITERIA) {
+    const value = (data as Record<string, unknown>)[key];
+    if (isImportance(value)) result[key] = value;
   }
   return result;
 }
