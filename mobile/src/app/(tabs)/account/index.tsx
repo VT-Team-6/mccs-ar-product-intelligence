@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/AuthContext';
@@ -8,9 +9,25 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function AccountScreen() {
-  const { profile, isAdmin, signOut } = useAuth();
+  const { profile, isAdmin, signOut, refreshProfile } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Tracks the "Try again" press, and makes the automatic retry happen once
+  const [retrying, setRetrying] = useState(false);
+  const attempted = useRef(false);
+
+  // Refresh the profile on first load, if we haven't already loaded it. This is important for the case where the user has just signed in and we haven't yet asked the backend who they are.
+  useEffect(() => {
+    if (isAdmin !== undefined || attempted.current) return;
+    attempted.current = true;
+    refreshProfile();
+  }, [isAdmin, refreshProfile]);
+
+  const retry = async () => {
+    setRetrying(true);
+    await refreshProfile();
+    setRetrying(false);
+  };
 
   return (
     <ThemedView style={styles.container}>
@@ -33,6 +50,25 @@ export default function AccountScreen() {
               hint="Add, edit and delete products"
               onPress={() => router.push('/admin')}
             />
+          )}
+
+          {/* Admin Access */}
+          {isAdmin === undefined && (
+            <Pressable
+              onPress={retry}
+              disabled={retrying}
+              accessibilityRole="button"
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedView type="backgroundElement" style={styles.row}>
+                <ThemedView type="backgroundElement" style={styles.rowText}>
+                  <ThemedText type="smallBold">Could not load your account</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {retrying ? 'Trying again…' : 'Tap to try again'}
+                  </ThemedText>
+                </ThemedView>
+                {retrying && <ActivityIndicator />}
+              </ThemedView>
+            </Pressable>
           )}
 
           <Row label="Sign out" onPress={signOut} />

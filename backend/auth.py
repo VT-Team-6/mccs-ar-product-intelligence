@@ -27,6 +27,12 @@ JWKS_URL = f"{COGNITO_ISSUER}/.well-known/jwks.json"
 
 jwk_client = PyJWKClient(JWKS_URL)
 
+# How much clock drift to tolerate between Cognito and this server, in seconds.
+# Covers the token's `iat`/`nbf` being slightly in the future and `exp` slightly
+# in the past, while still rejecting materially stale or future tokens.
+CLOCK_SKEW_LEEWAY = 15
+
+
 def verify_access_token(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
 ) -> dict:
@@ -40,6 +46,10 @@ def verify_access_token(
             algorithms=["RS256"],
             issuer=COGNITO_ISSUER,
             options={"verify_aud": False},
+            # Cognito stamps `iat` with AWS time. Without leeway, a just-issued
+            # token is rejected whenever this machine's clock lags AWS by even a
+            # second or two (PyJWT treats a future `iat` as invalid).
+            leeway=CLOCK_SKEW_LEEWAY,
         )
 
         if claims.get("token_use") != "access":
