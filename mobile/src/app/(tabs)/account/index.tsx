@@ -71,7 +71,15 @@ export default function AccountScreen() {
             </Pressable>
           )}
 
+          <Row 
+            label="Preferences"
+            hint="Manage your preferences" 
+            onPress={() => router.push('/account/preferences')} 
+          />
+
           <Row label="Sign out" onPress={signOut} />
+
+
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
