@@ -146,12 +146,13 @@ def load_product_scores() -> dict[int, dict[str, float]]:
 
 def refresh_recommendation_data() -> None:
     """Rebuild everything the recommendation engine uses after products change.
-
     Runs on startup and after admin edits. Errors are printed, not raised,
     so a failed refresh never breaks the app (old data is kept).
     """
+    from ranking import rebuild_engine  # avoids a circular import
     try:
         count = refresh_product_scores()
+        rebuild_engine()
         print(f"Recommendation data refreshed: {count} products")
     except Exception as error:
         print(f"Recommendation data refresh failed: {error}")
