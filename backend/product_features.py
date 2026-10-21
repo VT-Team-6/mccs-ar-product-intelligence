@@ -7,6 +7,7 @@ products change.
 """
 
 from database import get_connection
+from review_aspects import ASPECTS, aspect_ratings
 
 NEUTRAL = 0.5
 CRITERIA = ("price", "rating", "brand", "quality", "durability", "comfort")
@@ -65,23 +66,44 @@ def brand_scores(products: list[dict], ratings: dict[int, float]) -> dict[int, f
     return scores
 
 
-def compute_scores(products: list[dict]) -> dict[int, dict[str, float]]:
+def aspect_scores(
+    products: list[dict], ratings: dict[int, dict[str, float]]
+) -> dict[str, dict[int, float]]:
+    """Quality, durability and comfort scores from what reviews say.
+
+    ratings is {product_id: {"comfort": average stars, ...}} from review_aspects.
+    Like rating, each aspect is compared only within the same type: the best
+    comfort among boots gets 1, the worst gets 0. No data means 0.5.
+    """
+    scores = {}
+    for aspect in ASPECTS:
+        with_values = [
+            {**p, aspect: ratings.get(p["product_id"], {}).get(aspect)} for p in products
+        ]
+        scores[aspect] = scale_within_type(with_values, aspect, higher_is_better=True)
+    return scores
+
+
+def compute_scores(
+    products: list[dict], review_ratings: dict[int, dict[str, float]] | None = None
+) -> dict[int, dict[str, float]]:
     """Return {product_id: {criterion: score}} for every product.
 
-    Quality, durability and comfort stay neutral until review analysis
-    (Sprint 3) provides them.
+    review_ratings comes from review_aspects.aspect_ratings(). Without it,
+    quality, durability and comfort are neutral.
     """
     price = price_scores(products)
     rating = rating_scores(products)
     brand = brand_scores(products, rating)
+    aspects = aspect_scores(products, review_ratings or {})
     return {
         p["product_id"]: {
             "price": round(price[p["product_id"]], 4),
             "rating": round(rating[p["product_id"]], 4),
             "brand": round(brand[p["product_id"]], 4),
-            "quality": NEUTRAL,
-            "durability": NEUTRAL,
-            "comfort": NEUTRAL,
+            "quality": round(aspects["quality"][p["product_id"]], 4),
+            "durability": round(aspects["durability"][p["product_id"]], 4),
+            "comfort": round(aspects["comfort"][p["product_id"]], 4),
         }
         for p in products
     }
@@ -98,7 +120,11 @@ def refresh_product_scores() -> int:
             "SELECT product_id, product_type, brand, price, rating "
             "FROM products WHERE deleted_at IS NULL"
         ).fetchall()
-        scores = compute_scores(products)
+        reviews = conn.execute(
+            "SELECT r.product_id, r.rating, r.title, r.body, p.name "
+            "FROM reviews r JOIN products p USING (product_id)"
+        ).fetchall()
+        scores = compute_scores(products, aspect_ratings(reviews))
 
         # One transaction: if anything fails, the old scores stay
         conn.execute("DELETE FROM product_scores")

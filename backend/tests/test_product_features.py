@@ -67,10 +67,30 @@ def test_brand_with_several_products_gets_their_average_rating_score():
     assert scores[3]["brand"] == NEUTRAL
 
 
-def test_review_based_scores_are_neutral_for_now():
+def test_review_based_scores_are_neutral_without_review_data():
     scores = compute_scores([product(1, price=100, rating=4)])
     for criterion in ("quality", "durability", "comfort"):
         assert scores[1][criterion] == NEUTRAL
+
+
+def test_review_based_scores_compare_within_the_same_type():
+    products = [product(1), product(2), product(3), product(4, "Hat")]
+    review_ratings = {
+        1: {"comfort": 4.8, "durability": 3.0},
+        2: {"comfort": 4.0, "durability": 5.0},
+        3: {"comfort": 4.4},  # no durability data
+        4: {"comfort": 3.0},  # only hat, nothing to compare with
+    }
+    scores = compute_scores(products, review_ratings)
+
+    assert scores[1]["comfort"] == 1
+    assert scores[2]["comfort"] == 0
+    assert scores[3]["comfort"] == 0.5
+    assert scores[1]["durability"] == 0
+    assert scores[2]["durability"] == 1
+    assert scores[3]["durability"] == NEUTRAL
+    assert scores[4]["comfort"] == NEUTRAL
+    assert scores[1]["quality"] == NEUTRAL  # nobody mentioned quality
 
 
 def test_every_score_is_between_0_and_1():
