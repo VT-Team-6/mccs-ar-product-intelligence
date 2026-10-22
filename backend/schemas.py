@@ -126,3 +126,32 @@ class Preferences(BaseModel):
         if ranks != list(range(1, len(ranks) + 1)):
             raise ValueError("Ranks must be 1, 2, 3, ... with no repeats or gaps")
         return self
+
+
+# Recommendations 
+class RecommendationRequest(BaseModel):
+    """What the shopper asked for: the product on screen and/or typed text,
+    plus what matters to them right now (a ranking, same rules as Preferences)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    product_id: int | None = None
+    text: str | None = Field(default=None, max_length=200)
+    ranking: Preferences = Field(default_factory=Preferences)
+
+    @model_validator(mode="after")
+    def needs_a_product_or_text(self):
+        if self.product_id is None and not (self.text or "").strip():
+            raise ValueError("Give a product_id, some text, or both")
+        return self
+
+
+class Recommendation(BaseModel):
+    product: Product
+    score: float
+    reasons: list[str]
+
+
+class RecommendationResponse(BaseModel):
+    best_matches: list[Recommendation]
+    for_you: Recommendation | None

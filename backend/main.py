@@ -8,7 +8,7 @@ from product_features import refresh_recommendation_data
 
 from fastapi.staticfiles import StaticFiles
 
-from routers import me, products, scan, search, shopper_products, reviews, analysis
+from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations
 import auth
 
 
@@ -35,6 +35,7 @@ app.include_router(shopper_products.router)
 app.include_router(me.router)
 app.include_router(reviews.router)
 app.include_router(analysis.router)
+app.include_router(recommendations.router)
 
 # Serves the files in backend/static, such as product images
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
