@@ -5,7 +5,8 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
-import { productImageUrl } from '@/api/products';
+import { productImageUrl, type Product } from '@/api/products';
+import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
@@ -19,10 +20,13 @@ export default function ShopperProductScreen() {
   const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedId, setLoadedId] = useState<number | null>(null);
-  // True while a like request is running, so the heart cannot be double-tapped
+  // True once "Continue to analysis, recommendations & reviews" is pressed
   const [savingLike, setSavingLike] = useState(false);
   // Stops one visit from being recorded more than once
   const recorded = useRef(false);
+  // The bottom bar: "ask" shows it, "open" shows the recommendation questions/results, "dismissed" hides it
+  const [showMore, setShowMore] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   // Loads this product and the caller's like state when the page opens.
   // A product from a different page is ignored while the new one loads.
@@ -89,6 +93,16 @@ export default function ShopperProductScreen() {
 
   const imageUrl = product ? productImageUrl(product) : null;
 
+  // New questions or results appear below the product, so scroll down to show them
+  const scrollToBottom = () => {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
+  };
+
+  // Opens a recommended product on its own details page. Back returns here, results intact.
+  const openProduct = (picked: Product) => {
+    router.push(`/product/${picked.product_id}` as Href);
+  };
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -100,7 +114,7 @@ export default function ShopperProductScreen() {
         {(!product || loadedId !== Number(id)) && !error && <ActivityIndicator />}
 
         {product && loadedId === Number(id) && (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
             {imageUrl ? (
               <Image
                 source={{ uri: imageUrl }}
@@ -155,6 +169,29 @@ export default function ShopperProductScreen() {
             </ThemedView>
 
             {product.description && <ThemedText>{product.description}</ThemedText>}
+
+                        {showMore ? (
+              <>
+                {/* AI analysis (task 6.15) goes here */}
+                <RecommendationPanel
+                  productId={product.product_id}
+                  onOpenProduct={openProduct}
+                  onStepChange={scrollToBottom}
+                />
+              </>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  setShowMore(true);
+                  scrollToBottom();
+                }}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.moreButton, pressed && styles.pressed]}>
+                <ThemedText type="smallBold" style={styles.moreText}>
+                  Continue to analysis, recommendations & reviews
+                </ThemedText>
+              </Pressable>
+            )}
           </ScrollView>
         )}
       </SafeAreaView>
@@ -242,5 +279,16 @@ const styles = StyleSheet.create({
   fact: {
     flex: 1,
     gap: Spacing.half,
+  },
+  moreButton: {
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
+    backgroundColor: '#3c87f7',
+  },
+  moreText: {
+    color: '#ffffff',
+    textAlign: 'center',
   },
 });
