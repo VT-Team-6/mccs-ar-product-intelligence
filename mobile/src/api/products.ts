@@ -36,7 +36,9 @@ export async function listProducts(): Promise<Product[]> {
 
 // Shopper search: products whose name, brand, type or description contain the text
 export async function searchProducts(query: string): Promise<Product[]> {
-  const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(query)}`);
+  const response = await fetch(
+    `${API_URL}/api/search?q=${encodeURIComponent(query)}`,
+  );
   if (!response.ok) {
     throw new Error(`Could not search products (error ${response.status})`);
   }
@@ -56,12 +58,14 @@ export async function getProduct(productId: number): Promise<Product> {
 
 export async function createProduct(input: ProductInput): Promise<Product> {
   const response = await fetch(`${API_URL}/api/admin/products`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
   if (response.status === 422) {
-    throw new Error('The backend did not accept those values. Check the fields and try again.');
+    throw new Error(
+      "The backend did not accept those values. Check the fields and try again.",
+    );
   }
   if (!response.ok) {
     throw new Error(`Could not add the product (error ${response.status})`);
@@ -69,17 +73,22 @@ export async function createProduct(input: ProductInput): Promise<Product> {
   return response.json();
 }
 
-export async function updateProduct(productId: number, input: ProductInput): Promise<Product> {
+export async function updateProduct(
+  productId: number,
+  input: ProductInput,
+): Promise<Product> {
   const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
   if (response.status === 404) {
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
   if (response.status === 422) {
-    throw new Error('The backend did not accept those values. Check the fields and try again.');
+    throw new Error(
+      "The backend did not accept those values. Check the fields and try again.",
+    );
   }
   if (!response.ok) {
     throw new Error(`Could not save the product (error ${response.status})`);
@@ -89,7 +98,7 @@ export async function updateProduct(productId: number, input: ProductInput): Pro
 
 export async function deleteProduct(productId: number): Promise<void> {
   const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
   if (!response.ok) {
     throw new Error(`Could not delete the product (error ${response.status})`);
@@ -100,7 +109,7 @@ export async function deleteProduct(productId: number): Promise<void> {
 export async function getShopperProduct(productId: number): Promise<Product> {
   const response = await fetch(`${API_URL}/api/products/${productId}`);
   if (response.status === 404) {
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
   if (!response.ok) {
     throw new Error(`Could not load the product (error ${response.status})`);
