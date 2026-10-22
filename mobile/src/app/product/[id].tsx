@@ -1,32 +1,35 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
 import { productImageUrl, type Product } from '@/api/products';
 import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
   // "from" is the page to return to, such as /search?q=nike (optional).
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedId, setLoadedId] = useState<number | null>(null);
-  // True once "Continue to analysis, recommendations & reviews" is pressed
+  // True while a like request is running, so the heart cannot be double-tapped
   const [savingLike, setSavingLike] = useState(false);
   // Stops one visit from being recorded more than once
   const recorded = useRef(false);
-  // The bottom bar: "ask" shows it, "open" shows the recommendation questions/results, "dismissed" hides it
+  // True once "Continue to analysis, recommendations & reviews" is pressed
   const [showMore, setShowMore] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  // Where the questions/results start on the page, so we can scroll them to the top
+  const panelY = useRef(0);
 
   // Loads this product and the caller's like state when the page opens.
   // A product from a different page is ignored while the new one loads.
@@ -93,9 +96,9 @@ export default function ShopperProductScreen() {
 
   const imageUrl = product ? productImageUrl(product) : null;
 
-  // New questions or results appear below the product, so scroll down to show them
-  const scrollToBottom = () => {
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
+   // New questions or results appear below the product, so scroll them to the top of the screen
+  const scrollToPanel = () => {
+    setTimeout(() => scrollRef.current?.scrollTo({ y: panelY.current, animated: true }), 150);
   };
 
   // Opens a recommended product on its own details page. Back returns here, results intact.
@@ -105,7 +108,7 @@ export default function ShopperProductScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
           <ThemedText type="linkPrimary">‹ Back</ThemedText>
         </Pressable>
@@ -114,7 +117,9 @@ export default function ShopperProductScreen() {
         {(!product || loadedId !== Number(id)) && !error && <ActivityIndicator />}
 
         {product && loadedId === Number(id) && (
-          <ScrollView ref={scrollRef} contentContainerStyle={styles.content}>
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.two }]}>
             {imageUrl ? (
               <Image
                 source={{ uri: imageUrl }}
@@ -170,20 +175,22 @@ export default function ShopperProductScreen() {
 
             {product.description && <ThemedText>{product.description}</ThemedText>}
 
-                        {showMore ? (
-              <>
-                {/* AI analysis (task 6.15) goes here */}
-                <RecommendationPanel
-                  productId={product.product_id}
-                  onOpenProduct={openProduct}
-                  onStepChange={scrollToBottom}
-                />
-              </>
+              {showMore ? (
+                <>
+                  {/* AI analysis goes here */}
+                  <View onLayout={(event) => (panelY.current = event.nativeEvent.layout.y)}>
+                    <RecommendationPanel
+                      productId={product.product_id}
+                      onOpenProduct={openProduct}
+                      onStepChange={scrollToPanel}
+                    />
+                  </View>
+                </>
             ) : (
               <Pressable
                 onPress={() => {
                   setShowMore(true);
-                  scrollToBottom();
+                  scrollToPanel();
                 }}
                 accessibilityRole="button"
                 style={({ pressed }) => [styles.moreButton, pressed && styles.pressed]}>
@@ -231,7 +238,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     // On web the tab bar sits at the top, so leave room for it
     paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
@@ -240,7 +246,6 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.three,
-    paddingBottom: Spacing.four,
   },
   image: {
     width: '100%',

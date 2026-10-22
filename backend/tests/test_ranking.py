@@ -11,7 +11,7 @@ from preferences import CRITERIA
 from ranking import (
     RecommendationEngine,
     combined_weights,
-    plural,
+    compare_within,
     rescale,
     types_named_in,
 )
@@ -19,27 +19,29 @@ from ranking import (
 NOTHING_RANKED = {c: 0 for c in CRITERIA}
 
 
-def product(product_id, name, product_type, description):
+def product(product_id, name, product_type, description, price, rating=4.5):
     return {
         "product_id": product_id,
         "name": name,
         "brand": None,
         "product_type": product_type,
-        "price": None,
-        "rating": None,
+        "price": price,
+        "rating": rating,
         "description": description,
     }
 
 
 CATALOG = [
-    product(1, "Alpine Snow Boot", "Boot", "Insulated waterproof boots for snow and freezing winter weather"),
-    product(2, "Glacier Winter Boot", "Boot", "Warm insulated boots built for snow and ice"),
-    product(3, "Summit Hiking Boot", "Boot", "Sturdy leather boots for hiking trails and cold weather"),
-    product(4, "Beach Flip Flop", "Flip-Flop", "Light summer flip flops for the beach and pool"),
-    product(5, "Oxford Dress Shoe", "Dress Shoe", "Polished leather oxford shoes for weddings and formal events"),
-    product(6, "Daily Runner", "Running Shoe", "Cushioned running shoes for road runs and the gym"),
-    product(7, "Trail Runner", "Running Shoe", "Lightweight running shoes for muddy trail runs"),
-    product(8, "Classic Sandal", "Sandal", "Comfortable sandals for warm summer days"),
+    product(1, "Alpine Snow Boot", "Boot", "Insulated waterproof boots for snow and freezing winter weather", 200),
+    product(2, "Glacier Winter Boot", "Boot", "Warm insulated boots built for snow and ice", 190),
+    product(3, "Summit Hiking Boot", "Boot", "Sturdy leather boots for hiking trails and cold weather", 180),
+    product(4, "Beach Flip Flop", "Flip-Flop", "Light summer flip flops for the beach and pool", 20),
+    product(5, "Oxford Dress Shoe", "Dress Shoe", "Polished leather oxford shoes for weddings and formal events", 150),
+    product(6, "Daily Runner", "Running Shoe", "Cushioned running shoes for road runs and the gym", 120),
+    product(7, "Trail Runner", "Running Shoe", "Lightweight running shoes for muddy trail runs", 130),
+    product(8, "Classic Sandal", "Sandal", "Comfortable sandals for warm summer days", 40),
+    # The only rain boot, like Hunter in the real catalog
+    product(9, "Puddle Rain Boot", "Rain Boot", "Waterproof rubber boots for rain and puddles", 70),
 ]
 
 
@@ -55,7 +57,7 @@ def scores(**overrides):
 def engine():
     return RecommendationEngine(
         CATALOG,
-        scores(p2={"price": 1.0}, p1={"price": 0.0}, p3={"comfort": 1.0}, p6={"comfort": 0.9}),
+        scores(p3={"comfort": 1.0}, p6={"comfort": 0.9}),
     )
 
 
@@ -79,10 +81,16 @@ def test_types_named_in_text_singular_or_plural():
     assert types_named_in("something for a wedding", types) == set()
 
 
-def test_plural_for_reason_text():
-    assert plural("Boot") == "boots"
-    assert plural("Running Shoe") == "running shoes"
-    assert plural("Flip-Flops") == "flip-flops"
+def test_compare_within_scores_values_against_each_other():
+    prices = np.array([100.0, 200.0, 150.0])
+    assert list(compare_within(prices, higher_is_better=False)) == [1, 0, 0.5]
+    assert list(compare_within(prices, higher_is_better=True)) == [0, 1, 0.5]
+
+
+def test_compare_within_is_neutral_without_anything_to_compare():
+    assert list(compare_within(np.array([100.0, np.nan]), False)) == [0.5, 0.5]
+    assert list(compare_within(np.array([100.0, 100.0]), False)) == [0.5, 0.5]
+    assert list(compare_within(np.array([100.0, np.nan, 50.0]), False)) == [0, 0.5, 1]
 
 
 def test_combined_weights_average_now_and_saved():
@@ -133,10 +141,21 @@ def test_without_a_ranking_results_are_by_similarity_only(engine):
     assert cards[0]["product_id"] == 2  # the other insulated snow boot
 
 
-def test_ranking_price_first_puts_the_cheapest_similar_product_on_top(engine):
-    cards = engine.recommend(product_id=3, now_ranks={**NOTHING_RANKED, "price": 1})["best_matches"]
-    assert cards[0]["product_id"] == 2
-    assert "Cheaper than most boots" in cards[0]["reasons"]
+def test_ranking_price_first_moves_the_cheapest_similar_product_up(engine):
+    plain = engine.recommend(product_id=3)["best_matches"]
+    cheap = engine.recommend(product_id=3, now_ranks={**NOTHING_RANKED, "price": 1})["best_matches"]
+    # The $70 rain boot moves up, and says why
+    assert ids(cheap).index(9) < ids(plain).index(9)
+    assert "Cheaper than similar products" in cheap[ids(cheap).index(9)]["reasons"]
+
+
+def test_price_is_compared_across_types_among_the_results(engine):
+    # Like the Timberland example: the only rain boot is the cheapest waterproof
+    # boot, so with price first it should win even though its type is different
+    cards = engine.recommend(
+        product_id=1, text="waterproof boots", now_ranks={**NOTHING_RANKED, "price": 1}
+    )["best_matches"]
+    assert cards[0]["product_id"] == 9
 
 
 def test_ranking_comfort_first_moves_the_comfiest_product_up(engine):
@@ -185,3 +204,9 @@ def test_for_you_uses_the_saved_ranking(engine):
     result = engine.recommend(text="boots for cold weather", saved_ranks={**NOTHING_RANKED, "comfort": 1})
     shown = ids(result["best_matches"]) + [result["for_you"]["product_id"]]
     assert 3 in shown  # the comfiest boot makes it in somewhere
+
+def test_likes_only_count_when_truly_similar(engine):
+    # Liking a flip flop says nothing about winter boots
+    result = engine.recommend(text="boots for winter", liked_ids=[4])
+    assert result["for_you"] is not None
+    assert "Like products you liked" not in result["for_you"]["reasons"]

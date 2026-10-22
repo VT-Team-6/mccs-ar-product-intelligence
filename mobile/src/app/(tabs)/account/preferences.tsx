@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { getPreferences, savePreferences } from '@/api/preferences';
 import { ThemedText } from '@/components/themed-text';
@@ -18,6 +19,7 @@ import {
 const ACCENT = '#3c87f7';
 
 export default function PreferencesScreen() {
+  const router = useRouter();
   // What is currently selected on screen
   const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
   // What is saved on the account, so we know whether there is anything to save
@@ -82,8 +84,14 @@ export default function PreferencesScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <ThemedText type="subtitle">Preferences</ThemedText>
-        <ThemedText themeColor="textSecondary">
+        <Pressable
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/account'))}
+          hitSlop={12}
+          style={({ pressed }) => pressed && styles.pressed}>
+          <ThemedText type="linkPrimary">‹ Back</ThemedText>
+        </Pressable>
+        <ThemedText type="subtitle" style={styles.title}>Preferences</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
             Tap what matters most to you, in order. You only need to pick one; anything you don’t pick counts equally.
         </ThemedText>
 
@@ -100,7 +108,7 @@ export default function PreferencesScreen() {
           </ThemedView>
         ) : (
           <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
-            <RankPicker value={preferences} onChange={change} />
+            <RankPicker value={preferences} onChange={change} compact />
 
             <ThemedView style={styles.actions}>
               <Pressable
@@ -113,7 +121,7 @@ export default function PreferencesScreen() {
                   pressed && styles.pressed,
                 ]}>
                 <ThemedText type="smallBold" style={{ color: '#ffffff' }}>
-                  {saving ? 'Saving…' : 'Save preferences'}
+                  {saving ? 'Saving…' : 'Save Preferences'}
                 </ThemedText>
               </Pressable>
 
@@ -167,5 +175,9 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.4,
+  },
+  title: {
+    fontSize: 26,
+    lineHeight: 32,
   },
 });

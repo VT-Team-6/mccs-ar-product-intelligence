@@ -105,15 +105,15 @@ export function RecommendationPanel({ productId, textRequired = false, onOpenPro
   return (
     <View style={styles.panel}>
       <ThemedView style={styles.question}>
-        <ThemedText type="subtitle">What matters most right now?</ThemedText>
+        <ThemedText style={styles.questionTitle}>What matters most right now?</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           Tap in order. Pick at least one; the rest count equally.
         </ThemedText>
       </ThemedView>
-      <RankPicker value={ranking} onChange={setRanking} />
+      <RankPicker value={ranking} onChange={setRanking} compact />
 
       <ThemedView style={styles.question}>
-        <ThemedText type="subtitle">What are you looking for?</ThemedText>
+        <ThemedText style={styles.questionTitle}>What are you looking for?</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {textRequired ? 'Describe what you need.' : 'Optional, like "for a wedding" or "something waterproof".'}
         </ThemedText>
@@ -181,7 +181,12 @@ const styles = StyleSheet.create({
   },
   question: {
     gap: Spacing.half,
-    paddingTop: Spacing.two,
+    paddingTop: Spacing.one,
+  },
+  questionTitle: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: 700,
   },
   headerRow: {
     flexDirection: 'row',

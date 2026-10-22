@@ -9,15 +9,17 @@ import { CRITERIA, toggleRank, type Preferences } from '@/preferences/criteria';
 // The blue used for links elsewhere in the app
 const ACCENT = '#3c87f7';
 const BADGE_SIZE = 28;
+const COMPACT_BADGE_SIZE = 24;
 
 type Props = {
   value: Preferences;
   onChange: (next: Preferences) => void;
+  compact?: boolean;
 };
 
 // Tap the criteria in order of what matters most. Tapping a ranked one removes it.
 // Used on the Preferences screen and when asking for a recommendation.
-export function RankPicker({ value, onChange }: Props) {
+export function RankPicker({ value, onChange, compact = false }: Props) {
   const theme = useTheme();
 
   return (
@@ -34,10 +36,11 @@ export function RankPicker({ value, onChange }: Props) {
             style={({ pressed }) => pressed && styles.pressed}>
             <ThemedView
               type="backgroundElement"
-              style={[styles.card, ranked && { borderColor: ACCENT }]}>
+              style={[styles.card, compact && styles.compactCard, ranked && { borderColor: ACCENT }]}>
               <View
                 style={[
                   styles.badge,
+                  compact && styles.compactBadge,
                   ranked
                     ? { backgroundColor: ACCENT, borderColor: ACCENT }
                     : { borderColor: theme.textSecondary },
@@ -82,6 +85,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  compactCard: {
+    paddingVertical: Spacing.two,
+  },
+  compactBadge: {
+    width: COMPACT_BADGE_SIZE,
+    height: COMPACT_BADGE_SIZE,
+    borderRadius: COMPACT_BADGE_SIZE / 2,
   },
   badgeText: {
     color: '#ffffff',

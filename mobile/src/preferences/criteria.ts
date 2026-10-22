@@ -5,7 +5,7 @@
 export type CriterionKey = 'price' | 'rating' | 'brand' | 'quality' | 'durability' | 'comfort';
 
 export const CRITERIA: { key: CriterionKey; label: string; hint: string }[] = [
-  { key: 'price', label: 'Price', hint: 'Prefer lower-priced products' },
+  { key: 'price', label: 'Price', hint: 'Prefer lower priced products' },
   { key: 'rating', label: 'Rating', hint: 'Prefer products with higher ratings' },
   { key: 'brand', label: 'Brand', hint: 'Prefer brands you know and trust' },
   { key: 'quality', label: 'Quality', hint: 'Materials and how well it is made' },

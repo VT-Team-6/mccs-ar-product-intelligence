@@ -10,18 +10,22 @@ Rules (8.10):
                 best candidate is 1 and the worst is 0. With both a product and
                 text: 0.6 x text + 0.4 x product. +0.15 for the same type as the
                 product on screen or a type named in the text (capped at 1).
-  preference  = sum(weight x score) / sum(weight), weights from the ranking
-                (#1 = 6, #2 = 5, ..., unranked = 1)
   pool        = up to the 10 most similar products, keeping only those at least 70%
                 as similar as the best one (but always at least 4). Preferences
                 only reorder this pool, so a cheap or highly rated but unrelated
                 product can never jump into the results.
+  preference  = sum(weight x score) / sum(weight), weights from the ranking
+                (#1 = 6, #2 = 5, ..., unranked = 1). Price and rating are
+                compared among the pool (cheapest = 1), since those are the
+                products the shopper is choosing between. Quality, durability
+                and comfort use the saved review-based scores.
   final       = 0.6 x similarity + 0.4 x preference, or similarity alone when
                 nothing is ranked
   for_you     = best of the pool (minus the top 3 and liked products) by
                 0.5 x final + 0.3 x combined preference + 0.2 x likes
-                (0.6 / 0.4 without likes). Only when the shopper has a saved
-                ranking or likes.
+                (0.6 / 0.4 without likes). likes = how close it is to the
+                closest liked product, on a fixed scale (0.5 or less = 0,
+                0.9 or more = 1). Only when the shopper has a saved ranking or likes.
 Ties always go to the lower product_id, so the same input gives the same order.
 """
 
@@ -52,12 +56,17 @@ FILLER_WORDS = {
     "shoe", "shoes", "good", "best", "great", "nice", "find", "buy", "get", "wear", "wearing",
 }
 
+# How close (0-1) a product must be to a liked product to count. Unrelated
+# products still land around 0.5, so closeness is mapped from 0.5-0.9 to 0-1.
+LIKE_FLOOR, LIKE_CEILING = 0.5, 0.9
+LIKED_REASON = 0.75  # "Like products you liked" only when this close
+
 # Reasons shown on a card when a ranked criterion's score is high
 REASON_THRESHOLD = 0.7
 VERY_SIMILAR = 0.8
 REASONS = {
-    "price": "Cheaper than most {type}",
-    "rating": "Highly rated",
+    "price": "Cheaper than similar products",
+    "rating": "Rated higher than similar products",
     "brand": "Trusted brand",
     "quality": "Well made",
     "durability": "Built to last",
@@ -73,10 +82,19 @@ def rescale(values: np.ndarray) -> np.ndarray:
     return (values - low) / (high - low)
 
 
-def plural(product_type: str) -> str:
-    """'Boot' -> 'boots', 'Flip-Flop' -> 'flip-flops' (used in reason text)."""
-    lower = product_type.lower()
-    return lower if lower.endswith("s") else lower + "s"
+def compare_within(values: np.ndarray, higher_is_better: bool) -> np.ndarray:
+    """Score raw values against each other: best = 1, worst = 0.
+
+    Missing values (nan), or nothing to compare (fewer than 2 values, or all
+    equal), give 0.5.
+    """
+    scores = np.full(len(values), 0.5)
+    known = ~np.isnan(values)
+    if known.sum() < 2 or np.nanmax(values) == np.nanmin(values):
+        return scores
+    scaled = rescale(values[known])
+    scores[known] = scaled if higher_is_better else 1 - scaled
+    return scores
 
 
 def types_named_in(text: str, product_types: set[str]) -> set[str]:
@@ -117,6 +135,8 @@ class RecommendationEngine:
         self.types = np.array([p["product_type"] for p in products])
         self.vectorizer, self.tfidf = build_tfidf_matrix(products)
         self.embeddings = build_product_embeddings(products) if embeddings is None else embeddings
+        self.prices = np.array([np.nan if p.get("price") is None else float(p["price"]) for p in products])
+        self.ratings = np.array([np.nan if p.get("rating") is None else float(p["rating"]) for p in products])
         neutral = {c: 0.5 for c in CRITERIA}
         self.scores = np.array([[scores.get(pid, neutral)[c] for c in CRITERIA] for pid in self.ids])
 
@@ -178,7 +198,22 @@ class RecommendationEngine:
             return {"best_matches": [], "for_you": None}
 
         similarity = self.similarity(product_id, text, candidates)
-        scores = self.scores[candidates]
+        ids = np.array(self.ids)[candidates]
+
+        # Only the most similar products are considered, then preferences reorder them
+        most_similar = sorted(range(len(candidates)), key=lambda j: (-similarity[j], ids[j]))
+        cutoff = RELATIVE_SIMILARITY * similarity[most_similar[0]]
+        pool = [
+            j for n, j in enumerate(most_similar[:CANDIDATE_POOL])
+            if n < MIN_POOL or similarity[j] >= cutoff
+        ]
+
+        # Price and rating are compared among the pool: the products being chosen between
+        scores = self.scores[candidates].copy()
+        members = candidates[pool]
+        scores[pool, CRITERIA.index("price")] = compare_within(self.prices[members], higher_is_better=False)
+        scores[pool, CRITERIA.index("rating")] = compare_within(self.ratings[members], higher_is_better=True)
+
         personalized = bool(now_ranks) and has_ranking(now_ranks)
         if personalized:
             preference = preference_scores(scores, rank_weights(now_ranks))
@@ -186,27 +221,19 @@ class RecommendationEngine:
         else:
             final = similarity
 
-        # Only the most similar products are considered, then preferences reorder them
-        ids = np.array(self.ids)[candidates]
-        most_similar = sorted(range(len(candidates)), key=lambda j: (-similarity[j], ids[j]))
-        cutoff = RELATIVE_SIMILARITY * similarity[most_similar[0]]
-        pool = [
-            j for n, j in enumerate(most_similar[:CANDIDATE_POOL])
-            if n < MIN_POOL or similarity[j] >= cutoff
-        ]
         order = sorted(pool, key=lambda j: (-final[j], ids[j]))
         top = order[:BEST_MATCHES]
 
         best = [
-            self._card(candidates[j], final[j], similarity[j], now_ranks if personalized else None)
+            self._card(candidates[j], final[j], similarity[j], scores[j], now_ranks if personalized else None)
             for j in top
         ]
         for_you = self._for_you(
-            candidates, order, top, final, similarity, now_ranks, saved_ranks, liked_ids or []
+            candidates, order, top, final, similarity, scores, now_ranks, saved_ranks, liked_ids or []
         )
         return {"best_matches": best, "for_you": for_you}
 
-    def _for_you(self, candidates, order, top, final, similarity, now_ranks, saved_ranks, liked_ids):
+    def _for_you(self, candidates, order, top, final, similarity, scores, now_ranks, saved_ranks, liked_ids):
         has_saved = bool(saved_ranks) and has_ranking(saved_ranks)
         liked = [self.index[pid] for pid in liked_ids if pid in self.index]
         if not has_saved and not liked:
@@ -218,25 +245,26 @@ class RecommendationEngine:
             return None
 
         weights = combined_weights(now_ranks, saved_ranks)
-        personal = preference_scores(self.scores[candidates[pool]], weights)
+        personal = preference_scores(scores[pool], weights)
         if liked:
+            # How close each product is to the closest liked product, on a fixed scale
             closeness = (self.embeddings[candidates[pool]] @ self.embeddings[liked].T).max(axis=1)
-            likes = rescale(closeness) if len(pool) > 1 else np.ones(len(pool))
+            likes = np.clip((closeness - LIKE_FLOOR) / (LIKE_CEILING - LIKE_FLOOR), 0, 1)
             pick = 0.5 * final[pool] + 0.3 * personal + 0.2 * likes
         else:
-            likes = None
+            closeness = None
             pick = 0.6 * final[pool] + 0.4 * personal
 
         ids = np.array(self.ids)
         best = min(range(len(pool)), key=lambda n: (-pick[n], ids[candidates[pool[n]]]))
         j = pool[best]
-        card = self._card(
-            candidates[j], pick[best], similarity[j], saved_ranks if has_saved else now_ranks,
-            liked=likes is not None and likes[best] >= REASON_THRESHOLD,
+        return self._card(
+            candidates[j], pick[best], similarity[j], scores[j], saved_ranks if has_saved else now_ranks,
+            liked=closeness is not None and closeness[best] >= LIKED_REASON,
         )
-        return card
 
-    def _card(self, i: int, score: float, similarity: float, ranks: dict | None, liked: bool = False) -> dict:
+    def _card(self, i: int, score: float, similarity: float, criterion_scores: np.ndarray,
+              ranks: dict | None, liked: bool = False) -> dict:
         """One recommendation: the product, its score, and up to 2 reasons."""
         reasons = []
         if liked:
@@ -246,8 +274,8 @@ class RecommendationEngine:
         if ranks:
             ranked = sorted((r, c) for c, r in ranks.items() if r > 0)
             for _, criterion in ranked:
-                if self.scores[i][CRITERIA.index(criterion)] >= REASON_THRESHOLD:
-                    reasons.append(REASONS[criterion].format(type=plural(self.types[i])))
+                if criterion_scores[CRITERIA.index(criterion)] >= REASON_THRESHOLD:
+                    reasons.append(REASONS[criterion])
         if not reasons:
             reasons.append("Good match")
         return {
