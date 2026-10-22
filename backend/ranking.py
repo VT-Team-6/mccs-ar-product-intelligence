@@ -19,11 +19,14 @@ Rules (8.10):
                 compared among the pool (cheapest = 1), since those are the
                 products the shopper is choosing between. Quality, durability
                 and comfort use the saved review-based scores.
-  final       = 0.6 x similarity + 0.4 x preference, or similarity alone when
-                nothing is ranked
-  for_you     = best of the pool (minus the top 3 and liked products) by
-                0.5 x final + 0.3 x combined preference + 0.2 x likes
-                (0.6 / 0.4 without likes). likes = how close it is to the
+  final       = 0.4 x similarity + 0.6 x preference, or similarity alone when
+                nothing is ranked. The pool already keeps results relevant,
+                so the shopper's #1 priority can decide the order within it.
+  for_you     = best of the pool (minus the top 3 and liked products), using what
+                we know about the shopper instead of the "right now" ranking:
+                0.4 x similarity + 0.4 x saved preference + 0.2 x likes.
+                Without likes: 0.5 / 0.5. Without a saved ranking: 0.6 x
+                similarity + 0.4 x likes. likes = how close it is to the
                 closest liked product, on a fixed scale (0.5 or less = 0,
                 0.9 or more = 1). Only when the shopper has a saved ranking or likes.
 Ties always go to the lower product_id, so the same input gives the same order.
@@ -41,7 +44,7 @@ from recommendation import build_tfidf_matrix
 
 TFIDF_WEIGHT, EMBEDDING_WEIGHT = 0.4, 0.6
 TEXT_WEIGHT, PRODUCT_WEIGHT = 0.6, 0.4
-SIMILARITY_WEIGHT, PREFERENCE_WEIGHT = 0.6, 0.4
+SIMILARITY_WEIGHT, PREFERENCE_WEIGHT = 0.4, 0.6
 TYPE_BONUS = 0.15
 BEST_MATCHES = 3
 CANDIDATE_POOL = 10
@@ -110,19 +113,6 @@ def preference_scores(scores: np.ndarray, weights: dict[str, float]) -> np.ndarr
     """Weighted average of each product's 0-1 criterion scores."""
     w = np.array([weights[c] for c in CRITERIA], dtype=float)
     return scores @ w / w.sum()
-
-
-def combined_weights(now_ranks: dict | None, saved_ranks: dict | None) -> dict[str, float]:
-    """Average of the "right now" and saved weights, each scaled to add up to 1."""
-    parts = []
-    for ranks in (now_ranks, saved_ranks):
-        if ranks and has_ranking(ranks):
-            weights = rank_weights(ranks)
-            total = sum(weights.values())
-            parts.append({c: weights[c] / total for c in CRITERIA})
-    if not parts:
-        return {c: 1.0 for c in CRITERIA}
-    return {c: sum(p[c] for p in parts) / len(parts) for c in CRITERIA}
 
 
 class RecommendationEngine:
@@ -244,31 +234,40 @@ class RecommendationEngine:
         if not pool:
             return None
 
-        weights = combined_weights(now_ranks, saved_ranks)
-        personal = preference_scores(scores[pool], weights)
+        # Based on who the shopper is (saved ranking + likes), still within the relevant pool
+        personal = preference_scores(scores[pool], rank_weights(saved_ranks)) if has_saved else None
+        closeness = closest_like = None
         if liked:
             # How close each product is to the closest liked product, on a fixed scale
-            closeness = (self.embeddings[candidates[pool]] @ self.embeddings[liked].T).max(axis=1)
+            to_liked = self.embeddings[candidates[pool]] @ self.embeddings[liked].T
+            closeness = to_liked.max(axis=1)
+            closest_like = [liked[k] for k in to_liked.argmax(axis=1)]
             likes = np.clip((closeness - LIKE_FLOOR) / (LIKE_CEILING - LIKE_FLOOR), 0, 1)
-            pick = 0.5 * final[pool] + 0.3 * personal + 0.2 * likes
+
+        if has_saved and liked:
+            pick = 0.4 * similarity[pool] + 0.4 * personal + 0.2 * likes
+        elif has_saved:
+            pick = 0.5 * similarity[pool] + 0.5 * personal
         else:
-            closeness = None
-            pick = 0.6 * final[pool] + 0.4 * personal
+            pick = 0.6 * similarity[pool] + 0.4 * likes
 
         ids = np.array(self.ids)
         best = min(range(len(pool)), key=lambda n: (-pick[n], ids[candidates[pool[n]]]))
         j = pool[best]
+        liked_name = None
+        if closeness is not None and closeness[best] >= LIKED_REASON:
+            liked_name = self.products[closest_like[best]]["name"]
         return self._card(
-            candidates[j], pick[best], similarity[j], scores[j], saved_ranks if has_saved else now_ranks,
-            liked=closeness is not None and closeness[best] >= LIKED_REASON,
+            candidates[j], pick[best], similarity[j], scores[j], saved_ranks if has_saved else None,
+            liked_name=liked_name,
         )
 
     def _card(self, i: int, score: float, similarity: float, criterion_scores: np.ndarray,
-              ranks: dict | None, liked: bool = False) -> dict:
+              ranks: dict | None, liked_name: str | None = None) -> dict:
         """One recommendation: the product, its score, and up to 2 reasons."""
         reasons = []
-        if liked:
-            reasons.append("Like products you liked")
+        if liked_name:
+            reasons.append(f"Similar to {liked_name}, which you liked")
         if similarity >= VERY_SIMILAR:
             reasons.append("Very similar")
         if ranks:

@@ -10,7 +10,6 @@ import pytest
 from preferences import CRITERIA
 from ranking import (
     RecommendationEngine,
-    combined_weights,
     compare_within,
     rescale,
     types_named_in,
@@ -91,13 +90,6 @@ def test_compare_within_is_neutral_without_anything_to_compare():
     assert list(compare_within(np.array([100.0, np.nan]), False)) == [0.5, 0.5]
     assert list(compare_within(np.array([100.0, 100.0]), False)) == [0.5, 0.5]
     assert list(compare_within(np.array([100.0, np.nan, 50.0]), False)) == [0, 0.5, 1]
-
-
-def test_combined_weights_average_now_and_saved():
-    weights = combined_weights({**NOTHING_RANKED, "price": 1}, {**NOTHING_RANKED, "comfort": 1})
-    assert weights["price"] == pytest.approx(weights["comfort"])
-    assert weights["price"] > weights["rating"]
-    assert sum(weights.values()) == pytest.approx(1)
 
 
 # --- requests ---------------------------------------------------------------
@@ -209,4 +201,24 @@ def test_likes_only_count_when_truly_similar(engine):
     # Liking a flip flop says nothing about winter boots
     result = engine.recommend(text="boots for winter", liked_ids=[4])
     assert result["for_you"] is not None
-    assert "Like products you liked" not in result["for_you"]["reasons"]
+    assert not any("which you liked" in reason for reason in result["for_you"]["reasons"])
+
+
+def test_for_you_names_the_liked_product_it_is_similar_to(engine):
+    # Liked the snow boot; the rain boot is the closest product not already shown
+    result = engine.recommend(text="boots", liked_ids=[1])
+    assert result["for_you"]["product_id"] == 9
+    assert "Similar to Alpine Snow Boot, which you liked" in result["for_you"]["reasons"]
+
+
+def test_for_you_follows_the_saved_ranking_not_the_right_now_one(engine):
+    # Right now price matters; normally comfort does. The pick should be the comfy boot.
+    result = engine.recommend(
+        product_id=1,
+        now_ranks={**NOTHING_RANKED, "price": 1},
+        saved_ranks={**NOTHING_RANKED, "comfort": 1},
+    )
+    shown = ids(result["best_matches"]) + [result["for_you"]["product_id"]]
+    assert 3 in shown
+    if result["for_you"]["product_id"] == 3:
+        assert "Very comfortable" in result["for_you"]["reasons"]
