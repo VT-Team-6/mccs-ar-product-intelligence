@@ -15,9 +15,22 @@ from schemas import RecommendationRequest, RecommendationResponse
 
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 
-_PRODUCT_COLUMNS = (
-    "product_id, name, brand, product_type, price, rating, description, image_url, created_at, updated_at"
-)
+_PRODUCT_SELECT = """
+    SELECT
+        p.product_id,
+        p.name,
+        p.brand,
+        p.product_type,
+        p.price,
+        s.average_rating AS rating,
+        p.description,
+        p.image_url,
+        p.created_at,
+        p.updated_at
+    FROM products p
+    LEFT JOIN product_review_stats s
+        ON p.product_id = s.product_id
+"""
 
 
 @router.post("", response_model=RecommendationResponse)
@@ -49,8 +62,10 @@ def recommend(body: RecommendationRequest, user=Depends(auth.require_authenticat
     cards = result["best_matches"] + ([result["for_you"]] if result["for_you"] else [])
     with get_connection() as conn:
         rows = conn.execute(
-            f"SELECT {_PRODUCT_COLUMNS} FROM products "
-            "WHERE product_id = ANY(%s) AND deleted_at IS NULL",
+            _PRODUCT_SELECT + """
+                WHERE p.product_id = ANY(%s)
+                AND p.deleted_at IS NULL
+            """,
             ([card["product_id"] for card in cards],),
         ).fetchall()
     products = {row["product_id"]: row for row in rows}

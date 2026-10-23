@@ -300,8 +300,21 @@ def rebuild_engine() -> int:
 
     with get_connection() as conn:
         products = conn.execute(
-            "SELECT product_id, name, brand, product_type, price, rating, description "
-            "FROM products WHERE deleted_at IS NULL ORDER BY product_id"
+            """
+            SELECT
+                p.product_id,
+                p.name,
+                p.brand,
+                p.product_type,
+                p.price,
+                s.average_rating AS rating,
+                p.description
+            FROM products p
+            LEFT JOIN product_review_stats s
+                ON p.product_id = s.product_id
+            WHERE p.deleted_at IS NULL
+            ORDER BY p.product_id
+            """
         ).fetchall()
     _engine = RecommendationEngine(products, load_product_scores()) if products else None
     return len(products)

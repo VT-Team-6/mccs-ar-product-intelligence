@@ -117,8 +117,18 @@ def refresh_product_scores() -> int:
     """
     with get_connection() as conn:
         products = conn.execute(
-            "SELECT product_id, product_type, brand, price, rating "
-            "FROM products WHERE deleted_at IS NULL"
+            """
+            SELECT
+                p.product_id,
+                p.product_type,
+                p.brand,
+                p.price,
+                s.average_rating AS rating
+            FROM products p
+            LEFT JOIN product_review_stats s
+                ON p.product_id = s.product_id
+            WHERE p.deleted_at IS NULL
+            """
         ).fetchall()
         reviews = conn.execute(
             "SELECT r.product_id, r.rating, r.title, r.body, p.name "
