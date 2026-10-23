@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ProductCreate(BaseModel):
@@ -105,14 +105,51 @@ class ReviewAggregate(BaseModel):
     reviews: list[ReviewShortened]
 
 class Preferences(BaseModel):
-    """How much each criterion matters: 0 = Skip, 1 = Low, 2 = Medium, 3 = High."""
+    """Each criterion's rank: 1 = matters most, 2 = next, ..., 0 = not ranked."""
 
     # Reject unknown criteria so a typo can't be silently ignored
     model_config = ConfigDict(extra="forbid")
 
-    price: int = Field(default=2, ge=0, le=3)
-    rating: int = Field(default=2, ge=0, le=3)
-    brand: int = Field(default=2, ge=0, le=3)
-    quality: int = Field(default=2, ge=0, le=3)
-    durability: int = Field(default=2, ge=0, le=3)
-    comfort: int = Field(default=2, ge=0, le=3)
+    price: int = Field(default=0, ge=0, le=6)
+    rating: int = Field(default=0, ge=0, le=6)
+    brand: int = Field(default=0, ge=0, le=6)
+    quality: int = Field(default=0, ge=0, le=6)
+    durability: int = Field(default=0, ge=0, le=6)
+    comfort: int = Field(default=0, ge=0, le=6)
+
+    @model_validator(mode="after")
+    def ranks_are_1_2_3_in_order(self):
+        """Ranked criteria must be numbered 1, 2, 3, ... with no repeats or gaps."""
+        ranks = sorted(rank for rank in self.model_dump().values() if rank > 0)
+        if ranks != list(range(1, len(ranks) + 1)):
+            raise ValueError("Ranks must be 1, 2, 3, ... with no repeats or gaps")
+        return self
+
+
+# Recommendations 
+class RecommendationRequest(BaseModel):
+    """What the shopper asked for: the product on screen and/or typed text,
+    plus what matters to them right now (a ranking, same rules as Preferences)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    product_id: int | None = None
+    text: str | None = Field(default=None, max_length=200)
+    ranking: Preferences = Field(default_factory=Preferences)
+
+    @model_validator(mode="after")
+    def needs_a_product_or_text(self):
+        if self.product_id is None and not (self.text or "").strip():
+            raise ValueError("Give a product_id, some text, or both")
+        return self
+
+
+class Recommendation(BaseModel):
+    product: Product
+    score: float
+    reasons: list[str]
+
+
+class RecommendationResponse(BaseModel):
+    best_matches: list[Recommendation]
+    for_you: Recommendation | None

@@ -1,12 +1,9 @@
-"""A shopper's preferences: how much each shopping criterion matters to them.
+"""A shopper's preferences: which shopping criteria matter most to them, in order.
 
-Each criterion is rated 0 (Skip) to 3 (High). A user who has never saved
-anything has no row in ``user_preferences`` and gets the defaults, so the
-recommendation engine can always ask for a full set of weights.
-
-Like ``user_products``, every function takes an explicit ``user_id`` and a
-connection, and always filters on that id, so one user can never read or
-change another user's preferences.
+Each criterion has a rank: 1 = matters most, 2 = next, and so on, and 0 = not
+ranked. A user who has never saved anything has no row in ``user_preferences``
+and gets the defaults (nothing ranked), so the recommendation engine can always
+ask for a full set of ranks.
 """
 
 from psycopg import Connection
@@ -14,12 +11,30 @@ from psycopg import Connection
 # Must match the columns in db/migrations/003-user-preferences.sql
 CRITERIA = ("price", "rating", "brand", "quality", "durability", "comfort")
 
-# Medium, the same default the table and the mobile screen use
-DEFAULT_IMPORTANCE = 2
+# Not ranked, the same default the table and the mobile screen use
+NOT_RANKED = 0
 
 
 def default_preferences() -> dict[str, int]:
-    return {criterion: DEFAULT_IMPORTANCE for criterion in CRITERIA}
+    return {criterion: NOT_RANKED for criterion in CRITERIA}
+
+
+def rank_weights(ranks: dict[str, int]) -> dict[str, int]:
+    """Turn ranks into weights for the recommendation engine.
+
+    #1 counts 6, #2 counts 5, ... #6 counts 1, and every unranked criterion
+    counts 1. So ranking only Price makes it 6 times as important as each
+    of the others.
+    """
+    return {
+        criterion: len(CRITERIA) + 1 - rank if rank else 1
+        for criterion, rank in ranks.items()
+    }
+
+
+def has_ranking(ranks: dict[str, int]) -> bool:
+    """True if the user ranked at least one criterion."""
+    return any(rank > 0 for rank in ranks.values())
 
 
 def get_preferences(conn: Connection, user_id: int) -> dict[str, int]:

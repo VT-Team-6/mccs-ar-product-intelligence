@@ -18,7 +18,7 @@ import preferences
 from conftest import apply_init_sql
 from main import app
 
-ALL_MEDIUM = {c: 2 for c in preferences.CRITERIA}
+NOTHING_RANKED = {c: 0 for c in preferences.CRITERIA}
 
 
 class FakeCognito:
@@ -112,12 +112,12 @@ def _new_user(conn) -> int:
 def test_service_new_user_gets_defaults(db):
     user_id = _new_user(db)
 
-    assert preferences.get_preferences(db, user_id) == ALL_MEDIUM
+    assert preferences.get_preferences(db, user_id) == NOTHING_RANKED
 
 
 def test_service_save_then_read(db):
     user_id = _new_user(db)
-    chosen = {**ALL_MEDIUM, "price": 3, "brand": 0, "comfort": 1}
+    chosen = {**NOTHING_RANKED, "price": 1, "comfort": 2, "brand": 3}
 
     saved = preferences.save_preferences(db, user_id, chosen)
 
@@ -128,10 +128,12 @@ def test_service_save_then_read(db):
 def test_service_save_again_replaces_and_keeps_one_row(db):
     user_id = _new_user(db)
 
-    preferences.save_preferences(db, user_id, {**ALL_MEDIUM, "price": 3})
-    preferences.save_preferences(db, user_id, {**ALL_MEDIUM, "price": 1})
+    preferences.save_preferences(db, user_id, {**NOTHING_RANKED, "price": 1})
+    preferences.save_preferences(db, user_id, {**NOTHING_RANKED, "rating": 1})
 
-    assert preferences.get_preferences(db, user_id)["price"] == 1
+    saved = preferences.get_preferences(db, user_id)
+    assert saved["price"] == 0
+    assert saved["rating"] == 1
     count = db.execute(
         "SELECT COUNT(*) AS n FROM user_preferences WHERE user_id = %s", (user_id,)
     ).fetchone()["n"]
@@ -142,9 +144,17 @@ def test_service_users_are_separate(db):
     first = _new_user(db)
     second = _new_user(db)
 
-    preferences.save_preferences(db, first, {**ALL_MEDIUM, "quality": 3})
+    preferences.save_preferences(db, first, {**NOTHING_RANKED, "quality": 1})
 
-    assert preferences.get_preferences(db, second) == ALL_MEDIUM
+    assert preferences.get_preferences(db, second) == NOTHING_RANKED
+
+
+def test_new_user_has_nothing_ranked_in_the_database(db):
+    user_id = _new_user(db)
+
+    db.execute("INSERT INTO user_preferences (user_id) VALUES (%s)", (user_id,))
+
+    assert preferences.get_preferences(db, user_id) == NOTHING_RANKED
 
 
 def test_database_rejects_out_of_range_value(db):
@@ -152,7 +162,7 @@ def test_database_rejects_out_of_range_value(db):
 
     with pytest.raises(psycopg.errors.CheckViolation):
         db.execute(
-            "INSERT INTO user_preferences (user_id, price) VALUES (%s, 4)", (user_id,)
+            "INSERT INTO user_preferences (user_id, price) VALUES (%s, 7)", (user_id,)
         )
 
 
@@ -161,7 +171,7 @@ def test_database_rejects_out_of_range_value(db):
 
 def test_routes_require_authentication(client):
     assert client.get("/api/me/preferences").status_code == 401
-    assert client.put("/api/me/preferences", json=ALL_MEDIUM).status_code == 401
+    assert client.put("/api/me/preferences", json=NOTHING_RANKED).status_code == 401
 
 
 def test_get_returns_defaults_before_anything_is_saved(client, db, cognito):
@@ -170,12 +180,12 @@ def test_get_returns_defaults_before_anything_is_saved(client, db, cognito):
     response = client.get("/api/me/preferences")
 
     assert response.status_code == 200
-    assert response.json() == ALL_MEDIUM
+    assert response.json() == NOTHING_RANKED
 
 
 def test_put_then_get_round_trip(client, db, cognito):
     _sign_in_as(client, "prefs-round-trip")
-    chosen = {**ALL_MEDIUM, "price": 3, "rating": 0}
+    chosen = {**NOTHING_RANKED, "price": 1, "rating": 2}
 
     saved = client.put("/api/me/preferences", json=chosen)
 
@@ -186,7 +196,7 @@ def test_put_then_get_round_trip(client, db, cognito):
 
 def test_put_twice_is_idempotent(client, db, cognito):
     _sign_in_as(client, "prefs-twice")
-    chosen = {**ALL_MEDIUM, "durability": 3}
+    chosen = {**NOTHING_RANKED, "durability": 1}
 
     client.put("/api/me/preferences", json=chosen)
     second = client.put("/api/me/preferences", json=chosen)
@@ -198,24 +208,73 @@ def test_put_twice_is_idempotent(client, db, cognito):
 def test_put_rejects_out_of_range_value(client, db, cognito):
     _sign_in_as(client, "prefs-bad-value")
 
-    response = client.put("/api/me/preferences", json={**ALL_MEDIUM, "price": 4})
+    response = client.put("/api/me/preferences", json={**NOTHING_RANKED, "price": 7})
 
     assert response.status_code == 422
-    assert client.get("/api/me/preferences").json() == ALL_MEDIUM
+    assert client.get("/api/me/preferences").json() == NOTHING_RANKED
 
 
 def test_put_rejects_unknown_criterion(client, db, cognito):
     _sign_in_as(client, "prefs-unknown")
 
-    response = client.put("/api/me/preferences", json={**ALL_MEDIUM, "color": 3})
+    response = client.put("/api/me/preferences", json={**NOTHING_RANKED, "color": 1})
 
     assert response.status_code == 422
 
 
 def test_one_users_preferences_do_not_leak_to_another(client, db, cognito):
     _sign_in_as(client, "prefs-alice")
-    client.put("/api/me/preferences", json={**ALL_MEDIUM, "price": 3})
+    client.put("/api/me/preferences", json={**NOTHING_RANKED, "price": 1})
 
     _sign_in_as(client, "prefs-bob")
 
-    assert client.get("/api/me/preferences").json() == ALL_MEDIUM
+    assert client.get("/api/me/preferences").json() == NOTHING_RANKED
+
+def test_put_accepts_a_full_ranking(client, db, cognito):
+    _sign_in_as(client, "prefs-full")
+    chosen = {"price": 1, "rating": 2, "brand": 3, "quality": 4, "durability": 5, "comfort": 6}
+
+    response = client.put("/api/me/preferences", json=chosen)
+
+    assert response.status_code == 200
+    assert response.json() == chosen
+
+
+def test_put_rejects_two_criteria_with_the_same_rank(client, db, cognito):
+    _sign_in_as(client, "prefs-duplicate")
+
+    response = client.put("/api/me/preferences", json={**NOTHING_RANKED, "price": 1, "rating": 1})
+
+    assert response.status_code == 422
+    assert client.get("/api/me/preferences").json() == NOTHING_RANKED
+
+
+def test_put_rejects_a_gap_in_the_ranking(client, db, cognito):
+    _sign_in_as(client, "prefs-gap")
+
+    response = client.put("/api/me/preferences", json={**NOTHING_RANKED, "price": 1, "rating": 3})
+
+    assert response.status_code == 422
+
+
+# --- ranks to weights -----------------------------------------------------
+
+
+def test_weights_count_down_from_6_for_ranked_criteria():
+    ranks = {"price": 1, "rating": 2, "brand": 3, "quality": 4, "durability": 5, "comfort": 6}
+
+    assert preferences.rank_weights(ranks) == {
+        "price": 6, "rating": 5, "brand": 4, "quality": 3, "durability": 2, "comfort": 1,
+    }
+
+
+def test_unranked_criteria_all_weigh_1():
+    weights = preferences.rank_weights({**NOTHING_RANKED, "price": 1})
+
+    assert weights["price"] == 6
+    assert all(weights[c] == 1 for c in preferences.CRITERIA if c != "price")
+
+
+def test_has_ranking():
+    assert not preferences.has_ranking(NOTHING_RANKED)
+    assert preferences.has_ranking({**NOTHING_RANKED, "comfort": 1})
