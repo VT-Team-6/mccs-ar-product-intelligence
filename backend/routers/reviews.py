@@ -16,18 +16,20 @@ def get_reviews(product_id: int):
         reviews = conn.execute(
             """
             SELECT
-                review_id,
-                product_id,
-                rating,
-                source,
-                source_review_id,
-                title,
-                body,
-                review_date,
-                fetched_at
-            FROM reviews
-            WHERE product_id = %s
-            ORDER BY review_date DESC
+                r.review_id,
+                r.product_id,
+                r.rating,
+                prs.source,
+                r.source_review_id,
+                r.title,
+                r.body,
+                r.review_date,
+                r.fetched_at
+            FROM reviews r
+            JOIN product_review_sources prs
+                ON r.review_source_id = prs.review_source_id
+            WHERE r.product_id = %s
+            ORDER BY r.review_date DESC
             """,
             (product_id,),
         ).fetchall()

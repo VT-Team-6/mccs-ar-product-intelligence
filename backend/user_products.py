@@ -16,7 +16,7 @@ from pagination import InvalidCursor, decode_cursor, encode_cursor
 # Columns every product response carries, aliased so the joins below can use a
 # bare `p` for products. Keeps responses the same shape as GET /api/products/{id}.
 _PRODUCT_COLUMNS = (
-    "p.product_id, p.name, p.brand, p.product_type, p.price, p.rating, "
+    "p.product_id, p.name, p.brand, p.product_type, p.price, s.average_rating AS rating, "
     "p.description, p.image_url, p.created_at, p.updated_at"
 )
 _PRODUCT_KEYS = (
@@ -36,7 +36,7 @@ LikedSort = Literal["recent", "name", "rating", "price"]
 _SORT_ORDERS = {
     "recent": "lit.liked_at DESC, p.product_id DESC",
     "name": "p.name ASC, p.product_id ASC",
-    "rating": "p.rating DESC NULLS LAST, p.product_id ASC",
+    "rating": "s.average_rating DESC NULLS LAST, p.product_id ASC",
     "price": "p.price ASC NULLS LAST, p.product_id ASC",
 }
 
@@ -56,8 +56,12 @@ class UserProductError(Exception):
 
 def _fetch_product(conn: Connection, product_id: int) -> dict:
     row = conn.execute(
-        f"SELECT {_PRODUCT_COLUMNS} FROM products p"
-        " WHERE p.product_id = %s AND p.deleted_at IS NULL",
+        f"""SELECT {_PRODUCT_COLUMNS}
+            FROM products p
+            LEFT JOIN product_review_stats s
+                ON s.product_id = p.product_id
+            WHERE p.product_id = %s AND p.deleted_at IS NULL
+        """,
         (product_id,),
     ).fetchone()
     if row is None:
@@ -91,7 +95,7 @@ def _resume_after(sort: LikedSort, values: dict[str, Any]) -> tuple[str, tuple]:
 
     # Rating / Price sort
     if sort in ("rating", "price"):
-        column = "p.rating" if sort == "rating" else "p.price"
+        column = "s.average_rating" if sort == "rating" else "p.price"
         if last is None:
             # Everything after a NULL is the remaining NULLs, ordered by id.
             return f" AND ({column} IS NULL AND p.product_id > %s)", (product_id,)
@@ -164,6 +168,8 @@ def list_liked_products(
         SELECT {_PRODUCT_COLUMNS}, lit.liked_at
         FROM user_product_likes lit
         JOIN products p ON p.product_id = lit.product_id
+        LEFT JOIN product_review_stats s
+            ON s.product_id = p.product_id
         WHERE lit.user_id = %s AND p.deleted_at IS NULL{filter_sql}
     """
     params: tuple = (user_id, *filter_params)
@@ -202,6 +208,8 @@ def list_product_history(
                {_PRODUCT_COLUMNS}, lit.user_id IS NOT NULL AS is_liked
         FROM user_product_history h
         JOIN products p ON p.product_id = h.product_id
+        LEFT JOIN product_review_stats s
+            ON s.product_id = p.product_id
         LEFT JOIN user_product_likes lit
                ON lit.product_id = p.product_id AND lit.user_id = %s
         WHERE h.user_id = %s AND p.deleted_at IS NULL{filter_sql}

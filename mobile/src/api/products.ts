@@ -22,7 +22,6 @@ export type ProductInput = {
   brand: string | null;
   product_type: string;
   price: number | null;
-  rating: number | null;
   description: string | null;
 };
 

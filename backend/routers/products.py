@@ -5,16 +5,29 @@ from schemas import Product, ProductCreate, ProductUpdate
 
 router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 
-# Client-writable columns only; product_id, created_at, and updated_at are server-managed.
-_RETURNING = (
-    "product_id, name, brand, product_type, price, rating, description, image_url, created_at, updated_at"
-)
+_PRODUCT_SELECT = """
+    SELECT
+        p.product_id,
+        p.name,
+        p.brand,
+        p.product_type,
+        p.price,
+        s.average_rating AS rating,
+        p.description,
+        p.image_url,
+        p.created_at,
+        p.updated_at
+    FROM products p
+    LEFT JOIN product_review_stats s
+        ON p.product_id = s.product_id
+"""
 _NON_NULLABLE = ("name", "product_type")
 
 
 def _fetch_product(conn, product_id: int) -> dict:
     row = conn.execute(
-        f"SELECT {_RETURNING} FROM products WHERE product_id = %s", (product_id,)
+        _PRODUCT_SELECT + " WHERE p.product_id = %s",
+        (product_id,)
     ).fetchone()
     if row is None:
         raise HTTPException(
@@ -27,7 +40,7 @@ def _fetch_product(conn, product_id: int) -> dict:
 def list_products() -> list[dict]:
     with get_connection() as conn:
         return conn.execute(
-            f"SELECT {_RETURNING} FROM products ORDER BY product_id"
+            _PRODUCT_SELECT + " ORDER BY p.product_id"
         ).fetchall()
 
 
@@ -41,21 +54,22 @@ def create_product(product: ProductCreate) -> dict:
     with get_connection() as conn:
         row = conn.execute(
             """
-            INSERT INTO products (name, brand, product_type, price, rating, description, image_url)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING {returning}
-            """.format(returning=_RETURNING),
+            INSERT INTO products
+                (name, brand, product_type, price, description, image_url)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING product_id
+            """,
             (
                 product.name,
                 product.brand,
                 product.product_type,
                 product.price,
-                product.rating,
                 product.description,
                 product.image_url,
             ),
         ).fetchone()
-    return row
+        
+        return _fetch_product(conn, row["product_id"])
 
 
 @router.put("/{product_id}", response_model=Product)

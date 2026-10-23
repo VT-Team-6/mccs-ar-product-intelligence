@@ -9,7 +9,6 @@ class ProductCreate(BaseModel):
     product_type: str = Field(min_length=1, max_length=100)
     brand: str | None = Field(default=None, max_length=100)
     price: float | None = Field(default=None, ge=0)
-    rating: float | None = Field(default=None, ge=0, le=5)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
 
@@ -21,7 +20,6 @@ class ProductUpdate(BaseModel):
     product_type: str | None = Field(default=None, min_length=1, max_length=100)
     brand: str | None = Field(default=None, max_length=100)
     price: float | None = Field(default=None, ge=0)
-    rating: float | None = Field(default=None, ge=0, le=5)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
 
