@@ -25,3 +25,15 @@ CREATE TABLE reviews (
 CREATE UNIQUE INDEX reviews_source_id_unique
 ON reviews (review_source_id, source_review_id)
 WHERE source_review_id IS NOT NULL;
+
+-- this is to get the average rating and review count per product 
+CREATE VIEW product_review_stats AS
+SELECT
+    product_id,
+    ROUND(AVG(rating), 2) AS average_rating,
+    COUNT(rating) AS review_count
+FROM reviews
+GROUP BY product_id;
+
+CREATE INDEX idx_reviews_product_id
+ON reviews(product_id);

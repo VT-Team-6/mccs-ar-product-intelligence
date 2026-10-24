@@ -34,6 +34,7 @@ app.include_router(search.router)
 app.include_router(shopper_products.router)
 app.include_router(me.router)
 app.include_router(reviews.router)
+app.include_router(reviews.admin_router)
 app.include_router(analysis.router)
 app.include_router(recommendations.router)
 
