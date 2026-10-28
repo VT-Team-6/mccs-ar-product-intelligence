@@ -10,6 +10,7 @@ import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { AIAnalysisPanel} from '@/components/ai-analysis-panel'
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
@@ -177,8 +178,10 @@ export default function ShopperProductScreen() {
 
               {showMore ? (
                 <>
-                  {/* AI analysis goes here */}
+                  {/* AI analysis */}
                   <View onLayout={(event) => (panelY.current = event.nativeEvent.layout.y)}>
+                    <AIAnalysisPanel productId={product.product_id} />
+                    
                     <RecommendationPanel
                       productId={product.product_id}
                       onOpenProduct={openProduct}
