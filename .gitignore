@@ -53,3 +53,6 @@ __pycache__/
 
 mobile/android/
 mobile/ios/
+
+# personal md files
+*.self.md
