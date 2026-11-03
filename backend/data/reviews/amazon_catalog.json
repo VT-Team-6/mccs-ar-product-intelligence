@@ -1,0 +1,5214 @@
+{
+  "source": "amazon",
+  "dataset": "Amazon Reviews 2023",
+  "products": [
+    {
+      "source": "amazon",
+      "source_product_id": "B00477M5AU",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland 6\" Premium Waterproof Boots",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B079G3B9S4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland 6-Inch Premium Waterproof Boots",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B079G2TF8P",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland 6-Inch Premium Waterproof Boots",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01HJA0W24",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland Women's 6\" Premium Waterproof Boots",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 545
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B072JX1358",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland 6-Inch Premium Waterproof Boots Peach",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B005GO44IY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland Kids 6\" Premium Waterproof Boots for Toddlers",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 840
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B077569G51",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland 6 Inch Premium Waterproof Men's Blue Boots tb0a1p5u",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07751XJT6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Timberland 6 Inch Premium Waterproof Men's Blue Boots tb0a1p5u",
+      "amazon_store": "Timberland",
+      "suggested_targets": [
+        "Timberland 6\" Premium Waterproof Boots"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00N4G624K",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men Air Force 1 Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00NWFSVQ0",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men Air Force 1 Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00N4G6ARO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men Air Force 1 Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B008OE6C4C",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men Air Force 1 Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B001AXDX96",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men Air Force 1 Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01JOEAJQ2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Force 1 Low Retro",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01JOEAQWO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Force 1 Low Retro",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09XWJXP8G",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Force 1 Low Easter",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Force 1 Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B071FBKT3X",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Kids' Classic Clogs",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B25K3BHS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Classic Lisa Frank Clogs",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0773JQNZZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Unisex Classic Graphic Clogs",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00SYH52TA",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Unisex Classic Clogs, Black, 8D",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09LJBPZ33",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Women's Classic Platform Clogs",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0CHK5LWNX",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Unisex-Adult Classic NCAA Clogs",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BH8KJK4D",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Unisex-Adult Classic Hiker Clogs",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 98,
+      "written_reviews_seen": 116
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0CHN4L3T6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Crocs Unisex-Adult Barbie Classic Clogs",
+      "amazon_store": "Crocs",
+      "suggested_targets": [
+        "Crocs Classic Clogs"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09Y7XP2V3",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Men’s Ultraboost Light Running Shoes (Ultraboost 23)",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09Y7Z2W16",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Women's Ultraboost Light Running Shoes (Ultraboost 23)",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B086192HZH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Ultraboost DNA Mens Shoes Size 12, Color: Light Grey/Grey",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07FXXB36N",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Ultraboost X W",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07FXVZ4HV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Ultraboost X W",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07FXVRH6D",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Ultraboost X W",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07FXSB1TF",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Ultraboost X W",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07FXRQK8N",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Ultraboost X W",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Ultraboost Light"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08SFDBG7W",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens Unisex 1460 Mono Smooth Leather Lace Up Boots",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 214
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MHM9B9M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens Womens 1460 Pascal Soap Stone Smooth Leather Closed Toe Boots - Black - 8",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0CBSWQ47J",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens 1460 Smooth Leather Boot",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C1PDSZ59",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens mens 1460 Smooth Leather Boot",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BGQN8X6N",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens unisex-adult 1460 Smooth Leather Boot",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B7FJQ6T1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens Women's 1460 Smooth Leather Boot Fashion",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 205
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09MZ2R84Z",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens 1460 Virginia Leather Boots",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09MZ1SBPZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Dr. Martens 1460 Virginia Leather Boots",
+      "amazon_store": "Dr. Martens",
+      "suggested_targets": [
+        "Dr. Martens 1460 Smooth Leather Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01BES42N2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01BERUR96",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01BERSKS6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000VVMC36",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BC6RY7J1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01HQZ5TCU",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool™",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01HG0YUTI",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01HG0YP9S",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vans Old Skool",
+      "amazon_store": "Vans",
+      "suggested_targets": [
+        "Vans Old Skool"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B004TZBRE0",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000BYLMD4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 41,
+      "written_reviews_seen": 42
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00093CUD8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0CK4M64SZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0193TCIOO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0193UPWKU",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BHHJH9H6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08ZQDZ8T4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Converse Chuck Taylor All Star",
+      "amazon_store": "Converse",
+      "suggested_targets": [
+        "Converse Chuck Taylor All Star"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C48V8XYC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance mens 574 Core",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 7,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B096NY5S2P",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Kid's 574 Core",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 7,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08BN9V242",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 574 Core Sneaker",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 196
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B096G873FX",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 574 Core Sneaker",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C1MTFVK8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Women's 574 Core Sneaker",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 197
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BT9TB9N8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 574 V1 Core Sneaker",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 902
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BT9YJPC5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 574 V1 Core Sneaker",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 1013
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09X9474D7",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 574 V2 Core Sneaker",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 574 Core"
+      ],
+      "reviews_saved": 25,
+      "written_reviews_seen": 26
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B096MWVQ58",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "PUMA Women's Suede Classic XXI Sneakers",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 12,
+      "written_reviews_seen": 12
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B661L624",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "PUMA Womens Suede Classic Xxi Sneakers Casual Shoes Casual - Yellow",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B094QPFLJG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "PUMA Suede Classic XXI Alternate Closure (Toddler) Black White 8 Toddler M",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0CB9H7XRH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "PUMA Womens Suede Classic Xxi Flagship Lace Up Sneakers Shoes Casual - Beige",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07TN1LMP5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "PUMA Suede Classic",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01MA28GBZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "PUMA Suede Classic+",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B008B0U9DY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "PUMA Suede Classic +",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0753YXC65",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Puma Suede Classic",
+      "amazon_store": "PUMA",
+      "suggested_targets": [
+        "Puma Suede Classic XXI"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01IPND1H2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Club C 85",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09D8GF4BZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Men's Club C 85 Sneaker",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 1275
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01N0J3CDB",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Club C 85 X-Ray Botanica",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B089M8LWWG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Women's Club C 85 Sneakers",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B073WSW1FM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Women's Club C 85 NBK Sneaker",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07H4VQPVB",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Women's Club C 85 Mule Sneaker",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0789FXNM8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Women’s Club C 85 Dcn Trainers",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B074TSNQFD",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reebok Women's Club C 85 Soft Sneaker",
+      "amazon_store": "Reebok",
+      "suggested_targets": [
+        "Reebok Club C 85"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BY3N2FBN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Men's Gel-Kayano 30 Running Shoes",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B014EC0HUM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Gel-Kayano TR Evo",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00BMM04K6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Womens Gel-Kayano 20",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 1329
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00HTAEIFM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Womens Gel-Kayano 20",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00HTAE4UQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Womens Gel-Kayano 20",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00GU7AET4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Womens Gel-Kayano 20",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00GU7A9OO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Womens Gel-Kayano 20",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00GN3UZJY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Womens Gel-Kayano 20",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "Asics Gel-Kayano 30"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09RRZXQHS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Men's Ghost 15 Neutral Running Shoe",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 164
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09RRQ96YT",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Women's Ghost 15 Neutral Running Shoe",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 232
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07QW2JRXD",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Ghost 12 Running Shoe Black/Ebony/White 15 D (M)",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01N8TRWZP",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Ghost 10 Primer Grey/Metallic Charcoal/Ebony 15",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07Y31DT55",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Ghost 12 Running Shoe Navy/Blue/Nightlife 15 D (M)",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07WRSLVNY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Ghost 12 Running Shoe Nightlife/Black/White 15 D (M)",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01GEUXYCK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Men's Ghost 9 Running Shoes Peacoat/Red Orange/Black 15",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01N3U4AYX",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Brooks Ghost 10 Ebony/Metallic Charcoal/Electric Brooks Blue 15",
+      "amazon_store": "Brooks",
+      "suggested_targets": [
+        "Brooks Ghost 15"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B082D1LK5V",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hoka Clifton 7 Black/White 9 D - Wide",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08PKHWP69",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hoka Clifton 7 Fiesta/White 9.5 D (M)",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B082D95TYW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hoka Clifton 7 Black/White 9 EE - Wide",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B082CX68SW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOKA ONE ONE Clifton 7 Black/Bronze 9 B (M)",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 9
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00HAVS5RM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hoka Clifton Men's Blue/black/lime Size 9",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08KQ5RQ9L",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hoka Clifton 7 Morning Mist/Hot Coral 9 B (M)",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08KQ6RLJ1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hoka Clifton 7 Morning Mist/Hot Coral 9.5 B (M)",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08KQ63786",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hoka One One Men's Clifton Edge - Black/white - 9",
+      "amazon_store": "HOKA ONE ONE",
+      "suggested_targets": [
+        "Hoka Clifton 9"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09XZB7GV7",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony Men's Ride 16 Sneaker",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09XZHC5DP",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony Women's Ride 16 Sneaker",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 11,
+      "written_reviews_seen": 11
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0842P8FLB",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony Women's Ride 13",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 170
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07P5JBJP4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony Ride ISO Blue 12",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07BN49RPF",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony Ride ISO Men's",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 13,
+      "written_reviews_seen": 13
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07VN86Z7L",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony mens Ride Iso 2",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07VM95V13",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony mens Ride Iso 2",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MK54DTR",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Saucony mens Ride Iso 2",
+      "amazon_store": "Saucony",
+      "suggested_targets": [
+        "Saucony Ride 16"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09W3HWJHR",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ON Men's Cloud 5 Sneakers",
+      "amazon_store": "ON",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 98,
+      "written_reviews_seen": 148
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B072JGQPSR",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "On Men's Cloud - Black - 12.5",
+      "amazon_store": "ON",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C1MVB5M2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ON Women's Cloud 5 Sneakers",
+      "amazon_store": "ON",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 279
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09P21ZMYC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "On Men's Cloud 5 Terry Sneakers",
+      "amazon_store": "On",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08KNZ8558",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ON-Running Mens Cloud Sand/Chai, 10.5",
+      "amazon_store": "On",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08KP3LYGH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ON-Running Mens Cloud Sand/Chai, 11.5",
+      "amazon_store": "ON",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01NAECFUQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ON Men's Cloud Malibu/Denim 12.5 M US",
+      "amazon_store": "ON",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BCTN55SR",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ON Women's Cloud 5 Waterproof Sneakers",
+      "amazon_store": "ON",
+      "suggested_targets": [
+        "On Cloud 5"
+      ],
+      "reviews_saved": 26,
+      "written_reviews_seen": 27
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01JJDL5ZC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG BG - 575441",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01JJDL5Y8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG BG - 575441",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01BJBWTUM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG 555088 006",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01BJBWSJY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG 555088 006",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08QMM5Z7J",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG - 555088 100",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AL2L28Q",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG - 555088 100",
+      "amazon_store": "Jordan",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01KA95Q9U",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG - 555088 102",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01IY7CJ6I",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Air Jordan 1 Retro High OG - 555088 102",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Jordan 1 Retro High OG"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B073YDQCDJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Dunk Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B005FRHOW0",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "NIKE Dunk Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B003834SC2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "NIKE Dunk Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B002BTXQ86",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "NIKE Dunk Low",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00VSDU54E",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Dunk Low Pro",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00VSE2FRI",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Dunk Low Pro",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B012DFPA8G",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike SB Dunk Low Pro",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0159ZVSJ2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike SB Dunk Low Pro",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Dunk Low"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07K1K5PRK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07K1HL9NF",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07JZWRQVD",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07JZWRL7Y",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07K1MC572",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07K1LYNB1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07K1GQF27",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07P75Z3ZC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Samba OG W",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Samba OG"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B004DSP5J6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Max 90",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 23,
+      "written_reviews_seen": 23
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B001CM9B3M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Max 90",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 11,
+      "written_reviews_seen": 11
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B001CM9B4G",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Max 90",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 12,
+      "written_reviews_seen": 12
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07RM5TRR2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike AIR MAX 90",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07RK4MNLN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike AIR MAX 90",
+      "amazon_store": "ECOVOX",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07RGX6R61",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike AIR MAX 90",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B003KIA0R2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Max 90",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07RM65TN8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike AIR MAX 90",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Air Max 90"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07S1XJ1ZX",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 31,
+      "written_reviews_seen": 32
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01M0DVKI8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01LZEMOK5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01MG5LI2G",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01MFCN1F3",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01M0YRCFT",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01LZQEWAD",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01LZ30O9P",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "adidas Stan Smith",
+      "amazon_store": "adidas",
+      "suggested_targets": [
+        "Adidas Stan Smith"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BGQMNWWN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock womens Arizona Soft Footbed",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 12,
+      "written_reviews_seen": 12
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C9S2TKXW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock womens Arizona Soft Footbed",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01J33FUJU",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock womens Arizona Soft Footbed Sfb",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01J33F68K",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock womens Arizona Soft Footbed Sfb",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 7,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01J33EYHY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock womens Arizona Soft Footbed Sfb",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01J33EUFA",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock womens Arizona Soft Footbed Sfb",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 18,
+      "written_reviews_seen": 18
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01J33ER6M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock womens Arizona Soft Footbed Sfb",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 11,
+      "written_reviews_seen": 11
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BCXWDSNV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Birkenstock Unisex-Adult Arizona Soft Footbed",
+      "amazon_store": "Birkenstock",
+      "suggested_targets": [
+        "Birkenstock Arizona Soft Footbed"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07FDKVCLC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva Women's W Original Universal Suede Heels Sandals, 0",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 10,
+      "written_reviews_seen": 10
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00DSNAOKC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva mens Original Universal M-m sandals, Dark Earth, 11 M US",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B017C25H9W",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva Womens Original Universal Sport Sandals, Bonnaroo, US 10",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01BU759S4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva Womens Original Universal Sport Sandals, Eagles Blue, US 7",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B017C25IU0",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva Women's Original Universal Athletic Sandals, Red Canvas, 11 M",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01CO5SMVW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva Womens Original Universal Sport Sandals, Pyramid Wild Dove, US 8",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01CO5SW6W",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva Womens Original Universal Sport Sandals, Pyramid Wild Dove, US 6",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09X478FLM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Teva mens Original Universal Sandal",
+      "amazon_store": "Teva",
+      "suggested_targets": [
+        "Teva Original Universal Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B071GMKT3G",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco Women's Z/Cloud X2 Sandals",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0721NDDBQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco Men's Mega Z Cloud Sandals, Black, 8 M",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B071X5MGSN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco Women's Mega Z Cloud Sandals, Blue, 8 M",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B072QXBQ4Q",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco Women's Mega Z Cloud Sandals, Blue, 6 M",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B072N1SKV8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco Women's Mega Z Cloud Sandals, Blue, 7 M",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01H5RCIJG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco New Z/Cloud 2 Rune Reds 8 Mens Sandals",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01MYZGBKJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco New Z/Cloud Rocket Slate 13 Mens Sandals",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01JDNKIGK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Chaco New Z/Cloud 2 Laced Aqua 7W Womens Sandals",
+      "amazon_store": "Chaco",
+      "suggested_targets": [
+        "Chaco Z/Cloud Sandals"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00HIE0L6E",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Tide II Thong Sandals",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 30,
+      "written_reviews_seen": 31
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00HIDZ02U",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Tide II Thong Sandals",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00HIDYDYQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Tide II Thong Sandals",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B071WT669L",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Women's Tide II Orthopedic Sandals (8M, Light Blue)",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B072MPDTF6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Women's Tide II Orthopedic Sandals (6M, Light Blue)",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B072MPD28Y",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Women's Tide II Orthopedic Sandals (7M, Light Blue)",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B071JW44S2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Women's Tide II Orthopedic Sandals (9M, Light Blue)",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B071G94PVX",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Vionic Women's Tide II Orthopedic Sandals (5M, Light Blue)",
+      "amazon_store": "Vionic",
+      "suggested_targets": [
+        "Vionic Tide II Sandals"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0887R3S32",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Desert Boot 2",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 28,
+      "written_reviews_seen": 28
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B097993S3W",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Desert Boot 2",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 7,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0888CYK48",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Desert Boot 2.0",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 17,
+      "written_reviews_seen": 18
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B6CXWYWJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Desert Boot Evo",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B06XH1DCPM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Desert Boot - Men's",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0040FQDXO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Men's Desert Boot",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0031Y6W5O",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Men's Desert Boot",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08LFMWKQ5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Desert Boot Womens",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Desert Boot"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00593AEMW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Heritage Men's Classic Work 6\" Moc-Toe Boot",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00593ADJG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Heritage Men's Classic Work 6\" Moc-Toe Boot",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0057II732",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Heritage Men's Classic Work 6\" Moc-Toe Boot",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B004M6U0QM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Heritage Men's Classic Work 6\" Moc-Toe Boot",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09942NFBT",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Women's 6\" Classic Moc (Tan Boundary",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0018DW7QS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Heritage Men's Classic Moc 6\" Boot",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 531
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B005OPKQUK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Heritage Men's Classic Work 6\" Round-Toe Boot",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0057IIF5M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Red Wing Heritage Men's Classic Work 6\" Round-Toe Boot",
+      "amazon_store": "Red Wing",
+      "suggested_targets": [
+        "Red Wing Classic Moc Toe"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B082DQ3C9P",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone Men's Chelsea Boots",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08V1LXMDP",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone Original 500 Chelsea Boot",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000Y04I2W",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone BL500 Original 500 Chelsea Boot",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 588
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C9RXVTFH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone unisex-adult Chelsea Boots",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00IZ8I71S",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone BL1409 Original 500 Chelsea Boot",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 22,
+      "written_reviews_seen": 22
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0983FQW3J",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone New Active Summer Chelsea boots in sand color suede 2146",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B084QVD7XW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone BL1960 Chelsea Boot",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 15,
+      "written_reviews_seen": 17
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098YFCBPM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Blundstone BL2105 Chelsea Boot",
+      "amazon_store": "Blundstone",
+      "suggested_targets": [
+        "Blundstone 500 Chelsea Boots"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MFZ6TR4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Men's Atlis Caribou Waterproof Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09824BH5R",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Men's Caribou Chelsea WP — Waterproof Leather Rain Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 10,
+      "written_reviews_seen": 10
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098245G5T",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Men's Caribou Moc WP Boot — Waterproof Leather Rain Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 17,
+      "written_reviews_seen": 17
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B095YWXMJZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Men's Caribou OTM WP Boot — Waterproof Leather Rain Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 9,
+      "written_reviews_seen": 9
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098BR3LLK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Men's Caribou Six WP Boot — Waterproof Leather Rain Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 9
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098BR1YXS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Men's Caribou Six WP Boot — Waterproof Leather Rain Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B095YT1L9X",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Women's OTM Caribou Boot — Waterproof Suede & Nylon Snow Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 11,
+      "written_reviews_seen": 11
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098CCV5DW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sorel Women's Kinetic Rngd Caribou Boot — Waterproof Leather Winter Boots",
+      "amazon_store": "Sorel",
+      "suggested_targets": [
+        "Sorel Caribou Waterproof Boots"
+      ],
+      "reviews_saved": 87,
+      "written_reviews_seen": 87
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0966PTKZG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HUNTER mens Original Tall Rain Boots",
+      "amazon_store": "HUNTER",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08TB5PCJH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HUNTER Original Tall Rain Boots Black",
+      "amazon_store": "HUNTER",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MFBPTLV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HUNTER Women's Original Tall Rain Boots",
+      "amazon_store": "Hunter",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 23,
+      "written_reviews_seen": 23
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00FYZ2XSI",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hunter Women's Original Tall Rain Boots",
+      "amazon_store": "Hunter",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 7,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07G717PJP",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HUNTER Women's Original Tall Gloss Rain Boots",
+      "amazon_store": "Hunter",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 26,
+      "written_reviews_seen": 26
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07KYPL532",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Hunter Women's Original Tall Gloss Rain Boots",
+      "amazon_store": "Hunter",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07HGCC79J",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HUNTER Original Tall Rain Boots Thundercloud 7",
+      "amazon_store": "Hunter",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07HGBXXDP",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HUNTER Original Tall Rain Boots Thundercloud 6",
+      "amazon_store": "Hunter",
+      "suggested_targets": [
+        "Hunter Original Tall Rain Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09Q9GS8YG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Women's Classic Mini Side Logo Ii Boots",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 26,
+      "written_reviews_seen": 26
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B06WGSMMTL",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Kids' Classic Mini II Boot",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07B1P2315",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Women's Classic Mini II Boot",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 35,
+      "written_reviews_seen": 37
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07NCBM9DH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Women's Classic Mini Ii Boot",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B06XKYD9BN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Women's Classic Mini II Boot",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07Q8XHB6Y",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Kids' Luv Classic Mini II Boot",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07PLBLXML",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Classic Mini II Graphic Logo",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07PFV5ZRQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "UGG Classic Mini II Graphic Logo",
+      "amazon_store": "UGG",
+      "suggested_targets": [
+        "UGG Classic Mini II Boots"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BHXZWPBV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Women's Lando Loafer",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 24,
+      "written_reviews_seen": 24
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B002R0EAFC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Men's Loafers",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B002R0EAE8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Men's Loafers",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B002R0EAAW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Men's Loafers",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B002R0EAAC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Men's Loafers",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B002QHWDV4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Men's Loafers",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B077GY7B1C",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Women's Loafers",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B076TH1X99",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Steve Madden Women's Beck Loafers",
+      "amazon_store": "Steve Madden",
+      "suggested_targets": [
+        "Steve Madden Lando Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08KNMMF8H",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan Women's Originalgrand Wingtip Oxford",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 56,
+      "written_reviews_seen": 57
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08RTM57B1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan Men's Originalgrand Stitchlite Wingtip",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 7,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08BK6VMN9",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan Men's Originalgrand Stitchlite Wingtip",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07N1L2241",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan Women's OriginalGrand Stitchlite Wingtip Oxford",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 234
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B088761C9Q",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan Women's Originalgrand Stitchlite Wingtip Oxford",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 21,
+      "written_reviews_seen": 21
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0994YZDCQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan Women's ORIGINALGRAND Wingtip Oxford, Floral Print, 11",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01LZ0NKP2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan OriginalGrand Wingtip Oxford Women US 11 Silver Oxford",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07TTDNRGM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Cole Haan Originalgrand Stitchlite Wingtip Oxford Oxford para Hombre",
+      "amazon_store": "Cole Haan",
+      "suggested_targets": [
+        "Cole Haan OriginalGrand Wingtip"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08BV6KK1Y",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds Men's Park Avenue",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08D2GD6ZZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds Men's Park Avenue Oxford",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 165
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B079JKNM2S",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds Men's Park Avenue Oxford",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0009CYVMC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds Men's Park Avenue,Black,US 9 2E",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000H1D53G",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds Men's Park Avenue Cap-Toe Oxford",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 32,
+      "written_reviews_seen": 32
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09BPWBHTW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds mens Fifth Avenue",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 41,
+      "written_reviews_seen": 41
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BGQQXLMB",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds mens Fifth Avenue",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09TS1Q27C",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Allen Edmonds Men's Park Ave Sneaker Oxford",
+      "amazon_store": "Allen Edmonds",
+      "suggested_targets": [
+        "Allen Edmonds Park Avenue"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08NP4QGKV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Wallabee 2",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 18,
+      "written_reviews_seen": 18
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08PDFZRYG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Wallabee Cup",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 14,
+      "written_reviews_seen": 14
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08QZDYHGW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Wallabee Cup",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09818NGCL",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks mens Wallabee",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08GSKJ6P7",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Wallabee Hike",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07X1W4SLV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Wallabee Boot",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01FXECWHG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Men's Wallabee",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08NPMYP6D",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Clarks Wallabee Boot 2",
+      "amazon_store": "Clarks",
+      "suggested_targets": [
+        "Clarks Wallabee"
+      ],
+      "reviews_saved": 18,
+      "written_reviews_seen": 18
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09FQCWS36",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "TOMS Alpargata Classic Espadrilles",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01H61CWII",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "TOMS Girl's Alpargata Classic Espadrilles",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B018STUAUY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "TOMS Classic Alpargata Flat - Spiced Coral",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B018STUACM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "TOMS Classic Alpargata Flat - Spiced Coral",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07581FKT5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Toms Boy's Alpargata Youth Classic Slip-on Shoes",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08KGY3S85",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "TOMS womens Alpargata Classic Graphic Slip on Flats",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B072N1Q7CJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "TOMS womens Alpargata Classic Graphic Slip on Flats",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B071GMCGR3",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "TOMS womens Alpargata Classic Graphic Slip on Flats",
+      "amazon_store": "TOMS",
+      "suggested_targets": [
+        "Toms Alpargata Classic"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00NLOP21E",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry mens Authentic Original 2-eye",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07KSDVV1W",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry mens Authentic Original 2-eye",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B002NU6NSI",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry Men's Authentic Original 2-Eye",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B003ZRTCEK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry Authentic Original 2 Eye Olive Navy",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C6ZVPRW2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry mens Gold Cup Authentic Original 2-eye",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BF8XSQSF",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry mens Authentic Original 2-eye Boat Shoe",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 37,
+      "written_reviews_seen": 37
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B097584BRH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry mens Authentic Original 2-eye Boat Shoe",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00TFG2SVO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sperry Men's Authentic Original 2-Eye Boat Shoe",
+      "amazon_store": "Sperry",
+      "suggested_targets": [
+        "Sperry Authentic Original 2-Eye"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 5910
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01EUW9YCI",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "CAMEL Men's Driving Moccasin House Shoe Color Brown Size 38 M EU",
+      "amazon_store": "CAMEL",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08J36Y3Q8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOME RIGHT Mens Slippers, Moccasin House Shoes Memory Foam Fleece Lined Warm Comfort Indoor Outdoor Driving Loafers Slippers",
+      "amazon_store": "HOME RIGHT",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08J2R6CL9",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOME RIGHT Mens Slippers, Moccasin House Shoes Memory Foam Fleece Lined Warm Comfort Indoor Outdoor Driving Loafers Slippers",
+      "amazon_store": "HOME RIGHT",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08J2QZ2V4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOME RIGHT Mens Slippers, Moccasin House Shoes Memory Foam Fleece Lined Warm Comfort Indoor Outdoor Driving Loafers Slippers",
+      "amazon_store": "HOME RIGHT",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08J2QLPQD",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOME RIGHT Mens Slippers, Moccasin House Shoes Memory Foam Fleece Lined Warm Comfort Indoor Outdoor Driving Loafers Slippers",
+      "amazon_store": "HOME RIGHT",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08J2Q56KC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOME RIGHT Mens Slippers, Moccasin House Shoes Memory Foam Fleece Lined Warm Comfort Indoor Outdoor Driving Loafers Slippers",
+      "amazon_store": "HOME RIGHT",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08J2NJ4YG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOME RIGHT Mens Slippers, Moccasin House Shoes Memory Foam Fleece Lined Warm Comfort Indoor Outdoor Driving Loafers Slippers",
+      "amazon_store": "HOME RIGHT",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08J2LC45K",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "HOME RIGHT Mens Slippers, Moccasin House Shoes Memory Foam Fleece Lined Warm Comfort Indoor Outdoor Driving Loafers Slippers",
+      "amazon_store": "HOME RIGHT",
+      "suggested_targets": [
+        "Moccasin House Driving Moc"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08158N5KN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Men's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 12,
+      "written_reviews_seen": 12
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09HR88124",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Women's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09HR7XXM2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Women's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09HR7TZH9",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Women's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09HR7NDHN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Women's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09HR7JVSQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Women's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09HR6RW4X",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Women's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09HR6J8PY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Veja Women's Campo Sneakers",
+      "amazon_store": "Veja",
+      "suggested_targets": [
+        "Veja Campo Leather"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07K8W8HMP",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Common Projects Women's 0506 Original Achilles Low Sneakers",
+      "amazon_store": "SHOESVENTURE",
+      "suggested_targets": [
+        "Common Projects Original Achilles"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BWKCLYB5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Common Projects Shoelaces",
+      "amazon_store": "Private Laces",
+      "suggested_targets": [
+        "Common Projects Original Achilles"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0K71I",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon S-Lab XT 6 Shoe",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0FVL4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon S-Lab XT 6 Shoe",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0FUXI",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon S-Lab XT 6 Shoe",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0FU1A",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon - Chaussures Trail - XT S-LAB 6 Rouge Racing/Noir",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0FTQ6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon S-Lab XT 6 Trail Running Shoe - Men's Racing Red/Black/White, 9.0",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0K7UO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon - Chaussures Trail - XT S-LAB 6 SOFTGROUND Noir/Rouge - Tailles : 44 2/3",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0K0VK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon Unisex S-Lab XT 6 Softground Black Sneakers Men's 5, Women's 6 Medium",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00AO0K3X0",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Salomon Unisex S-Lab XT 6 Softground Black Sneakers Men's 7.5, Women's 8.5 Medium",
+      "amazon_store": "Salomon",
+      "suggested_targets": [
+        "Salomon XT-6"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BRKWH2DS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Men's Shoes Moab Adventure 3 Moc Hiking Shoe",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 36,
+      "written_reviews_seen": 36
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BY97ZZCL",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Men's Moab 3 Hiking Shoe",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 369
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098KT498M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Women's Moab 3 Hiking Shoe",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 33,
+      "written_reviews_seen": 34
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098KTG6P8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Women's Moab 3 Hiking Shoe",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 13,
+      "written_reviews_seen": 13
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098KTB11M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Women's Moab 3 Hiking Shoe",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 13,
+      "written_reviews_seen": 13
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C6B37GBG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Women's Moab 3 Hiking Shoe",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B098KTT3C4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Men's Moab 3 Edge Hiking Shoe",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 33,
+      "written_reviews_seen": 33
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0796B9151",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Merrell Men's Moab Edge 2 Hiking Shoes",
+      "amazon_store": "Merrell",
+      "suggested_targets": [
+        "Merrell Moab 3 Hiking Shoes"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 320
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MCKZ3W1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN Targhee III Waterproof Canteen/Mulch 7 D (M)",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01NCX0TJS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN - Men's Targhee III Waterproof Leather Hiking Shoe",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MCCLW8P",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN Targhee III Mid Waterproof Hiking Boot - Women's Brindle/Quiet Harbor, 8.0",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MTQ2N7H",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN - Men's Targhee III Waterproof Mid Leather Hiking Boot, Canteen/Mulch, 9 US",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MTQNPQH",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN - Men's Targhee III Waterproof Mid Leather Hiking Boot, Canteen/Mulch, 12 US",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MTPV2WQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN - Men's Targhee III Waterproof Mid Leather Hiking Boot, Canteen/Mulch, 11 US",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MTMWJ2S",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN - Men's Targhee III Waterproof Mid Leather Hiking Boot, Canteen/Mulch, 13 US",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07MTQYVP1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "KEEN - Men's Targhee III Waterproof Mid Leather Hiking Boot, Brindle/Magnet, 7 US",
+      "amazon_store": "KEEN",
+      "suggested_targets": [
+        "Keen Targhee III Waterproof"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07BCK9CWR",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Mens Tarantulace Rock Climbing Shoe",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 179
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01EON741Q",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Mens Tarantulace Rock Climbing Shoe",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01K7UZ6RE",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Tarantulace Climbing Shoe - Men's Flame 43.5",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01K7UZ3Y0",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Tarantulace Climbing Shoe - Men's Flame 42.5",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01K7UZAOS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Men's TarantuLace Rock Climbing Shoe, Flame, 45",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 10,
+      "written_reviews_seen": 10
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01K7UZ890",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Men's TarantuLace Rock Climbing Shoe, Flame, 44",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01K7UZ2H8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Men's TarantuLace Rock Climbing Shoe, Flame, 42",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 12,
+      "written_reviews_seen": 12
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01K7UYV6G",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "La Sportiva Men's TarantuLace Rock Climbing Shoe, Flame, 41",
+      "amazon_store": "La Sportiva",
+      "suggested_targets": [
+        "La Sportiva Tarantulace"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B016P6BPJC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Pegasus 83/30",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B016P6BMKO",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Air Pegasus 83/30",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01HD5BHXS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "NIKE Zoom Pegasus 33",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00QFJGN7Y",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men's Pegasus 32",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00QFJGMAC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men's Pegasus 32",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00QFJGKKE",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men's Pegasus 32",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00QFJGF7M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men's Pegasus 32",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00QFJGL6M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Nike Men's Pegasus 32",
+      "amazon_store": "Nike",
+      "suggested_targets": [
+        "Nike Pegasus 40"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09WWS24R6",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Men's Charged Assert 10 Running Shoe",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 9,
+      "written_reviews_seen": 9
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09WWS24Q5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Women's Charged Assert 10 Running Shoe",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07G7JW381",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Women's Charged Assert 8 , Black (002)/Black , 10",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 17,
+      "written_reviews_seen": 17
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B087Z29XN7",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Men's Charged Assert 8 , Black (006)/Vapor Green , 10.5",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07HYZLNLQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Women's Charged Assert 8 Running Shoe , Black (003)/White, 10",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07PYYSF9R",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Women's Charged Assert 8 Running Shoe , White (102)/White, 10",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07Z8RW52V",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Women's Charged Assert 8 Running Shoe , White (111)/White, 10",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07HYRB9PN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Under Armour Women's Charged Assert 8 Running Shoe , Black (003)/White, 10.5",
+      "amazon_store": "Under Armour",
+      "suggested_targets": [
+        "Under Armour Charged Assert 10"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C6382KFK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno Women's Wave Rider 27 Running Shoe",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B004KSQLOM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno womens Wave Rider 25",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B004KSQHQ4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno Women's Wave Rider 14",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B004KSQHEQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno Women's Wave Rider 14",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000MST4T8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno Women's Wave Rider 10",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B8DLVYHK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno Wave Rider 26 Project Zero",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B8DL9VKV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno Wave Rider 26 Project Zero",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 5,
+      "written_reviews_seen": 5
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07XMP1JDJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mizuno Men's Wave Rider 24 Running Shoe",
+      "amazon_store": "Mizuno",
+      "suggested_targets": [
+        "Mizuno Wave Rider 27"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 160
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0866TGFX5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "FILA Disruptor 2 Premium RT",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0866TCMCJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "FILA Disruptor 2 Premium RT",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0866T91FG",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "FILA Disruptor 2 Premium RT",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0866T53SY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "FILA Disruptor 2 Premium RT",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0866S6D5F",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "FILA Disruptor 2 Premium RT",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09X4NRY16",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Fila mens Disruptor 2 No-sew",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0CB27GMQS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Fila mens Disruptor 2 No-sew",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0852Y5PVQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Fila Disruptor 2 Athletic Shoe",
+      "amazon_store": "Fila",
+      "suggested_targets": [
+        "Fila Disruptor 2"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C66MH7FD",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Women's Santa Ana Flip-Flop",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 29,
+      "written_reviews_seen": 29
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C62ZGHHB",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Men's Santa Ana Flip-Flop, Black, 12",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 62,
+      "written_reviews_seen": 62
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08NPVN2Q9",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Men's Santa Ana Flip-Flop, Grey/TAN, 14",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000NVFBR8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Stash Flip Flops",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07CXSBGZ5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Men's Flip Flops",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 9,
+      "written_reviews_seen": 9
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09818GDDF",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Men's Flip Flops",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B08BYGMHV5",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Women's Flip Flops",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 17,
+      "written_reviews_seen": 17
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07CZ5HL32",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Reef Women's Flip Flops",
+      "amazon_store": "Reef",
+      "suggested_targets": [
+        "Reef Santa Ana Flip Flops"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 8
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07CKB42V9",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Rainbow Sandals Women's Single Layer Premier Leather Sandal",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 926
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BQWJ52YB",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Rainbow Sandals Kid's Single Layer Premier Leather Sandals Kids",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 99,
+      "written_reviews_seen": 141
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000JCWO1M",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Mens Rainbow Sandals Premier Leather Single Layer",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 6,
+      "written_reviews_seen": 6
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000MMEQCY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Rainbow Sandals - Mens Premier Leather Single Layer (XL)",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000IN21EC",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Rainbow Sandals Women's Premier Leather Double Stack Wide Strap",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00V2I5IS8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Rainbow Sandals Women's Double Layer Premier Leather Sandals w/Arch Support",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 674
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0874TN917",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Rainbow Sandals Kid's Single Layer Premier Leather Flirty Braidy",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 31,
+      "written_reviews_seen": 31
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B000JQ4Y3O",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Rainbow Sandals Womens Premier Leather Double Layer Arch Wide Strap - Sand",
+      "amazon_store": "Rainbow Sandals",
+      "suggested_targets": [
+        "Rainbow Premier Leather Sandals"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B06W2LJT8C",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's Phay Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B019FX5AKM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's BELI Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B017XBVV6U",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's BELI Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0193LRAYK",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's ROERO Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B017XD3DI2",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's ROERO Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B017XD33A0",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's ROERO Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B017XD2ZFY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's ROERO Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07B4XWXV1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ALDO Women's Zusien Ballet Flat",
+      "amazon_store": "ALDO",
+      "suggested_targets": [
+        "Aldo Stessy Ballet Flats"
+      ],
+      "reviews_saved": 8,
+      "written_reviews_seen": 9
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07RL37H8H",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafers, Bright Red, 8 Medium US",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0813XH3RZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafers, Brown Crocodile, 9 Medium US",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0813XM71V",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafers, Brown Crocodile, 6 Medium US",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07RRJHHF4",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafers, Pyrite, Gold, Metallic, 8.5 Medium US",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0C1HRJX6R",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafer",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 216
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09TS3ZQZR",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafer",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 127
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09NWG87W1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafer",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 11,
+      "written_reviews_seen": 11
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BMZTZQST",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Sam Edelman Women's Loraine Loafer",
+      "amazon_store": "Sam Edelman",
+      "suggested_targets": [
+        "Sam Edelman Loraine Loafers"
+      ],
+      "reviews_saved": 11,
+      "written_reviews_seen": 11
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07N354YFL",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Men's After Burn m.fit- fi",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07W15MKZY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers After Burn M. Fit Wonted Mens Slip On Sneakers Black/Gray 10.5",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 3,
+      "written_reviews_seen": 3
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00UOWRS72",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Men's After Burn Memory Fit - Strike Off Lace-Up Sneaker,Pebble/Black,10.5 M US",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B079R6Q15S",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers After Burn Memory Fit - CHAMLAN",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B079LZTGNJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers After Burn Memory Fit - CHAMLAN",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00EVQ802E",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Men's After Burn Memory Fit - Reprint Shoe",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 1042
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B013KXY30Q",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Men's After Burn - Memory Fit Training Shoes-Black",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B013KXUJ9K",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Men's After Burn - Memory Fit Training Shoes-Black",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers After Burn M. Fit"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B093T5VXJ1",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Women's 608 V5 Cross Trainer",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 4592
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B093XKL7WZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 608 V5 Casual Comfort Cross Trainer",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 9804
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07F211T6F",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 608 V5 Casual Comfort Cross Trainer",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07F1QPM9T",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 608 V5 Casual Comfort Cross Trainer",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B089CF33QY",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 608 V5 Casual Comfort Cross Trainer",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 7,
+      "written_reviews_seen": 7
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07SQQ3C9J",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Kids' 990 V5 Sneaker",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 15,
+      "written_reviews_seen": 15
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BQY9XL8W",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Men's 680 V5 Running Shoe",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 92,
+      "written_reviews_seen": 94
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B078T5K7VV",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "New Balance Women's 680 V5 Running Shoe",
+      "amazon_store": "New Balance",
+      "suggested_targets": [
+        "New Balance 608 V5"
+      ],
+      "reviews_saved": 87,
+      "written_reviews_seen": 88
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B47XQK4P",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Men's Gel-Venture 9 Shoes",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 12,
+      "written_reviews_seen": 12
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B4PGDCSL",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Women's Gel-Venture 9 Running Shoes",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0B485PHPN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Men's Gel-Venture 9 Mid Top Running Shoes",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07P5PFS6T",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Men's Gel-Venture 6 Running Shoes, 9.5, Black/Black",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 12,
+      "written_reviews_seen": 12
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B01636WRR8",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Asics Gel Venture 5 Womens Size 9 Gray Wide Sneakers Shoes",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 4,
+      "written_reviews_seen": 4
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00FLJZ2MQ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Women's GEL-Venture 4 Charcoal/Seafoam/Coral 9 B - Medium",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B09MGCYCMW",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Men's Gel-Venture 8 Running Shoes, 9.5, Black/Electric RED",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B00OHUP40A",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "ASICS Gel Venture 4 Mens Size 9 Gray Fabric Trail Running Shoes",
+      "amazon_store": "ASICS",
+      "suggested_targets": [
+        "ASICS GEL-Venture 9"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07B2Z81WP",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers D'Lites - Fresh Start",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07B2Y7ZCZ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers D'Lites - Fresh Start",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07B2YRJNM",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers D'Lites - Fresh Start",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 1,
+      "written_reviews_seen": 1
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0CGMKJNGJ",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers D'Lites Fresh Start",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 2,
+      "written_reviews_seen": 2
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B017WZLY6Y",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Women's D'Lites - Fresh Start",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 22,
+      "written_reviews_seen": 23
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07B2YZFCN",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers D'Lites - Fresh Start White/Navy/Red 9.5 B (M)",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 20,
+      "written_reviews_seen": 21
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B07CNC83PS",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Women's D'Lites Fresh Start Fashion Sneaker",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 100,
+      "written_reviews_seen": 3238
+    },
+    {
+      "source": "amazon",
+      "source_product_id": "B0BGW55K3Q",
+      "category": "Clothing_Shoes_and_Jewelry",
+      "amazon_title": "Skechers Sport Women's D'Lites Fresh Start Lace-Up Sneaker",
+      "amazon_store": "Skechers",
+      "suggested_targets": [
+        "Skechers D'Lites Fresh Start"
+      ],
+      "reviews_saved": 27,
+      "written_reviews_seen": 27
+    }
+  ]
+}

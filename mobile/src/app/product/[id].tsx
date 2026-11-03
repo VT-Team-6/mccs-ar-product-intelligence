@@ -1,31 +1,46 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getShopperProduct, productImageUrl, type Product } from '@/api/products';
+import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
+import { productImageUrl, type Product } from '@/api/products';
+import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { AIAnalysisPanel} from '@/components/ai-analysis-panel'
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
   // "from" is the page to return to, such as /search?q=nike (optional).
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadedId, setLoadedId] = useState<number | null>(null);
+  // True while a like request is running, so the heart cannot be double-tapped
+  const [savingLike, setSavingLike] = useState(false);
+  // Stops one visit from being recorded more than once
+  const recorded = useRef(false);
+  // True once "Continue to analysis, recommendations & reviews" is pressed
+  const [showMore, setShowMore] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  // Where the questions/results start on the page, so we can scroll them to the top
+  const panelY = useRef(0);
 
-  // Loads this product from the shopper endpoint when the page opens
+  // Loads this product and the caller's like state when the page opens.
+  // A product from a different page is ignored while the new one loads.
   useEffect(() => {
     let cancelled = false;
-    setProduct(null);
-    setError(null);
-    getShopperProduct(Number(id))
+    getMyProduct(Number(id))
       .then((loaded) => {
-        if (!cancelled) setProduct(loaded);
+        if (cancelled) return;
+        setProduct(loaded);
+        setLoadedId(loaded.product_id);
       })
       .catch((problem: Error) => {
         if (!cancelled) setError(problem.message);
@@ -35,9 +50,20 @@ export default function ShopperProductScreen() {
     };
   }, [id]);
 
-  // Goes back to the page this one was opened from, such as the search results.
-  // If we don't know where that was, goes back normally, or to the home page.
-    const goBack = () => {
+  // Records that this product was opened in user history.
+  useEffect(() => {
+    const productId = Number(id);
+    if (recorded.current || !Number.isInteger(productId)) return;
+    recorded.current = true;
+    const fromSearch = (from ?? '').startsWith('/search');
+    // Fire and forget: history must never block showing the product
+    recordInteraction(productId, fromSearch ? 'viewed-from-search' : 'viewed').catch(
+      () => undefined,
+    );
+  }, [id, from]);
+
+  // Go to the previous page, else the "from" page, else the home page. 
+  const goBack = () => {
     if (router.canGoBack()) {
       router.back();
     } else if (from && from.startsWith('/')) {
@@ -47,20 +73,54 @@ export default function ShopperProductScreen() {
     }
   };
 
+  // Toggles the state of the heart icon and sends to backend.
+  // If the backend fails, the heart is restored to its previous state.
+  const toggleLike = async () => {
+    if (!product || savingLike) return;
+    const liked = !product.is_liked;
+    setProduct({ ...product, is_liked: liked });
+    setSavingLike(true);
+    setError(null);
+    try {
+      if (liked) {
+        await likeProduct(product.product_id);
+      } else {
+        await unlikeProduct(product.product_id);
+      }
+    } catch (problem) {
+      setProduct((current) => (current ? { ...current, is_liked: !liked } : current));
+      setError(likeErrorMessage(problem));
+    } finally {
+      setSavingLike(false);
+    }
+  };
+
   const imageUrl = product ? productImageUrl(product) : null;
+
+   // New questions or results appear below the product, so scroll them to the top of the screen
+  const scrollToPanel = () => {
+    setTimeout(() => scrollRef.current?.scrollTo({ y: panelY.current, animated: true }), 150);
+  };
+
+  // Opens a recommended product on its own details page. Back returns here, results intact.
+  const openProduct = (picked: Product) => {
+    router.push(`/product/${picked.product_id}` as Href);
+  };
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
           <ThemedText type="linkPrimary">‹ Back</ThemedText>
         </Pressable>
 
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
-        {!product && !error && <ActivityIndicator />}
+        {(!product || loadedId !== Number(id)) && !error && <ActivityIndicator />}
 
-        {product && (
-          <ScrollView contentContainerStyle={styles.content}>
+        {product && loadedId === Number(id) && (
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.two }]}>
             {imageUrl ? (
               <Image
                 source={{ uri: imageUrl }}
@@ -80,6 +140,29 @@ export default function ShopperProductScreen() {
               </ThemedText>
             </ThemedView>
 
+            <Pressable
+              onPress={toggleLike}
+              disabled={savingLike}
+              accessibilityRole="button"
+              accessibilityLabel={
+                product.is_liked
+                  ? `Remove ${product.name} from Likes`
+                  : `Save ${product.name} to Likes`
+              }
+              accessibilityState={{ selected: product.is_liked, busy: savingLike }}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedView
+                type={product.is_liked ? 'backgroundSelected' : 'backgroundElement'}
+                style={styles.likeButton}>
+                <ThemedText type="subtitle" style={styles.heart}>
+                  {product.is_liked ? '♥' : '♡'}
+                </ThemedText>
+                <ThemedText type="smallBold">
+                  {product.is_liked ? 'Saved to Likes' : 'Save to Likes'}
+                </ThemedText>
+              </ThemedView>
+            </Pressable>
+
             <ThemedView type="backgroundElement" style={styles.facts}>
               <Fact
                 label="Price"
@@ -92,11 +175,48 @@ export default function ShopperProductScreen() {
             </ThemedView>
 
             {product.description && <ThemedText>{product.description}</ThemedText>}
+
+              {showMore ? (
+                <>
+                  {/* AI analysis */}
+                  <View onLayout={(event) => (panelY.current = event.nativeEvent.layout.y)}>
+                    <AIAnalysisPanel productId={product.product_id} />
+                    
+                    <RecommendationPanel
+                      productId={product.product_id}
+                      onOpenProduct={openProduct}
+                      onStepChange={scrollToPanel}
+                    />
+                  </View>
+                </>
+            ) : (
+              <Pressable
+                onPress={() => {
+                  setShowMore(true);
+                  scrollToPanel();
+                }}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.moreButton, pressed && styles.pressed]}>
+                <ThemedText type="smallBold" style={styles.moreText}>
+                  Continue to analysis, recommendations & reviews
+                </ThemedText>
+              </Pressable>
+            )}
           </ScrollView>
         )}
       </SafeAreaView>
     </ThemedView>
   );
+}
+
+function likeErrorMessage(problem: unknown): string {
+  if (problem instanceof TypeError) {
+    return 'Could not reach the backend. Is it running?';
+  }
+  if (problem instanceof Error) {
+    return problem.message;
+  }
+  return 'Could not save your like.';
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -121,7 +241,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     // On web the tab bar sits at the top, so leave room for it
     paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
@@ -130,7 +249,6 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.three,
-    paddingBottom: Spacing.four,
   },
   image: {
     width: '100%',
@@ -148,6 +266,18 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 32,
   },
+  likeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  heart: {
+    fontSize: 26,
+    lineHeight: 30,
+  },
   facts: {
     flexDirection: 'row',
     borderRadius: Spacing.three,
@@ -157,5 +287,16 @@ const styles = StyleSheet.create({
   fact: {
     flex: 1,
     gap: Spacing.half,
+  },
+  moreButton: {
+    alignItems: 'center',
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
+    backgroundColor: '#3c87f7',
+  },
+  moreText: {
+    color: '#ffffff',
+    textAlign: 'center',
   },
 });

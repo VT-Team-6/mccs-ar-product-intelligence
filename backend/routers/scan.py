@@ -4,14 +4,9 @@ from fastapi import APIRouter, HTTPException, status
 
 from database import get_connection
 from schemas import Product
+from routers.products import _fetch_product
 
 router = APIRouter(prefix="/api/scan", tags=["scan"])
-
-_RETURNING = (
-    "product_id, name, brand, product_type, price, rating, "
-    "description, image_url, created_at, updated_at"
-)
-
 
 @router.get("", response_model=Product)
 def scan_product(code: str) -> dict:
@@ -40,15 +35,4 @@ def scan_product(code: str) -> dict:
         )
 
     with get_connection() as conn:
-        product = conn.execute(
-            f"SELECT {_RETURNING} FROM products WHERE product_id = %s",
-            (product_id,),
-        ).fetchone()
-
-    if product is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Product {product_id} not found",
-        )
-
-    return product
+        return _fetch_product(conn, product_id)

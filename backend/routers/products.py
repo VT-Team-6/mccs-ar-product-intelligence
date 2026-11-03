@@ -1,20 +1,34 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
 from database import get_connection
 from schemas import Product, ProductCreate, ProductUpdate
+from product_features import refresh_recommendation_data
 
 router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 
-# Client-writable columns only; product_id, created_at, and updated_at are server-managed.
-_RETURNING = (
-    "product_id, name, brand, product_type, price, rating, description, image_url, created_at, updated_at"
-)
+_PRODUCT_SELECT = """
+    SELECT
+        p.product_id,
+        p.name,
+        p.brand,
+        p.product_type,
+        p.price,
+        s.average_rating AS rating,
+        p.description,
+        p.image_url,
+        p.created_at,
+        p.updated_at
+    FROM products p
+    LEFT JOIN product_review_stats s
+        ON p.product_id = s.product_id
+"""
 _NON_NULLABLE = ("name", "product_type")
 
 
 def _fetch_product(conn, product_id: int) -> dict:
     row = conn.execute(
-        f"SELECT {_RETURNING} FROM products WHERE product_id = %s", (product_id,)
+        _PRODUCT_SELECT + " WHERE p.product_id = %s",
+        (product_id,)
     ).fetchone()
     if row is None:
         raise HTTPException(
@@ -27,7 +41,7 @@ def _fetch_product(conn, product_id: int) -> dict:
 def list_products() -> list[dict]:
     with get_connection() as conn:
         return conn.execute(
-            f"SELECT {_RETURNING} FROM products ORDER BY product_id"
+            _PRODUCT_SELECT + " ORDER BY p.product_id"
         ).fetchall()
 
 
@@ -37,29 +51,31 @@ def read_product(product_id: int) -> dict:
         return _fetch_product(conn, product_id)
     
 @router.post("", response_model=Product, status_code=status.HTTP_201_CREATED)
-def create_product(product: ProductCreate) -> dict:
+def create_product(product: ProductCreate, background_tasks: BackgroundTasks) -> dict:
     with get_connection() as conn:
         row = conn.execute(
             """
-            INSERT INTO products (name, brand, product_type, price, rating, description, image_url)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING {returning}
-            """.format(returning=_RETURNING),
+            INSERT INTO products
+                (name, brand, product_type, price, description, image_url)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING product_id
+            """,
             (
                 product.name,
                 product.brand,
                 product.product_type,
                 product.price,
-                product.rating,
                 product.description,
                 product.image_url,
             ),
         ).fetchone()
-    return row
+        background_tasks.add_task(refresh_recommendation_data)
+        return _fetch_product(conn, row["product_id"])
+    
 
 
 @router.put("/{product_id}", response_model=Product)
-def update_product(product_id: int, product: ProductUpdate) -> dict:
+def update_product(product_id: int, product: ProductUpdate, background_tasks: BackgroundTasks) -> dict:
     updates = product.model_dump(exclude_unset=True)
 
     for column in _NON_NULLABLE:
@@ -83,11 +99,13 @@ def update_product(product_id: int, product: ProductUpdate) -> dict:
                 (*updates.values(), product_id),
             )
 
-        return _fetch_product(conn, product_id)
+            row = _fetch_product(conn, product_id)
+        background_tasks.add_task(refresh_recommendation_data)
+        return row
 
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int) -> dict:
+def delete_product(product_id: int, background_tasks: BackgroundTasks) -> dict:
     with get_connection() as conn:
         cursor = conn.execute(
             "DELETE FROM products WHERE product_id = %s", (product_id,)
@@ -97,4 +115,7 @@ def delete_product(product_id: int) -> dict:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Product {product_id} not found",
             )
+    background_tasks.add_task(refresh_recommendation_data)
     return {"deleted": True, "product_id": product_id}
+
+

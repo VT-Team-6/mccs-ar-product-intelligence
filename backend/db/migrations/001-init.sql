@@ -13,7 +13,6 @@ CREATE TABLE products (
     brand           VARCHAR(100),
     product_type    VARCHAR(100) NOT NULL,
     price           NUMERIC(10,2) CHECK (price >= 0),  -- temporary: moves to inventory when per-store pricing is added
-    rating          NUMERIC(2,1) CHECK (rating BETWEEN 0 AND 5),
     description     TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

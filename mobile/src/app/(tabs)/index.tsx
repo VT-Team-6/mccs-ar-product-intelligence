@@ -8,6 +8,7 @@ import {
 import { useRouter, type Href } from "expo-router";
 
 import { API_URL } from "@/api/config";
+import { recordInteraction } from "@/api/me";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, Spacing, type ThemeColor } from "@/constants/theme";
@@ -50,6 +51,9 @@ export default function ScanScreen() {
       }
 
       // Opens the shopper product page. "from" makes its Back button return here.
+      // The scan is recorded for the History tab; the product page records the
+      // view itself. Recording never blocks opening the product.
+      recordInteraction(result.product_id, "scanned").catch(() => undefined);
       router.push(`/product/${result.product_id}?from=/` as Href);
     } catch (error) {
       Alert.alert(
