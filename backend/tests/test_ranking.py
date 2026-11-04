@@ -239,3 +239,59 @@ def test_a_small_category_is_not_filled_with_unrelated_products(engine):
     mixed = RecommendationEngine(engine.products + candy, {})
     result = mixed.recommend(product_id=101, now_ranks={**NOTHING_RANKED, "comfort": 1})
     assert ids(result["best_matches"]) and set(ids(result["best_matches"])) <= {102, 103}
+
+def _comparison_engine():
+    products = [
+        {"product_id": 1, "name": "A Boot", "brand": "A", "product_type": "Boot", "price": 100.0, "rating": 4.8, "description": "a"},
+        {"product_id": 2, "name": "B Boot", "brand": "B", "product_type": "Boot", "price": 150.0, "rating": 4.0, "description": "b"},
+        {"product_id": 3, "name": "C Shoe", "brand": "C", "product_type": "Shoe", "price": 102.0, "rating": 4.7, "description": "c"},
+    ]
+    neutral = {c: 0.5 for c in CRITERIA}
+    scores = {
+        1: {**neutral, "quality_stars": 4.6, "durability_stars": None, "comfort_stars": 3.5},
+        2: {**neutral, "quality_stars": 3.9, "durability_stars": None, "comfort_stars": 4.6},
+        3: {**neutral, "quality_stars": None, "durability_stars": None, "comfort_stars": None},
+    }
+    return RecommendationEngine(products, scores, embeddings=np.eye(3))
+
+
+def test_compare_gives_pros_and_cons_relative_to_the_others():
+    result = {p["product_id"]: p for p in _comparison_engine().compare([1, 2])["products"]}
+    assert _says(result[1]["pros"], "Cheapest of these ($100)") and _says(result[2]["cons"], "Most expensive ($150)")
+    assert _says(result[1]["pros"], "Best quality") or _says(result[1]["pros"], "Highest rated")
+    assert _says(result[2]["pros"], "Most comfortable (4.6★)")
+
+
+def test_compare_skips_small_gaps_and_says_what_it_cannot_judge():
+    result = {p["product_id"]: p for p in _comparison_engine().compare([1, 3])["products"]}
+    # $100 vs $102 and 4.8 vs 4.7 stars are too close to mention
+    assert not _says(result[1]["pros"], "Cheapest") and not _says(result[1]["pros"], "Highest rated")
+    # Product 1 is still praised on its own; product 3 has no review stars
+    assert _says(result[1]["pros"], "Reviewers love the quality")
+    assert result[3]["pros"] == [] and result[3]["cons"] == []
+    assert result[3]["notes"] == ["Not enough reviews to judge quality or comfort"]
+
+
+def test_compare_uses_the_text_for_budget_and_best_for_you():
+    result = _comparison_engine().compare([1, 2], text="under $120")
+    by_id = {p["product_id"]: p for p in result["products"]}
+    assert _says(by_id[1]["pros"], "Within your $120 budget")
+    assert _says(by_id[2]["cons"], "Over your $120 budget")
+    assert result["best_for_you"] == 1
+
+
+def test_compare_needs_two_known_products():
+    engine = _comparison_engine()
+    with pytest.raises(ValueError):
+        engine.compare([1, 1])
+    with pytest.raises(KeyError):
+        engine.compare([1, 99])
+
+
+def test_compare_picks_best_for_you_from_the_ranking():
+    engine = _comparison_engine()
+    assert engine.compare([1, 2])["best_for_you"] is None
+    assert engine.compare([1, 2], ranks={**NOTHING_RANKED, "comfort": 1})["best_for_you"] == 2
+
+def _says(sentences, start):
+    return any(s.startswith(start) for s in sentences)

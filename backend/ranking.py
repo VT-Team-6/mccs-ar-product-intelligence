@@ -37,6 +37,12 @@ Rules (8.10):
                 similarity + 0.4 x likes. likes = how close it is to the
                 closest liked product, on a fixed scale (0.5 or less = 0,
                 0.9 or more = 1). Only when the shopper has a saved ranking or likes.
+  compare     = for 2+ picked products: up to 3 pros and 3 cons each, strongest
+                first, from what they typed (requirements, budget), best/worst
+                among the picks when the gap matters (10% on price, 0.3 stars
+                otherwise) and what reviews say on their own (4.5+ or 3.5- stars).
+                Notes list what couldn't be judged for lack of reviews.
+                best_for_you uses the text and/or ranking.
 Ties always go to the lower product_id, so the same input gives the same order.
 """
 
@@ -94,6 +100,24 @@ REASONS = {
     "durability": "Built to last",
     "comfort": "Very comfortable",
 }
+# Comparison (task 7): pros/cons between the products the shopper picked.
+# criterion -> (higher is better, smallest gap worth mentioning, pro, con, how to show the value)
+COMPARISON = {
+    "price": (False, 0.10, "Cheapest of these", "Most expensive", "${:.0f}"),  # gap = share of the cheaper price
+    "rating": (True, 0.3, "Highest rated", "Lowest rated", "{:.1f}★"),         # gaps below are in stars
+    "brand": (True, 0.3, "Most trusted brand", "Less trusted brand", "{:.1f}★ brand average"),
+    "quality": (True, 0.3, "Best quality", "Lowest quality", "{:.1f}★"),
+    "durability": (True, 0.3, "Most durable", "Least durable", "{:.1f}★"),
+    "comfort": (True, 0.3, "Most comfortable", "Least comfortable", "{:.1f}★"),
+}
+# What reviews say about one product on its own, whatever the others score
+STRONG_STARS, WEAK_STARS = 4.5, 3.5
+REVIEW_PROS = {"quality": "Reviewers love the quality", "durability": "Reviewers say it lasts",
+               "comfort": "Reviewers love the comfort"}
+REVIEW_CONS = {"quality": "Reviewers find the quality lacking", "durability": "Reviewers say it wears out quickly",
+               "comfort": "Reviewers find it uncomfortable"}
+STAR_ASPECTS = ("quality", "durability", "comfort")
+MAX_POINTS = 3  # pros and cons each, per product
 
 
 def rescale(values: np.ndarray) -> np.ndarray:
@@ -130,6 +154,9 @@ def types_named_in(text: str, product_types: set[str]) -> set[str]:
     heads = {t.split()[-1].lower() for t in named} - {"shoe"}
     return named | {t for t in product_types if t.split()[-1].lower() in heads}
 
+def join_words(words: list[str]) -> str:
+    """['quality', 'comfort'] -> 'quality or comfort'."""
+    return words[0] if len(words) == 1 else ", ".join(words[:-1]) + " or " + words[-1]
 
 def preference_scores(scores: np.ndarray, weights: dict[str, float]) -> np.ndarray:
     """Weighted average of each product's 0-1 criterion scores."""
@@ -153,6 +180,12 @@ class RecommendationEngine:
         self.scores = np.array([[scores.get(pid, neutral)[c] for c in CRITERIA] for pid in self.ids])
         self.brands = sorted({p["brand"] for p in products if p.get("brand")})
         self.product_text = [f"{p['name']} {p.get('description') or ''}" for p in products]
+        # Unscaled review stars per aspect, for comparing products of different types
+        self.aspect_stars = np.array([
+            [np.nan if (scores.get(pid) or {}).get(f"{a}_stars") is None else float(scores[pid][f"{a}_stars"])
+             for a in ("quality", "durability", "comfort")]
+            for pid in self.ids
+        ])
 
     # --- similarity -------------------------------------------------------
 
@@ -350,6 +383,152 @@ class RecommendationEngine:
             "score": round(float(score), 4),
             "reasons": reasons[:2],
         }
+
+    # --- comparison -------------------------------------------------------
+    def compare(self, product_ids: list[int], text: str | None = None, ranks: dict | None = None) -> dict:
+        """Pros, cons and notes for each picked product, plus the best pick for the shopper.
+
+        Pros and cons, strongest first and up to 3 each, come from:
+          - what they typed: requirements met or not ("Waterproof"), budget kept or not
+          - best or worst of the picked products on a criterion, when the gap matters
+          - what reviews say about the product on its own (4.5 stars or more, 3.5 or less)
+        Notes say what couldn't be judged for lack of reviews. best_for_you uses the
+        text and/or ranking, and is None without either.
+        """
+        product_ids = list(dict.fromkeys(product_ids))  # drop repeats, keep order
+        if len(product_ids) < 2:
+            raise ValueError("Pick at least 2 products to compare")
+        missing = [pid for pid in product_ids if pid not in self.index]
+        if missing:
+            raise KeyError(f"Products not in the catalog: {missing}")
+
+        rows = np.array([self.index[pid] for pid in product_ids])
+        text = (text or "").strip()
+        parsed = parse_request(text, self.brands) if text else None
+        values = {
+            "price": self.prices[rows],
+            "rating": self.ratings[rows],
+            "brand": np.array([self._brand_stars(i) for i in rows]),
+            **{a: self.aspect_stars[rows, k] for k, a in enumerate(STAR_ASPECTS)},
+        }
+        points = {pid: {"pros": [], "cons": []} for pid in product_ids}
+        covered = set()  # (product_id, criterion) already said something about
+
+        def add(pid, kind, strength, sentence, criterion=None):
+            points[pid][kind].append((strength, sentence))
+            if criterion:
+                covered.add((pid, criterion))
+
+        # 1. What they typed: requirements and budget
+        if parsed:
+            for n, pid in enumerate(product_ids):
+                i = rows[n]
+                for r in sorted(parsed.requirements):
+                    if mentions(self.product_text[i], REQUIREMENTS[r][1]):
+                        add(pid, "pros", 3.0, r.capitalize())
+                    else:
+                        add(pid, "cons", 3.0, f"Not listed as {r}")
+                if parsed.max_price is not None and not np.isnan(self.prices[i]):
+                    if self.prices[i] <= parsed.max_price:
+                        add(pid, "pros", 2.5, f"Within your ${parsed.max_price:.0f} budget")
+                    else:
+                        add(pid, "cons", 2.5, f"Over your ${parsed.max_price:.0f} budget")
+
+        # 2. Best and worst of the picked products, when the gap matters
+        for criterion, (higher_is_better, min_gap, pro, con, shown) in COMPARISON.items():
+            v = values[criterion]
+            known = ~np.isnan(v)
+            if known.sum() < 2:
+                continue
+            best = np.nanmax(v) if higher_is_better else np.nanmin(v)
+            worst = np.nanmin(v) if higher_is_better else np.nanmax(v)
+            gap = abs(best - worst)
+            if criterion == "price":
+                gap /= min(best, worst) or 1
+            if gap < min_gap:
+                continue
+            strength = 1 + min(gap / min_gap, 4) / 4  # bigger gaps come first
+            for n, pid in enumerate(product_ids):
+                if not known[n]:
+                    continue
+                if np.isclose(v[n], best):
+                    add(pid, "pros", strength, f"{pro} ({shown.format(v[n])})", criterion)
+                elif np.isclose(v[n], worst):
+                    add(pid, "cons", strength, f"{con} ({shown.format(v[n])})", criterion)
+
+        # 3. What reviews say about each product on its own
+        for k, aspect in enumerate(STAR_ASPECTS):
+            for n, pid in enumerate(product_ids):
+                stars = self.aspect_stars[rows[n], k]
+                if np.isnan(stars) or (pid, aspect) in covered:
+                    continue
+                if stars >= STRONG_STARS:
+                    add(pid, "pros", 1 + min(stars - STRONG_STARS, 0.5), f"{REVIEW_PROS[aspect]} ({stars:.1f}★)")
+                elif stars <= WEAK_STARS:
+                    add(pid, "cons", 1 + min(WEAK_STARS - stars, 0.5), f"{REVIEW_CONS[aspect]} ({stars:.1f}★)")
+
+        def strongest(items):
+            return [sentence for _, sentence in sorted(items, key=lambda item: -item[0])[:MAX_POINTS]]
+
+        products = []
+        for n, pid in enumerate(product_ids):
+            # Only aspects some other picked product has reviews for, so it's worth saying
+            unknown = [
+                a for k, a in enumerate(STAR_ASPECTS)
+                if np.isnan(self.aspect_stars[rows[n], k]) and not np.isnan(self.aspect_stars[rows, k]).all()
+            ]
+            products.append({
+                "product_id": pid,
+                "pros": strongest(points[pid]["pros"]),
+                "cons": strongest(points[pid]["cons"]),
+                "notes": [f"Not enough reviews to judge {join_words(unknown)}"] if unknown else [],
+            })
+        return {
+            "products": products,
+            "best_for_you": self._best_for_you(product_ids, rows, values, parsed, ranks),
+        }
+
+    def _brand_stars(self, i: int) -> float:
+        """Average rating of the brand's products; unknown (nan) with fewer than 2 rated."""
+        brand = (self.products[i].get("brand") or "").strip().lower()
+        rated = [
+            self.ratings[n] for n, p in enumerate(self.products)
+            if (p.get("brand") or "").strip().lower() == brand and not np.isnan(self.ratings[n])
+        ]
+        return float(np.mean(rated)) if brand and len(rated) >= 2 else np.nan
+
+    def _best_for_you(self, product_ids, rows, values, parsed, ranks) -> int | None:
+        """The picked product that best fits what they typed and/or their ranking.
+
+        Uses the same values as the pros and cons, so a product with no reviews is
+        neutral on that criterion. Products outside their price limits can't win.
+        """
+        has_ranks = bool(ranks) and has_ranking(ranks)
+        if parsed is None and not has_ranks:
+            return None
+        prices = self.prices[rows]
+        eligible = [
+            n for n in range(len(product_ids))
+            if parsed is None or (
+                (parsed.max_price is None or prices[n] <= parsed.max_price)
+                and (parsed.min_price is None or prices[n] >= parsed.min_price)
+            )
+        ]
+        if not eligible:
+            return None
+
+        match_text = parsed.remaining_text if parsed else ""
+        similarity = self.similarity(None, match_text, rows)[0] if match_text else np.zeros(len(rows))
+        if has_ranks:
+            criteria = np.column_stack([
+                compare_within(values[c], higher_is_better=COMPARISON[c][0]) for c in CRITERIA
+            ])
+            preference = preference_scores(criteria, rank_weights(ranks))
+            fit = SIMILARITY_WEIGHT * similarity + PREFERENCE_WEIGHT * preference if match_text else preference
+        else:
+            fit = similarity
+        fit = fit + REQUIREMENT_FINAL_BONUS * self._requirements_met(rows, parsed)
+        return product_ids[min(eligible, key=lambda n: (-fit[n], product_ids[n]))]
 
 
 # --- the shared engine the API uses ------------------------------------------

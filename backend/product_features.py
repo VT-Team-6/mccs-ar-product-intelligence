@@ -104,6 +104,11 @@ def compute_scores(
             "quality": round(aspects["quality"][p["product_id"]], 4),
             "durability": round(aspects["durability"][p["product_id"]], 4),
             "comfort": round(aspects["comfort"][p["product_id"]], 4),
+                        **{
+                f"{a}_stars": None if (v := (review_ratings or {}).get(p["product_id"], {}).get(a)) is None
+                else round(v, 2)
+                for a in ("quality", "durability", "comfort")
+            },
         }
         for p in products
     }
@@ -141,9 +146,13 @@ def refresh_product_scores() -> int:
         with conn.cursor() as cur:
             cur.executemany(
                 "INSERT INTO product_scores (product_id, price_score, rating_score, brand_score, "
-                "quality_score, durability_score, comfort_score) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                [(pid, *(s[c] for c in CRITERIA)) for pid, s in scores.items()],
+                "quality_score, durability_score, comfort_score, "
+                "quality_stars, durability_stars, comfort_stars) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                [
+                    (pid, *(s[c] for c in CRITERIA), *(s[f"{a}_stars"] for a in ("quality", "durability", "comfort")))
+                    for pid, s in scores.items()
+                ],
             )
     return len(scores)
 
@@ -152,7 +161,13 @@ def load_product_scores() -> dict[int, dict[str, float]]:
     """Read the saved scores as {product_id: {criterion: score}}."""
     with get_connection() as conn:
         rows = conn.execute("SELECT * FROM product_scores").fetchall()
-    return {r["product_id"]: {c: r[f"{c}_score"] for c in CRITERIA} for r in rows}
+    return {
+        r["product_id"]: {
+            **{c: r[f"{c}_score"] for c in CRITERIA},
+            **{f"{a}_stars": r[f"{a}_stars"] for a in ("quality", "durability", "comfort")},
+        }
+        for r in rows
+    }
 
 def refresh_recommendation_data() -> None:
     """Rebuild everything the recommendation engine uses after products change.
