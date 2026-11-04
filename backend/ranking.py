@@ -10,10 +10,16 @@ Rules (8.10):
                 best candidate is 1 and the worst is 0. With both a product and
                 text: 0.6 x text + 0.4 x product. +0.15 for the same type as the
                 product on screen or a type named in the text (capped at 1).
-  pool        = up to the 10 most similar products, keeping only those at least 70%
-                as similar as the best one (but always at least 4). Preferences
-                only reorder this pool, so a cheap or highly rated but unrelated
-                product can never jump into the results.
+  text        = price limits ("under $100", "$50-$100") and brand names in the text
+                are hard limits. Requirements ("waterproof", from words like
+                "rain") boost products that mention them: +0.2 similarity and
+                +0.25 on the final score. Price phrases are left out of the match.
+  pool        = up to the 10 most similar products that are real matches (raw
+                embedding similarity of at least 0.6, mixed like the similarity),
+                keeping only those at least 70% as similar as the best one, though
+                the 4 most similar real matches always stay. Can be empty.
+                Preferences only reorder this pool, so a cheap or highly rated but
+                unrelated product can never jump into the results.
   preference  = sum(weight x score) / sum(weight), weights from the ranking
                 (#1 = 6, #2 = 5, ..., unranked = 1). Price and rating are
                 compared among the pool (cheapest = 1), since those are the
@@ -22,6 +28,8 @@ Rules (8.10):
   final       = 0.4 x similarity + 0.6 x preference, or similarity alone when
                 nothing is ranked. The pool already keeps results relevant,
                 so the shopper's #1 priority can decide the order within it.
+  best_matches = up to 3 from the pool, dropping any that score under 75% of #1,
+                  so weak matches are hidden instead of always filling 3 spots.
   for_you     = best of the pool (minus the top 3 and liked products), using what
                 we know about the shopper instead of the "right now" ranking:
                 0.4 x similarity + 0.4 x saved preference + 0.2 x likes.
@@ -41,6 +49,7 @@ from database import get_connection
 from embeddings import build_product_embeddings, embed_query
 from preferences import CRITERIA, has_ranking, rank_weights
 from recommendation import build_tfidf_matrix
+from text_parsing import REQUIREMENTS, mentions, parse_request
 
 TFIDF_WEIGHT, EMBEDDING_WEIGHT = 0.4, 0.6
 TEXT_WEIGHT, PRODUCT_WEIGHT = 0.6, 0.4
@@ -48,8 +57,18 @@ SIMILARITY_WEIGHT, PREFERENCE_WEIGHT = 0.4, 0.6
 TYPE_BONUS = 0.15
 BEST_MATCHES = 3
 CANDIDATE_POOL = 10
-MIN_POOL = BEST_MATCHES + 1
 RELATIVE_SIMILARITY = 0.7
+MIN_POOL = BEST_MATCHES + 1
+# Raw embedding similarity a product needs to count as a real match, using the
+# same text/product mix as the similarity. From testing: unrelated text
+# ("laptop", "cook pasta") 0.52 or less; real but looser matches (a waterproof
+# hiking shoe for "rain") around 0.58.
+MIN_MATCH = 0.55
+# Products that mention what the shopper asked for ("waterproof") get a boost:
+# on similarity, so they make the pool, and on the final score, so a ranked
+# criterion like comfort can't bury them.
+REQUIREMENT_SIMILARITY_BONUS = 0.2
+REQUIREMENT_FINAL_BONUS = 0.25
 
 # Words that say nothing about which product someone wants. They're dropped from
 # typed text before the word match (TF-IDF), so "looking for wedding shoes" matches
@@ -101,12 +120,15 @@ def compare_within(values: np.ndarray, higher_is_better: bool) -> np.ndarray:
 
 
 def types_named_in(text: str, product_types: set[str]) -> set[str]:
-    """Product types mentioned in typed text, singular or plural ('boots' -> 'Boot')."""
+    """Product types mentioned in typed text, singular or plural ('boots' -> 'Boot').
+
+    "boots" also covers types ending in boot ("Rain Boot"). "shoes" alone is too
+    general to count as naming a type.
+    """
     lower = (text or "").lower()
-    return {
-        t for t in product_types
-        if re.search(rf"\b{re.escape(t.lower())}s?\b", lower)
-    }
+    named = {t for t in product_types if re.search(rf"\b{re.escape(t.lower())}s?\b", lower)}
+    heads = {t.split()[-1].lower() for t in named} - {"shoe"}
+    return named | {t for t in product_types if t.split()[-1].lower() in heads}
 
 
 def preference_scores(scores: np.ndarray, weights: dict[str, float]) -> np.ndarray:
@@ -129,6 +151,8 @@ class RecommendationEngine:
         self.ratings = np.array([np.nan if p.get("rating") is None else float(p["rating"]) for p in products])
         neutral = {c: 0.5 for c in CRITERIA}
         self.scores = np.array([[scores.get(pid, neutral)[c] for c in CRITERIA] for pid in self.ids])
+        self.brands = sorted({p["brand"] for p in products if p.get("brand")})
+        self.product_text = [f"{p['name']} {p.get('description') or ''}" for p in products]
 
     # --- similarity -------------------------------------------------------
 
@@ -143,8 +167,12 @@ class RecommendationEngine:
         embedding = self.embeddings @ embed_query(text)
         return tfidf, embedding
 
-    def similarity(self, product_id: int | None, text: str | None, candidates: np.ndarray) -> np.ndarray:
-        """0-1 similarity of each candidate to the product and/or text."""
+    def similarity(self, product_id: int | None, text: str | None, candidates: np.ndarray):
+        """0-1 similarity of each candidate, and whether each one is a real match.
+
+        A real match has a raw embedding similarity of at least MIN_MATCH, mixed
+        the same way as the similarity (0.6 text + 0.4 product when both are given).
+        """
         parts = []
         wanted_types = set()
         if text:
@@ -164,7 +192,8 @@ class RecommendationEngine:
             for weight, tfidf, embedding in parts
         )
         bonus = np.isin(self.types[candidates], list(wanted_types)) * TYPE_BONUS
-        return np.minimum(similarity + bonus, 1.0)
+        raw = sum(weight / total * embedding[candidates] for weight, _, embedding in parts)
+        return np.minimum(similarity + bonus, 1.0), raw >= MIN_MATCH
 
     # --- the request ------------------------------------------------------
 
@@ -176,27 +205,41 @@ class RecommendationEngine:
         saved_ranks: dict | None = None,
         liked_ids: list[int] | None = None,
     ) -> dict:
-        """Best matches (top 3) plus one "for you" pick, each with reasons."""
+        """Up to 3 best matches plus one "for you" pick, each with reasons."""
         text = (text or "").strip()
         if product_id is None and not text:
             raise ValueError("Give a product, some text, or both")
         if product_id is not None and product_id not in self.index:
             raise KeyError(f"Product {product_id} is not in the catalog")
 
-        candidates = np.array([i for i, pid in enumerate(self.ids) if pid != product_id])
+        parsed = parse_request(text, self.brands) if text else None
+        named_types = types_named_in(text, set(self.types)) if text else set()
+        candidates = np.array([
+            i for i, pid in enumerate(self.ids)
+            if pid != product_id
+            and self._within_limits(i, parsed)
+            and (not named_types or self.types[i] in named_types)
+        ])
         if len(candidates) == 0:
             return {"best_matches": [], "for_you": None}
 
-        similarity = self.similarity(product_id, text, candidates)
+        # Price phrases say nothing about the product, so they're left out of the match
+        match_text = parsed.remaining_text if parsed and parsed.remaining_text else text
+        similarity, strong = self.similarity(product_id, match_text, candidates)
+        met = self._requirements_met(candidates, parsed)
+        strong = strong | (met > 0)
+        similarity = np.minimum(similarity + REQUIREMENT_SIMILARITY_BONUS * met, 1.0)
         ids = np.array(self.ids)[candidates]
 
-        # Only the most similar products are considered, then preferences reorder them
+        # Only real matches near the best one are considered, then preferences reorder them
         most_similar = sorted(range(len(candidates)), key=lambda j: (-similarity[j], ids[j]))
         cutoff = RELATIVE_SIMILARITY * similarity[most_similar[0]]
         pool = [
             j for n, j in enumerate(most_similar[:CANDIDATE_POOL])
-            if n < MIN_POOL or similarity[j] >= cutoff
+            if strong[j] and (n < MIN_POOL or similarity[j] >= cutoff)
         ]
+        if not pool:
+            return {"best_matches": [], "for_you": None}
 
         # Price and rating are compared among the pool: the products being chosen between
         scores = self.scores[candidates].copy()
@@ -211,6 +254,8 @@ class RecommendationEngine:
         else:
             final = similarity
 
+        final = final + REQUIREMENT_FINAL_BONUS * met
+
         order = sorted(pool, key=lambda j: (-final[j], ids[j]))
         top = order[:BEST_MATCHES]
 
@@ -219,18 +264,41 @@ class RecommendationEngine:
             for j in top
         ]
         for_you = self._for_you(
-            candidates, order, top, final, similarity, scores, now_ranks, saved_ranks, liked_ids or []
+            candidates, order, final, similarity, scores, now_ranks, saved_ranks, liked_ids or []
         )
         return {"best_matches": best, "for_you": for_you}
 
-    def _for_you(self, candidates, order, top, final, similarity, scores, now_ranks, saved_ranks, liked_ids):
+    def _within_limits(self, i: int, parsed) -> bool:
+        """Price range and brand from the text are hard limits."""
+        if parsed is None:
+            return True
+        price = self.prices[i]
+        if parsed.min_price is not None and not (price >= parsed.min_price):
+            return False
+        if parsed.max_price is not None and not (price <= parsed.max_price):
+            return False
+        if parsed.brands and self.products[i].get("brand") not in parsed.brands:
+            return False
+        return True
+
+    def _requirements_met(self, candidates: np.ndarray, parsed) -> np.ndarray:
+        """Share (0-1) of the asked-for requirements each candidate mentions."""
+        if parsed is None or not parsed.requirements:
+            return np.zeros(len(candidates))
+        return np.array([
+            sum(mentions(self.product_text[i], REQUIREMENTS[r][1]) for r in parsed.requirements)
+            / len(parsed.requirements)
+            for i in candidates
+        ])
+
+    def _for_you(self, candidates, order, final, similarity, scores, now_ranks, saved_ranks, liked_ids):
         has_saved = bool(saved_ranks) and has_ranking(saved_ranks)
         liked = [self.index[pid] for pid in liked_ids if pid in self.index]
         if not has_saved and not liked:
             return None
 
         liked_set = set(liked)
-        pool = [j for j in order if j not in top and candidates[j] not in liked_set]
+        pool = [j for j in order if candidates[j] not in liked_set]
         if not pool:
             return None
 
