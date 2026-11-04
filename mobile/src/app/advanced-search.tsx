@@ -61,7 +61,7 @@ export default function AdvancedSearchScreen() {
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="e.g. waterproof hiking boots under $150"
+              placeholder="e.g. waterproof hiking boots under $175"
               placeholderTextColor={theme.textSecondary}
               multiline
               maxLength={MAX_REQUEST_LENGTH}

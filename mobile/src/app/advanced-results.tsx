@@ -71,11 +71,16 @@ export default function AdvancedResultsScreen() {
     router.push(`/product/${product.product_id}?from=${encodeURIComponent(thisPage)}` as Href);
   };
 
-  // Back to the form with the same words and ranking filled in
+  // Back to the form with the same words and ranking filled in. The form is
+  // usually right underneath, so going back avoids stacking a new copy each time.
   const editSearch = () => {
-    router.replace(
-      `/advanced-search?q=${encodeURIComponent(query)}&rank=${encodeURIComponent(rankParam)}` as Href,
-    );
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace(
+        `/advanced-search?q=${encodeURIComponent(query)}&rank=${encodeURIComponent(rankParam)}` as Href,
+      );
+    }
   };
 
   return (

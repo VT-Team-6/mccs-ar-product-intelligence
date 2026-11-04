@@ -144,15 +144,19 @@ def compare_within(values: np.ndarray, higher_is_better: bool) -> np.ndarray:
 
 
 def types_named_in(text: str, product_types: set[str]) -> set[str]:
-    """Product types mentioned in typed text, singular or plural ('boots' -> 'Boot').
+    """Product types mentioned in typed text.
 
-    "boots" also covers types ending in boot ("Rain Boot"). "shoes" alone is too
-    general to count as naming a type.
+    Counts a type when the text names it ("running shoes" -> 'Running Shoe'),
+    its last word ("boots" -> 'Boot' and 'Rain Boot'), or its first word
+    ("hiking" -> 'Hiking Shoe'). "shoes" alone is too general to count.
     """
     lower = (text or "").lower()
+    words = set(re.findall(r"[a-z]+", lower))
     named = {t for t in product_types if re.search(rf"\b{re.escape(t.lower())}s?\b", lower)}
     heads = {t.split()[-1].lower() for t in named} - {"shoe"}
-    return named | {t for t in product_types if t.split()[-1].lower() in heads}
+    named |= {t for t in product_types if t.split()[-1].lower() in heads}
+    named |= {t for t in product_types if len(t.split()) > 1 and t.split()[0].lower() in words}
+    return named
 
 def join_words(words: list[str]) -> str:
     """['quality', 'comfort'] -> 'quality or comfort'."""
@@ -289,7 +293,8 @@ class RecommendationEngine:
 
         final = final + REQUIREMENT_FINAL_BONUS * met
 
-        order = sorted(pool, key=lambda j: (-final[j], ids[j]))
+        # Products meeting more of what they asked for come first; their ranking orders the rest
+        order = sorted(pool, key=lambda j: (-met[j], -final[j], ids[j]))
         top = order[:BEST_MATCHES]
 
         best = [
@@ -297,7 +302,7 @@ class RecommendationEngine:
             for j in top
         ]
         for_you = self._for_you(
-            candidates, order, final, similarity, scores, now_ranks, saved_ranks, liked_ids or []
+            candidates, order, final, similarity, scores, now_ranks, saved_ranks, liked_ids or [], met
         )
         return {"best_matches": best, "for_you": for_you}
 
@@ -324,7 +329,7 @@ class RecommendationEngine:
             for i in candidates
         ])
 
-    def _for_you(self, candidates, order, final, similarity, scores, now_ranks, saved_ranks, liked_ids):
+    def _for_you(self, candidates, order, final, similarity, scores, now_ranks, saved_ranks, liked_ids, met):
         has_saved = bool(saved_ranks) and has_ranking(saved_ranks)
         liked = [self.index[pid] for pid in liked_ids if pid in self.index]
         if not has_saved and not liked:
@@ -351,6 +356,9 @@ class RecommendationEngine:
             pick = 0.5 * similarity[pool] + 0.5 * personal
         else:
             pick = 0.6 * similarity[pool] + 0.4 * likes
+
+        # What they asked for still counts: a general pick shouldn't ignore "waterproof"
+        pick = pick + REQUIREMENT_FINAL_BONUS * met[pool]
 
         ids = np.array(self.ids)
         best = min(range(len(pool)), key=lambda n: (-pick[n], ids[candidates[pool[n]]]))
