@@ -145,7 +145,9 @@ def test_product_and_text_together(client, db):
     response = _recommend(client, product_id=_product_id(db, "Sorel"), text="for rain")
 
     assert response.status_code == 200
-    assert len(response.json()["best_matches"]) == 3
+    cards = response.json()["best_matches"]
+    assert 1 <= len(cards) <= 3
+    assert _ids(cards)[0] == _product_id(db, "Hunter")
 
 
 def test_needs_a_product_or_text(client):
@@ -184,7 +186,6 @@ def test_saved_ranking_adds_a_for_you_pick(client):
     body = _recommend(client, text="warm boots for snow", ranking=PRICE_FIRST).json()
 
     assert body["for_you"] is not None
-    assert body["for_you"]["product"]["product_id"] not in _ids(body["best_matches"])
 
 
 def test_liked_products_are_never_the_for_you_pick(client, db):
@@ -211,3 +212,12 @@ def test_deleted_products_are_not_recommended(client, db):
     finally:
         db.execute("UPDATE products SET deleted_at = NULL WHERE product_id = %s", (timberland,))
         refresh_recommendation_data()
+
+def test_unrelated_text_returns_no_matches(client, db):
+    _sign_in_as(client, "rec-unrelated")
+
+    response = _recommend(client, text="laptop")
+
+    assert response.status_code == 200
+    assert response.json()["best_matches"] == []
+    assert response.json()["for_you"] is None

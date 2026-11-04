@@ -1,6 +1,7 @@
 """Tests for the product score calculations (no database needed)."""
 
 from product_features import NEUTRAL, compute_scores
+from preferences import CRITERIA
 
 
 def product(product_id, product_type="Boot", price=None, rating=None, brand=None):
@@ -96,4 +97,5 @@ def test_review_based_scores_compare_within_the_same_type():
 def test_every_score_is_between_0_and_1():
     products = [product(i, "Boot", price=50 + i * 10, rating=3 + i * 0.2, brand="A" if i % 2 else "B") for i in range(8)]
     for scores in compute_scores(products).values():
-        assert all(0 <= value <= 1 for value in scores.values())
+        assert all(0 <= scores[c] <= 1 for c in CRITERIA)
+        assert all(scores[f"{a}_stars"] is None for a in ("quality", "durability", "comfort"))  # no reviews given
