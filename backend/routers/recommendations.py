@@ -5,38 +5,37 @@ them right now. The backend adds their saved ranking and liked products, asks
 the engine, and returns each result with the product details the screen needs.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from psycopg import sql
 
 import auth
 import preferences
+import store_selection
 from database import get_connection
-from ranking import get_engine
+from ranking import get_engine, types_named_in
 from schemas import RecommendationRequest, RecommendationResponse
+from routers.products import product_select
+from search_understanding import understand
 
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 
-_PRODUCT_SELECT = """
-    SELECT
-        p.product_id,
-        p.name,
-        p.brand,
-        p.product_type,
-        p.price,
-        s.average_rating AS rating,
-        p.description,
-        p.image_url,
-        p.created_at,
-        p.updated_at
-    FROM products p
-    LEFT JOIN product_review_stats s
-        ON p.product_id = s.product_id
-"""
-
 
 @router.post("", response_model=RecommendationResponse)
-def recommend(body: RecommendationRequest, user=Depends(auth.require_authenticated_user)):
+def recommend(
+    body: RecommendationRequest,
+    store_id: int | None = Query(
+        default=None,
+        description="Prices each card at this store; a query parameter, not a body field.",
+    ),
+    user=Depends(auth.require_authenticated_user),
+):
+    """Ranking is store-agnostic: the engine's price criterion keeps reading the
+    catalog-wide baseline (AVG(inventory.price)), so changing stores never
+    reorders "Best matches". The resolved store only sets the price displayed on
+    each card via store_inventory."""
     with get_connection() as conn:
         saved_ranks = preferences.get_preferences(conn, user["user_id"])
+        resolved = store_selection.resolve_store_id(conn, user["user_id"], store_id)
         liked_ids = [
             row["product_id"]
             for row in conn.execute(
@@ -46,7 +45,8 @@ def recommend(body: RecommendationRequest, user=Depends(auth.require_authenticat
         ]
 
     try:
-        result = get_engine().recommend(
+        engine = get_engine()
+        result = engine.recommend(
             product_id=body.product_id,
             text=body.text,
             now_ranks=body.ranking.model_dump(),
@@ -62,10 +62,10 @@ def recommend(body: RecommendationRequest, user=Depends(auth.require_authenticat
     cards = result["best_matches"] + ([result["for_you"]] if result["for_you"] else [])
     with get_connection() as conn:
         rows = conn.execute(
-            _PRODUCT_SELECT + """
+            product_select(resolved) + sql.SQL("""
                 WHERE p.product_id = ANY(%s)
                 AND p.deleted_at IS NULL
-            """,
+            """),
             ([card["product_id"] for card in cards],),
         ).fetchall()
     products = {row["product_id"]: row for row in rows}
@@ -78,4 +78,7 @@ def recommend(body: RecommendationRequest, user=Depends(auth.require_authenticat
 
     best = [c for c in (with_product(card) for card in result["best_matches"]) if c]
     for_you = with_product(result["for_you"]) if result["for_you"] else None
-    return {"best_matches": best, "for_you": for_you}
+
+    # How the text was read, so the shopper can see the limits the results follow
+    understood = understand(body.text, engine.brands, types_named_in(body.text or "", set(engine.types)))
+    return {"best_matches": best, "for_you": for_you, "understood": understood}

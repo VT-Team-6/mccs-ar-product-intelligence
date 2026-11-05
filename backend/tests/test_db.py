@@ -2,6 +2,7 @@
 
 import re
 import uuid
+from decimal import Decimal
 from urllib.parse import quote
 
 import psycopg
@@ -316,3 +317,156 @@ def test_likes_indexes_exist(conn):
     per_product = _index_def(conn, "idx_user_product_likes_product")
     assert per_product, "idx_user_product_likes_product is missing"
     assert "(product_id)" in per_product
+
+
+# --- migration 005: store selection ----------------------------------------
+
+
+def test_products_price_column_is_gone(conn):
+    # migration 005 dropped it; a leftover column means 005 was never applied.
+    with pytest.raises(psycopg.errors.UndefinedColumn):
+        conn.execute(
+            "INSERT INTO products (name, product_type, price)"
+            " VALUES ('No Price', 'X', 9.99)"
+        )
+
+
+def test_user_store_selection_upsert_and_foreign_keys(conn):
+    user_id = _new_user(conn)
+    conn.execute(
+        "INSERT INTO user_store_selection (user_id, store_id) VALUES (%s, 1)",
+        (user_id,),
+    )
+    # A repeat insert with a different store must win (DO UPDATE, not DO
+    # NOTHING): this is the migration-level half of the repeat-PUT behavior.
+    conn.execute(
+        "INSERT INTO user_store_selection (user_id, store_id) VALUES (%s, 2)"
+        " ON CONFLICT (user_id) DO UPDATE SET store_id = EXCLUDED.store_id",
+        (user_id,),
+    )
+    saved = conn.execute(
+        "SELECT store_id FROM user_store_selection WHERE user_id = %s", (user_id,)
+    ).fetchone()[0]
+    assert saved == 2
+
+    # Unknown stores and unknown users are both rejected.
+    with pytest.raises(psycopg.errors.ForeignKeyViolation):
+        conn.execute(
+            "INSERT INTO user_store_selection (user_id, store_id)"
+            " VALUES (%s, %s)",
+            (_new_user(conn), _missing_id(conn, "stores", "store_id")),
+        )
+    with pytest.raises(psycopg.errors.ForeignKeyViolation):
+        conn.execute(
+            "INSERT INTO user_store_selection (user_id, store_id)"
+            " VALUES (%s, 1)",
+            (_missing_id(conn, "users", "user_id"),),
+        )
+
+
+def test_history_store_reference_survives_store_deletion(conn):
+    user_id = _new_user(conn)
+    product_id = _new_product(conn)
+    conn.execute(
+        "INSERT INTO stores (name, address) VALUES ('Doomed', '1 Gone St')"
+    )
+    store_id = conn.execute(
+        "SELECT store_id FROM stores WHERE name = 'Doomed'"
+    ).fetchone()[0]
+    conn.execute(
+        "INSERT INTO user_product_history"
+        " (product_id, user_id, interaction, store_id, price_at_interaction)"
+        " VALUES (%s, %s, 'purchased', %s, 12.34)",
+        (product_id, user_id, store_id),
+    )
+
+    # ON DELETE SET NULL: the audit trail survives the store; nothing else
+    # blocks the delete or rewrites the price snapshot.
+    conn.execute("DELETE FROM stores WHERE store_id = %s", (store_id,))
+
+    row = conn.execute(
+        "SELECT store_id, price_at_interaction FROM user_product_history"
+        " WHERE user_id = %s",
+        (user_id,),
+    ).fetchone()
+    assert row[0] is None
+    assert float(row[1]) == 12.34
+
+
+def test_store_selection_cascades_when_user_deleted(conn):
+    user_id = _new_user(conn)
+    conn.execute(
+        "INSERT INTO user_store_selection (user_id, store_id) VALUES (%s, 1)",
+        (user_id,),
+    )
+    conn.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+    count = conn.execute(
+        "SELECT COUNT(*) FROM user_store_selection WHERE user_id = %s",
+        (user_id,),
+    ).fetchone()[0]
+    assert count == 0
+
+
+def test_inventory_quantity_defaults_to_zero(conn):
+    product_id = _new_product(conn)
+    quantity = conn.execute(
+        "INSERT INTO inventory (product_id, store_id, price)"
+        " VALUES (%s, 1, 9.99) RETURNING quantity",
+        (product_id,),
+    ).fetchone()[0]
+    assert quantity == 0
+
+
+def test_inventory_quantity_rejects_null(conn):
+    with pytest.raises(psycopg.errors.NotNullViolation):
+        conn.execute(
+            "INSERT INTO inventory (product_id, store_id, quantity, price)"
+            " VALUES (1, 1, NULL, 9.99)"
+        )
+
+
+def test_inventory_quantity_rejects_negative(conn):
+    with pytest.raises(psycopg.errors.CheckViolation):
+        conn.execute(
+            "INSERT INTO inventory (product_id, store_id, quantity, price)"
+            " VALUES (1, 1, -1, 9.99)"
+        )
+
+
+def test_every_seeded_product_has_inventory(conn):
+    # The regression guard for the 51/52 gap: without it, an inventory seed
+    # missing one product silently passes every count-based test. Other tests
+    # in this module insert throwaway products (some without inventory), so
+    # the check is scoped to the products the seeds themselves define — which
+    # is also what a fresh database would contain.
+    seeded_names = _seeded_product_names()
+    assert len(seeded_names) == EXPECTED_SEED_COUNT
+    gaps = conn.execute(
+        """
+        SELECT p.name FROM products p
+        WHERE p.name = ANY(%s)
+          AND p.product_id NOT IN (SELECT product_id FROM inventory)
+        """,
+        (seeded_names,),
+    ).fetchall()
+    assert [row[0] for row in gaps] == []
+
+
+def test_seeded_prices_differ_per_store_for_fixture_product(conn):
+    # Product 1 is the cross-store fixture: it must cost different amounts at
+    # different stores, or an endpoint that ignores store_id would pass every
+    # price test by accident. Scoped to the two seeded stores because other
+    # tests in this module add throwaway inventory rows for product 1.
+    prices = dict(
+        conn.execute(
+            "SELECT store_id, price FROM inventory"
+            " WHERE product_id = 1 AND store_id IN (1, 2)"
+        ).fetchall()
+    )
+    assert prices == {1: Decimal("220.00"), 2: Decimal("240.00")}
+
+    # And the seeded out-of-stock fixture is genuinely out of stock.
+    quantity_at_2 = conn.execute(
+        "SELECT quantity FROM inventory WHERE product_id = 1 AND store_id = 2"
+    ).fetchone()[0]
+    assert quantity_at_2 == 0

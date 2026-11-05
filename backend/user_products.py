@@ -9,20 +9,53 @@ on ``user_id``, so no caller can read or change another user's rows by accident.
 
 from typing import Any, Literal
 
-from psycopg import Connection
+from psycopg import Connection, sql
 
 from pagination import InvalidCursor, decode_cursor, encode_cursor
 
 # Columns every product response carries, aliased so the joins below can use a
 # bare `p` for products. Keeps responses the same shape as GET /api/products/{id}.
+# store_inventory is built by _product_columns() and joins inventory at the
+# resolved store.
 _PRODUCT_COLUMNS = (
-    "p.product_id, p.name, p.brand, p.product_type, p.price, s.average_rating AS rating, "
+    "p.product_id, p.name, p.brand, p.product_type, s.average_rating AS rating, "
     "p.description, p.image_url, p.created_at, p.updated_at"
 )
 _PRODUCT_KEYS = (
-    "product_id", "name", "brand", "product_type", "price",
-    "rating", "description", "image_url", "created_at", "updated_at",
+    "product_id", "name", "brand", "product_type",
+    "rating", "description", "image_url", "created_at", "updated_at", "store_inventory",
 )
+
+# The store-scoped inventory join. sql.Literal safely embeds store_id here,
+# avoiding positional-parameter ordering mistakes where same-length,
+# incorrectly ordered parameters could bind without raising an error.
+_STORE_INVENTORY = """
+    CASE WHEN i.product_id IS NULL OR i.status = 'pending' THEN NULL ELSE
+        json_build_object(
+            'store_id', i.store_id,
+            'price',    i.price,
+            'quantity', i.quantity,
+            'in_stock', i.quantity > 0 AND i.status = 'active',
+            'status',   i.status
+        )
+    END AS store_inventory
+"""
+
+
+def _store_inventory_join(store_id: int | None) -> sql.Composed:
+    return sql.SQL(
+        "LEFT JOIN inventory i"
+        " ON i.product_id = p.product_id AND i.store_id = {}"
+    ).format(sql.Literal(store_id))
+
+
+def _product_columns(store_id: int | None) -> sql.Composed:
+    """Product columns plus the nested store_inventory, scoped to one store."""
+    return sql.SQL("{}, {}").format(
+        sql.SQL(_PRODUCT_COLUMNS),
+        sql.SQL(_STORE_INVENTORY),
+    )
+
 
 # Interactions the client may report itself. Like changes are recorded by
 # set_liked, so a client cannot forge them.
@@ -37,8 +70,11 @@ _SORT_ORDERS = {
     "recent": "lit.liked_at DESC, p.product_id DESC",
     "name": "p.name ASC, p.product_id ASC",
     "rating": "s.average_rating DESC NULLS LAST, p.product_id ASC",
-    "price": "p.price ASC NULLS LAST, p.product_id ASC",
+    "price": "i.price ASC NULLS LAST, p.product_id ASC",
 }
+
+NO_STORE_SORT_DETAIL = "Select a store to sort by price."
+CURSOR_STORE_MISMATCH_DETAIL = "Cursor does not match the selected store."
 
 
 class UserProductError(Exception):
@@ -54,14 +90,15 @@ class UserProductError(Exception):
         self.status = status
 
 
-def _fetch_product(conn: Connection, product_id: int) -> dict:
+def _fetch_product(conn: Connection, product_id: int, store_id: int | None = None) -> dict:
     row = conn.execute(
-        f"""SELECT {_PRODUCT_COLUMNS}
-            FROM products p
-            LEFT JOIN product_review_stats s
-                ON s.product_id = p.product_id
-            WHERE p.product_id = %s AND p.deleted_at IS NULL
-        """,
+        sql.SQL("SELECT {columns} FROM products p"
+                " LEFT JOIN product_review_stats s ON s.product_id = p.product_id"
+                " {inventory_join}"
+                " WHERE p.product_id = %s AND p.deleted_at IS NULL").format(
+            columns=_product_columns(store_id),
+            inventory_join=_store_inventory_join(store_id),
+        ),
         (product_id,),
     ).fetchone()
     if row is None:
@@ -88,19 +125,33 @@ def _text_filter(query: str | None) -> tuple[str, tuple]:
 def _resume_after(sort: LikedSort, values: dict[str, Any]) -> tuple[str, tuple]:
     """The WHERE fragment that resumes a sorted list right after a cursor row.
 
-    Mirrors _SORT_ORDERS, including how NULL rating/price values sort last.
+    Mirrors _SORT_ORDERS, including each sort's direction and how NULL
+    rating/price values sort last. Price resumes on the inventory price at the
+    cursor's store (i.price).
     """
     last = values["v"]
     product_id = values["id"]
 
-    # Rating / Price sort
-    if sort in ("rating", "price"):
-        column = "s.average_rating" if sort == "rating" else "p.price"
+    # Rating sort: best first (DESC NULLS LAST)
+    if sort == "rating":
+        column = "s.average_rating"
         if last is None:
-            # Everything after a NULL is the remaining NULLs, ordered by id.
+            # Sort remaining NULLS by product_id ascending.
             return f" AND ({column} IS NULL AND p.product_id > %s)", (product_id,)
         return (
             f" AND ({column} < %s"
+            f" OR ({column} = %s AND p.product_id > %s)"
+            f" OR {column} IS NULL)",
+            (last, last, product_id),
+        )
+
+    # Price sort: cheapest first (ASC NULLS LAST) 
+    if sort == "price":
+        column = "i.price"
+        if last is None:
+            return f" AND ({column} IS NULL AND p.product_id > %s)", (product_id,)
+        return (
+            f" AND ({column} > %s"
             f" OR ({column} = %s AND p.product_id > %s)"
             f" OR {column} IS NULL)",
             (last, last, product_id),
@@ -113,7 +164,7 @@ def _resume_after(sort: LikedSort, values: dict[str, Any]) -> tuple[str, tuple]:
             " OR (lit.liked_at = %s AND p.product_id < %s))",
             (last, last, product_id),
         )
-    
+
     # Alphabetical sort
     return (
         " AND (p.name > %s OR (p.name = %s AND p.product_id > %s))",
@@ -121,14 +172,18 @@ def _resume_after(sort: LikedSort, values: dict[str, Any]) -> tuple[str, tuple]:
     )
 
 
-def _cursor_for(last_row: dict, sort: LikedSort) -> str:
+def _cursor_for(last_row: dict, sort: LikedSort, store_id: int | None) -> str:
     if sort == "recent":
         value = last_row["liked_at"].isoformat()
     elif sort == "name":
         value = last_row["name"]
+    elif sort == "price":
+        # store_inventory is None whenever the store has no row for the
+        # product
+        value = (last_row["store_inventory"] or {}).get("price")
     else:
-        value = last_row[sort]
-    return encode_cursor({"v": value, "id": last_row["product_id"]})
+        value = last_row["rating"]
+    return encode_cursor({"v": value, "id": last_row["product_id"], "s": store_id})
 
 
 def _page(rows: list[dict], limit: int) -> tuple[list[dict], bool]:
@@ -141,9 +196,11 @@ def _product_from_row(row: dict, is_liked: bool) -> dict:
     return {**{key: row[key] for key in _PRODUCT_KEYS}, "is_liked": bool(is_liked)}
 
 
-def get_product_for_user(conn: Connection, user_id: int, product_id: int) -> dict:
+def get_product_for_user(
+    conn: Connection, user_id: int, product_id: int, store_id: int | None = None
+) -> dict:
     """One product plus this user's current like state (``is_liked``)."""
-    product = _fetch_product(conn, product_id)
+    product = _fetch_product(conn, product_id, store_id)
     liked = conn.execute(
         "SELECT 1 FROM user_product_likes WHERE user_id = %s AND product_id = %s",
         (user_id, product_id),
@@ -158,36 +215,53 @@ def list_liked_products(
     sort: LikedSort,
     limit: int,
     cursor: str | None,
+    store_id: int | None = None,
 ) -> tuple[list[dict], str | None]:
     """One page of currently liked products, most recently liked first by default.
 
     ``query`` only narrows this user's likes; it never searches the catalog.
+    ``sort=price`` orders by the inventory price at ``store_id`` and requires a
+    store: without one, every row would sort as NULL (all equal) instead of
+    failing, so the request is rejected up front.
     """
+    if sort == "price" and store_id is None:
+        raise UserProductError(NO_STORE_SORT_DETAIL, status=400)
+
     filter_sql, filter_params = _text_filter(query)
-    sql = f"""
-        SELECT {_PRODUCT_COLUMNS}, lit.liked_at
+    sql_text = sql.SQL("""
+        SELECT {columns}, lit.liked_at
         FROM user_product_likes lit
         JOIN products p ON p.product_id = lit.product_id
         LEFT JOIN product_review_stats s
             ON s.product_id = p.product_id
+        {inventory_join}
         WHERE lit.user_id = %s AND p.deleted_at IS NULL{filter_sql}
-    """
+    """).format(
+        columns=_product_columns(store_id),
+        inventory_join=_store_inventory_join(store_id),
+        filter_sql=sql.SQL(filter_sql),
+    )
     params: tuple = (user_id, *filter_params)
 
     # Add a WHERE clause to resume after the last row of the previous page, if any.
     if cursor:
         try:
-            values = decode_cursor(cursor, ("v", "id"))
+            values = decode_cursor(cursor, ("v", "id", "s"))
         except InvalidCursor as error:
             raise UserProductError(str(error), status=400) from error
+        # A price cursor is store-scoped: resuming store A's cursor under
+        # store B would skip or repeat rows, so the mismatch is rejected
+        # instead of silently accepted.
+        if sort == "price" and values.get("s") != store_id:
+            raise UserProductError(CURSOR_STORE_MISMATCH_DETAIL, status=400)
         resume_sql, resume_params = _resume_after(sort, values)
-        sql += resume_sql
+        sql_text += sql.SQL(resume_sql)
         params = (*params, *resume_params)
 
-    sql += f" ORDER BY {_SORT_ORDERS[sort]} LIMIT %s"
-    rows, has_more = _page(conn.execute(sql, (*params, limit + 1)).fetchall(), limit)
+    sql_text += sql.SQL(f" ORDER BY {_SORT_ORDERS[sort]} LIMIT %s")
+    rows, has_more = _page(conn.execute(sql_text, (*params, limit + 1)).fetchall(), limit)
     # return the rows and a cursor for the last row if there is another page, else None
-    return rows, _cursor_for(rows[-1], sort) if has_more else None
+    return rows, _cursor_for(rows[-1], sort, store_id) if has_more else None
 
 
 def list_product_history(
@@ -196,24 +270,32 @@ def list_product_history(
     query: str | None,
     limit: int,
     cursor: str | None,
+    store_id: int | None = None,
 ) -> tuple[list[dict], str | None]:
     """One page of this user's events, newest first.
 
     A product may appear many times: history is a list of events, not a set of
-    products.
+    products. The flat store fields use a screenshot of the store at the time of the event.
     """
     filter_sql, filter_params = _text_filter(query)
-    sql = f"""
+    sql_text = sql.SQL("""
         SELECT h.history_id, h.interaction::text AS interaction, h.occurred_at,
-               {_PRODUCT_COLUMNS}, lit.user_id IS NOT NULL AS is_liked
+               h.store_id, st.name AS store_name, h.price_at_interaction,
+               {columns}, lit.user_id IS NOT NULL AS is_liked
         FROM user_product_history h
         JOIN products p ON p.product_id = h.product_id
         LEFT JOIN product_review_stats s
             ON s.product_id = p.product_id
+        LEFT JOIN stores st ON st.store_id = h.store_id
         LEFT JOIN user_product_likes lit
                ON lit.product_id = p.product_id AND lit.user_id = %s
+        {inventory_join}
         WHERE h.user_id = %s AND p.deleted_at IS NULL{filter_sql}
-    """
+    """).format(
+        columns=_product_columns(store_id),
+        inventory_join=_store_inventory_join(store_id),
+        filter_sql=sql.SQL(filter_sql),
+    )
     params: tuple = (user_id, user_id, *filter_params)
 
     # Add a WHERE clause to resume after the last row of the previous page, if any.
@@ -222,14 +304,14 @@ def list_product_history(
             values = decode_cursor(cursor, ("at", "id"))
         except InvalidCursor as error:
             raise UserProductError(str(error), status=400) from error
-        sql += (
+        sql_text += sql.SQL(
             " AND (h.occurred_at < %s"
             " OR (h.occurred_at = %s AND h.history_id < %s))"
         )
         params = (*params, values["at"], values["at"], values["id"])
 
-    sql += " ORDER BY h.occurred_at DESC, h.history_id DESC LIMIT %s"
-    rows, has_more = _page(conn.execute(sql, (*params, limit + 1)).fetchall(), limit)
+    sql_text += sql.SQL(" ORDER BY h.occurred_at DESC, h.history_id DESC LIMIT %s")
+    rows, has_more = _page(conn.execute(sql_text, (*params, limit + 1)).fetchall(), limit)
 
     # build the response items and a cursor for the last row if there is another page, else None
     items = [
@@ -237,6 +319,9 @@ def list_product_history(
             "history_id": row["history_id"],
             "interaction": row["interaction"],
             "occurred_at": row["occurred_at"],
+            "store_id": row["store_id"],
+            "store_name": row["store_name"],
+            "price_at_interaction": row["price_at_interaction"],
             "product": _product_from_row(row, row["is_liked"]),
         }
         for row in rows
@@ -251,14 +336,20 @@ def list_product_history(
     return items, next_cursor
 
 
-def set_liked(conn: Connection, user_id: int, product_id: int, liked: bool) -> dict:
+def set_liked(
+    conn: Connection,
+    user_id: int,
+    product_id: int,
+    liked: bool,
+    store_id: int | None = None,
+) -> dict:
     """Set this user's like state, recording a history event on a real change.
 
     Idempotent: liking an already liked product (or unliking one that is not
     liked) succeeds without writing a second event. Unliking never removes
     history, so the timeline still shows the earlier interaction.
     """
-    _fetch_product(conn, product_id)
+    _fetch_product(conn, product_id, store_id)
 
     already_liked = conn.execute(
         "SELECT 1 FROM user_product_likes WHERE user_id = %s AND product_id = %s",
@@ -270,38 +361,57 @@ def set_liked(conn: Connection, user_id: int, product_id: int, liked: bool) -> d
             "INSERT INTO user_product_likes (product_id, user_id) VALUES (%s, %s)",
             (product_id, user_id),
         )
-        _append_history(conn, user_id, product_id, "liked")
+        _append_history(conn, user_id, product_id, "liked", store_id)
     elif not liked and already_liked:
         conn.execute(
             "DELETE FROM user_product_likes WHERE user_id = %s AND product_id = %s",
             (user_id, product_id),
         )
-        _append_history(conn, user_id, product_id, "unliked")
+        _append_history(conn, user_id, product_id, "unliked", store_id)
 
-    return get_product_for_user(conn, user_id, product_id)
+    return get_product_for_user(conn, user_id, product_id, store_id)
 
 
 def record_interaction(
-    conn: Connection, user_id: int, product_id: int, interaction: str
+    conn: Connection,
+    user_id: int,
+    product_id: int,
+    interaction: str,
+    store_id: int | None = None,
 ) -> dict:
     """Append a client-reported interaction event and return it."""
     if interaction not in CLIENT_INTERACTIONS:
         raise UserProductError(
             f"Interaction must be one of: {', '.join(CLIENT_INTERACTIONS)}"
         )
-    _fetch_product(conn, product_id)
-    return _append_history(conn, user_id, product_id, interaction)
+    _fetch_product(conn, product_id, store_id)
+    return _append_history(conn, user_id, product_id, interaction, store_id)
 
 
 def _append_history(
-    conn: Connection, user_id: int, product_id: int, interaction: str
+    conn: Connection,
+    user_id: int,
+    product_id: int,
+    interaction: str,
+    store_id: int | None = None,
 ) -> dict:
-    """Insert a row into user_product_history and return it."""
+    """Insert a history row with a snapshot of the store and price at the time of the event.
+
+    The price resolves in the same statement, so the snapshot equals what the
+    user saw: NULL when no store was selected or the store does not carry the
+    product, without a separate lookup. 
+    Both fields are nullable by design. 
+    """
     return conn.execute(
         """
-        INSERT INTO user_product_history (product_id, user_id, interaction)
-        VALUES (%s, %s, %s)
-        RETURNING history_id, interaction::text AS interaction, occurred_at
+        INSERT INTO user_product_history
+            (product_id, user_id, interaction, store_id, price_at_interaction)
+        VALUES (
+            %s, %s, %s, %s,
+            (SELECT price FROM inventory WHERE product_id = %s AND store_id = %s)
+        )
+        RETURNING history_id, interaction::text AS interaction, occurred_at,
+                  store_id, price_at_interaction
         """,
-        (product_id, user_id, interaction),
+        (product_id, user_id, interaction, store_id, product_id, store_id),
     ).fetchone()

@@ -1,10 +1,30 @@
+"""GET /api/stores: the public list of locations a shopper can pick from.
+
+Completly public: no auth, no optional auth. The client calls it before any store is
+selected, and it must answer the same way for everyone.
+"""
+
+
 import httpx
 from fastapi import APIRouter, HTTPException, Query
-
+from schemas import Store
 from database import get_connection
 
 router = APIRouter(prefix="/api/stores", tags=["stores"])
 
+
+@router.get("", response_model=list[Store])
+def list_stores() -> list[dict]:
+    """Every store, in a stable order so the client's list never reshuffles."""
+    with get_connection() as conn:
+        return conn.execute(
+            """
+            SELECT store_id, name, address, latitude, longitude
+            FROM stores
+            ORDER BY store_id
+            """
+        ).fetchall()
+   
 @router.get("/search")
 async def search_locations(q: str = Query(min_length=2, max_length=150)):
     """Turns a user entered zip code or location into a real location with coordinates."""

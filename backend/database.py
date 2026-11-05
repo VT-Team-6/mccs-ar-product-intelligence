@@ -55,10 +55,13 @@ def get_connection():
 
 
 def get_product(product_id: int):
-    """Return one product as a dict, or None if that ID doesn't exist."""
+    """Return one product as a dict, or None if that ID doesn't exist.
+
+    Only used as an existence check (the QR route), so it selects no columns
+    that could drift when the schema changes.
+    """
     with get_connection() as conn:
         return conn.execute(
-            "SELECT product_id, name, brand, product_type, price, description "
-            "FROM products WHERE product_id = %s",
+            "SELECT 1 FROM products WHERE product_id = %s",
             (product_id,),
         ).fetchone()

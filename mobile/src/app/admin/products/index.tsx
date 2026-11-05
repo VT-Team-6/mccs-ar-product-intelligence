@@ -143,7 +143,7 @@ function ProductRow({ product }: { product: Product }) {
     .filter(Boolean)
     .join(" · ");
   const price =
-    product.price === null ? "No price" : `$${product.price.toFixed(2)}`;
+    product.price == null ? "No price" : `$${product.price.toFixed(2)}`;
   const imageUrl = productImageUrl(product);
   const router = useRouter();
 

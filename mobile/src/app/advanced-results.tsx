@@ -10,7 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { CRITERIA } from '@/preferences/criteria';
-import { rankingFromParam } from '@/search/advanced';
+import { describeUnderstood, rankingFromParam } from '@/search/advanced';
 
 // The blue used for links elsewhere in the app
 const ACCENT = '#3c87f7';
@@ -28,6 +28,10 @@ export default function AdvancedResultsScreen() {
   const [error, setError] = useState<string | null>(null);
   // Goes up by one each time "Try again" is pressed, which runs the search again
   const [attempt, setAttempt] = useState(0);
+
+  // How the backend read the text, e.g. ["Under $150", "Waterproof"]
+  const understood = describeUnderstood(result?.understood);
+  const hasLimits = understood.length > 0;
 
   // The shopper's priorities in order, e.g. ["Comfort", "Price"]
   const priorities = CRITERIA.filter(({ key }) => ranking[key] > 0)
@@ -98,6 +102,18 @@ export default function AdvancedResultsScreen() {
             {query !== '' && (
               <ThemedText themeColor="textSecondary">{`For "${query}"`}</ThemedText>
             )}
+            {understood.length > 0 && (
+              <View style={styles.chips}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Looking for:
+                </ThemedText>
+                {understood.map((label) => (
+                  <ThemedView key={label} type="backgroundElement" style={styles.chip}>
+                    <ThemedText type="small">{label}</ThemedText>
+                  </ThemedView>
+                ))}
+              </View>
+            )}
             {priorities.length > 0 && (
               <ThemedText type="small" themeColor="textSecondary">
                 {`Your priorities: ${priorities.map((label, i) => `${i + 1}. ${label}`).join('  ')}`}
@@ -121,7 +137,9 @@ export default function AdvancedResultsScreen() {
           ) : result && result.best_matches.length === 0 ? (
             <View style={styles.section}>
               <ThemedText themeColor="textSecondary">
-                No good matches. Try different words or fewer requirements.
+                {hasLimits
+                  ? 'No products match all of that. Try a higher budget or fewer requirements.'
+                  : 'No good matches. Try describing it differently, like "boots for snow".'}
               </ThemedText>
               <Pressable onPress={editSearch} style={({ pressed }) => pressed && styles.pressed}>
                 <ThemedText type="linkPrimary">Edit search</ThemedText>
@@ -200,6 +218,18 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: Spacing.one,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: Spacing.one,
+    paddingTop: Spacing.one,
+  },
+  chip: {
+    paddingVertical: Spacing.half,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Spacing.three,
   },
   forYou: {
     gap: Spacing.two,

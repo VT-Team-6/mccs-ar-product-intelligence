@@ -186,7 +186,7 @@ export default function ProductScreen() {
               <Fact
                 label="Price"
                 value={
-                  product.price === null
+                  product.price == null
                     ? "No price"
                     : `$${product.price.toFixed(2)}`
                 }
