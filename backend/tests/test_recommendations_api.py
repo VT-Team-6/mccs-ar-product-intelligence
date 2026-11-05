@@ -221,3 +221,27 @@ def test_unrelated_text_returns_no_matches(client, db):
     assert response.status_code == 200
     assert response.json()["best_matches"] == []
     assert response.json()["for_you"] is None
+
+# --- how advanced-search text was read (task 12) ---------------------------
+
+
+def test_text_request_says_how_it_was_read(client):
+    _sign_in_as(client, "rec-understood")
+
+    response = _recommend(client, text="waterproof boots under $150", ranking=NOTHING_RANKED)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["understood"]["max_price"] == 150
+    assert body["understood"]["requirements"] == ["waterproof"]
+    # The results follow the limit the shopper sees
+    assert all(card["product"]["price"] <= 150 for card in body["best_matches"])
+
+
+def test_product_only_request_has_nothing_to_read(client, db):
+    _sign_in_as(client, "rec-understood-product")
+
+    response = _recommend(client, product_id=_product_id(db, "Sorel"), ranking=NOTHING_RANKED)
+
+    assert response.status_code == 200
+    assert response.json()["understood"] is None

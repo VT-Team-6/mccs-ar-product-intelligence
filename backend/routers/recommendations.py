@@ -10,8 +10,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 import auth
 import preferences
 from database import get_connection
-from ranking import get_engine
+from ranking import get_engine, types_named_in
 from schemas import RecommendationRequest, RecommendationResponse
+from search_understanding import understand
 
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
 
@@ -46,7 +47,8 @@ def recommend(body: RecommendationRequest, user=Depends(auth.require_authenticat
         ]
 
     try:
-        result = get_engine().recommend(
+        engine = get_engine()
+        result = engine.recommend(
             product_id=body.product_id,
             text=body.text,
             now_ranks=body.ranking.model_dump(),
@@ -78,4 +80,7 @@ def recommend(body: RecommendationRequest, user=Depends(auth.require_authenticat
 
     best = [c for c in (with_product(card) for card in result["best_matches"]) if c]
     for_you = with_product(result["for_you"]) if result["for_you"] else None
-    return {"best_matches": best, "for_you": for_you}
+
+    # How the text was read, so the shopper can see the limits the results follow
+    understood = understand(body.text, engine.brands, types_named_in(body.text or "", set(engine.types)))
+    return {"best_matches": best, "for_you": for_you, "understood": understood}
