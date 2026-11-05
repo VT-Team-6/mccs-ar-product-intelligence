@@ -1,13 +1,11 @@
-"""Stock levels: public reads, and admin-only writes including the push flow.
+"""Stock levels: public reads, and permission-gated writes including the push flow.
 
 Reads are completely public, and the public routes are in their own routers so they can be mounted.
-
-Writes require inventory-writer from auth.py.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-import auth
+from auth import require_permission
 import stock
 from database import get_connection
 from schemas import (
@@ -30,10 +28,10 @@ MAX_PAGE_SIZE = 200
 product_stock_router = APIRouter(prefix="/api/products", tags=["stock"])
 store_stock_router = APIRouter(prefix="/api/stores", tags=["stock"])
 
+# Each route declares the permission it needs.
 writer_router = APIRouter(
     prefix="/api/admin/inventory",
     tags=["admin-stock"],
-    dependencies=[Depends(auth.require_inventory_writer)],
 )
 
 
@@ -77,7 +75,11 @@ def read_store_stock(
     }
 
 
-@writer_router.get("", response_model=StoreStock)
+@writer_router.get(
+    "",
+    response_model=StoreStock,
+    dependencies=[Depends(require_permission("manage_stock"))],
+)
 def read_store_inventory(
     store_id: int = Query(gt=0),
     entry_status: InventoryStatus = Query(default=stock.SHOPPER_STATUS),
@@ -111,7 +113,7 @@ def replace_stock(
     product_id: int,
     store_id: int,
     body: InventoryWrite,
-    user=Depends(auth.require_inventory_writer),
+    user=Depends(require_permission("manage_stock")),
 ) -> dict:
     """Create or replace one product's stock at one store.
 
@@ -136,7 +138,7 @@ def replace_stock(
 @writer_router.put("", response_model=list[InventoryRecord])
 def replace_stock_batch(
     body: InventoryBatch,
-    user=Depends(auth.require_inventory_writer),
+    user=Depends(require_permission("manage_stock")),
 ) -> list[dict]:
     """Apply many product+store rows, or none of them."""
     with get_connection() as conn:
@@ -152,11 +154,12 @@ def replace_stock_batch(
             raise _http_error(error) from error
 
 
-@writer_router.post("/push", response_model=list[PushedEntry])
-def push_products(
-    body: InventoryPush,
-    user=Depends(auth.require_inventory_writer),
-) -> list[dict]:
+@writer_router.post(
+    "/push",
+    response_model=list[PushedEntry],
+    dependencies=[Depends(require_permission("manage_stock"))],
+)
+def push_products(body: InventoryPush) -> list[dict]:
     """Push catalog products to stores as pending entries awaiting approval.
 
     Nothing about a pushed product reaches a shopper until the store approves
@@ -174,7 +177,7 @@ def approve_pushed_product(
     product_id: int,
     store_id: int,
     body: InventoryApproval,
-    user=Depends(auth.require_inventory_writer),
+    user=Depends(require_permission("manage_inventory")),
 ) -> dict:
     """Approve a pending entry, with the price the store is setting."""
     with get_connection() as conn:
@@ -191,7 +194,10 @@ def approve_pushed_product(
             raise _http_error(error) from error
 
 
-@writer_router.delete("/{product_id}/{store_id}")
+@writer_router.delete(
+    "/{product_id}/{store_id}",
+    dependencies=[Depends(require_permission("manage_stock"))],
+)
 def delete_stock(product_id: int, store_id: int) -> dict:
     """Remove an entry. Declining a push is exactly this: delete the pending row."""
     with get_connection() as conn:

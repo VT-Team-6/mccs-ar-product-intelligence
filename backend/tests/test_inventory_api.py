@@ -6,8 +6,8 @@
 # write can never leak into a later read assertion.
 #
 # Authorisation is exercised for real: token verification is overridden and the
-# cognito-idp client is faked, so no AWS call is made, but `require_admin` and
-# `require_inventory_writer` run exactly as they do in production.
+# cognito-idp client is faked, so no AWS call is made, but `require_permission`
+# runs exactly as it does in production.
 
 import os
 from urllib.parse import quote
@@ -111,17 +111,37 @@ def _sign_in(client, token) -> dict:
 
 
 def _sign_in_as_admin(client, db, token="stock-admin") -> dict:
+    """Sign in and promote to system_admin, the only globally-scoped role."""
     user = _sign_in(client, token)
-    db.execute("UPDATE users SET is_admin = TRUE WHERE user_id = %s", (user["user_id"],))
+    db.execute(
+        "UPDATE users SET role = 'system_admin' WHERE user_id = %s", (user["user_id"],)
+    )
     return client.get("/me").json()
 
 
-def _new_product(client) -> int:
+def _sign_in_as(client, db, role, token=None) -> dict:
+    """Sign in as a specific role."""
+    user = _sign_in(client, token or f"stock-{role}")
+    db.execute("UPDATE users SET role = %s WHERE user_id = %s", (role, user["user_id"]))
+    return client.get("/me").json()
+
+
+def _new_product(client, db=None) -> int:
     """A catalog product with no inventory rows anywhere.
 
     Every seeded product already has stock at both stores, so the
-    "no entry yet" cases need a product nobody has stocked.
+    "no entry yet" cases need a product nobody has stocked. Inserted directly
+    when a connection is given: creating a product is a catalog permission
+    (`manage_products`), which store roles deliberately do not hold, so going
+    through the API would test the wrong thing.
     """
+    if db is not None:
+        return db.execute(
+            "INSERT INTO products (name, product_type) VALUES (%s, %s)"
+            " RETURNING product_id",
+            ("Test Pushed Sneaker", "Sneaker"),
+        ).fetchone()["product_id"]
+
     response = client.post(
         "/api/admin/products",
         json={"name": "Test Pushed Sneaker", "product_type": "Sneaker"},
@@ -659,3 +679,98 @@ def test_writes_refuse_non_admins(client, db):
 
     assert response.status_code == 403
     assert client.get("/api/products/1/stock").json()["stores"][0]["quantity"] == 12
+
+
+# --- role permissions -----------------------------------------------------
+#
+# One test per role/route combination that matters, because the failure mode
+# here is silent: a route guarded by the wrong permission still returns 200 for
+# the roles that happen to hold it, and only breaks for the rest.
+
+
+def test_single_write_is_allowed_for_store_buyer(client, db):
+    # The single-row PUT is the same job as the batch PUT, so holding
+    # manage_stock must be enough. Guarding it with manage_products locked
+    # every store role out of it.
+    _sign_in_as(client, db, "store_buyer")
+
+    response = client.put("/api/admin/inventory/1/1", json={"quantity": 7})
+
+    assert response.status_code == 200
+    assert response.json()["quantity"] == 7
+
+
+def test_single_write_is_allowed_for_store_admin(client, db):
+    _sign_in_as(client, db, "store_admin")
+
+    assert (
+        client.put("/api/admin/inventory/1/1", json={"quantity": 7}).status_code == 200
+    )
+
+
+def test_store_buyer_cannot_approve_a_pushed_product(client, db):
+    # Deciding what the store sells is store_admin work, not buyer work.
+    _sign_in_as(client, db, "store_buyer")
+    product_id = _new_product(client, db)
+    client.post(
+        "/api/admin/inventory/push",
+        json={"product_ids": [product_id], "store_ids": [1]},
+    )
+
+    response = client.post(
+        f"/api/admin/inventory/{product_id}/1/approve", json={"price": 5.0}
+    )
+
+    assert response.status_code == 403
+
+
+def test_store_admin_can_approve_a_pushed_product(client, db):
+    _sign_in_as(client, db, "store_admin")
+    product_id = _new_product(client, db)
+    client.post(
+        "/api/admin/inventory/push",
+        json={"product_ids": [product_id], "store_ids": [1]},
+    )
+
+    response = client.post(
+        f"/api/admin/inventory/{product_id}/1/approve", json={"price": 5.0}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "active"
+
+
+def test_store_buyer_can_push_a_product(client, db):
+    # The push route never reads the user, so it is guarded by the decorator
+    # rather than a parameter; a missing Depends there would not fail loudly.
+    _sign_in_as(client, db, "store_buyer")
+    product_id = _new_product(client, db)
+
+    response = client.post(
+        "/api/admin/inventory/push",
+        json={"product_ids": [product_id], "store_ids": [1]},
+    )
+
+    assert response.status_code == 200
+    assert response.json()[0]["status"] == "pending"
+
+
+def test_store_buyer_can_delete_an_entry(client, db):
+    _sign_in_as(client, db, "store_buyer")
+
+    assert client.delete("/api/admin/inventory/1/1").status_code == 200
+
+    remaining = client.get("/api/products/1/stock").json()["stores"]
+    assert [store["store_id"] for store in remaining] == [2]
+
+
+def test_read_only_role_cannot_push(client, db):
+    _sign_in_as(client, db, "user")
+    product_id = _new_product(client, db)
+
+    response = client.post(
+        "/api/admin/inventory/push",
+        json={"product_ids": [product_id], "store_ids": [1]},
+    )
+
+    assert response.status_code == 403

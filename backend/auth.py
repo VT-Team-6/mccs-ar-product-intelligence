@@ -176,27 +176,6 @@ def optional_user(
     return require_authenticated_user(verify_access_token(credentials))
 
 
-def require_admin(
-    user=Depends(require_authenticated_user),
-):
-    if not user["is_admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
-        )
-
-    return user
-
-
-def require_inventory_writer(
-    user=Depends(require_admin),
-):
-    """Who may change store inventory.
-
-    Currently uses placeholder admin requirement.
-    """
-    return user
-  
 def get_user_access(conn, user):
     """One global role determines capabilities; assignments determine scope."""
     assignments = conn.execute(
