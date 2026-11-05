@@ -7,6 +7,9 @@ export type ProductAnalysis = {
   pros: string[];
   cons: string[];
   review_count: number;
+  total_review_count: number;
+  average_rating: number | null;
+  rating_distribution: Record<string, number>;
   sources: string[];
   message?: string;
 };
