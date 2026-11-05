@@ -142,8 +142,6 @@ function ProductRow({ product }: { product: Product }) {
   const details = [product.brand, product.product_type]
     .filter(Boolean)
     .join(" · ");
-  const price =
-    product.price == null ? "No price" : `$${product.price.toFixed(2)}`;
   const imageUrl = productImageUrl(product);
   const router = useRouter();
 
@@ -180,7 +178,6 @@ function ProductRow({ product }: { product: Product }) {
               ` · ${product.rating.toFixed(1)} rating`}
           </ThemedText>
         </ThemedView>
-        <ThemedText type="smallBold">{price}</ThemedText>
       </ThemedView>
     </Pressable>
   );
