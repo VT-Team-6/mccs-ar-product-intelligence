@@ -15,6 +15,7 @@ from fastapi.testclient import TestClient
 from testcontainers.community.postgres import PostgresContainer
 
 import auth
+import store_selection
 import user_products
 from conftest import apply_init_sql
 from main import app
@@ -81,6 +82,7 @@ def cognito(monkeypatch):
 def _reset_auth_override():
     yield
     app.dependency_overrides.pop(auth.verify_access_token, None)
+    app.dependency_overrides.pop(auth.optional_user, None)
 
 
 # --- helpers --------------------------------------------------------------
@@ -101,7 +103,11 @@ def _sign_in_as(client, token):
 
 
 def _new_product(conn, name="Test Product", brand="Test Brand", **columns) -> int:
-    """Insert a product and return its id, so tests never depend on seed data."""
+    """Insert a product and return its id, so tests never depend on seed data.
+
+    Only real product columns may be passed: price lives in inventory and
+    rating comes from reviews, so those fixtures have their own helpers.
+    """
     fields = {"name": name, "brand": brand, "product_type": "Test", **columns}
     assignments = ", ".join(fields)
     placeholders = ", ".join(["%s"] * len(fields))
@@ -109,6 +115,35 @@ def _new_product(conn, name="Test Product", brand="Test Brand", **columns) -> in
         f"INSERT INTO products ({assignments}) VALUES ({placeholders}) RETURNING product_id",
         tuple(fields.values()),
     ).fetchone()["product_id"]
+
+
+def _add_inventory(conn, product_id, store_id, quantity, price) -> None:
+    """Price a product at a store, since products no longer carry a price."""
+    conn.execute(
+        "INSERT INTO inventory (product_id, store_id, quantity, price)"
+        " VALUES (%s, %s, %s, %s)",
+        (product_id, store_id, quantity, price),
+    )
+
+
+def _add_review(conn, product_id, rating) -> None:
+    """Give a product a rating, which comes from reviews (not a column)."""
+    source_id = conn.execute(
+        "INSERT INTO product_review_sources (product_id, source)"
+        " VALUES (%s, 'test') RETURNING review_source_id",
+        (product_id,),
+    ).fetchone()["review_source_id"]
+    conn.execute(
+        "INSERT INTO reviews (product_id, rating, review_source_id, body)"
+        " VALUES (%s, %s, %s, 'test review body')",
+        (product_id, rating, source_id),
+    )
+
+
+def _save_store(client, store_id) -> None:
+    """Persist the signed-in user's store selection."""
+    response = client.put("/api/me/store", json={"store_id": store_id})
+    assert response.status_code == 200, response.text
 
 
 def _history(conn, user_id) -> list[str]:
@@ -238,6 +273,30 @@ def _sign_in_as_direct(conn) -> int:
     ).fetchone()["user_id"]
 
 
+# --- store selection resolution -------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "user_has_row,explicit,expected",
+    [
+        pytest.param(True, 2, 2, id="explicit-param-beats-saved-store"),
+        pytest.param(True, None, 1, id="saved-store-applies-when-no-param"),
+        pytest.param(False, 3, 3, id="explicit-param-without-saved-store"),
+        pytest.param(False, None, None, id="signed-in-without-saved-store"),
+        pytest.param(None, None, None, id="anonymous-without-param"),
+        pytest.param(None, 3, 3, id="anonymous-with-explicit-param"),
+    ],
+)
+def test_resolve_store_id_priority(db, user_has_row, explicit, expected):
+    # One table-driven test for the whole resolution rule, so a future edit
+    # cannot make one route drift from another (they all share this call).
+    user_id = None if user_has_row is None else _sign_in_as_direct(db)
+    if user_has_row:
+        store_selection.save_selected_store(db, user_id, 1)
+
+    assert store_selection.resolve_store_id(db, user_id, explicit) == expected
+
+
 # --- HTTP layer -----------------------------------------------------------
 
 
@@ -334,20 +393,98 @@ def test_likes_can_be_sorted(client, db, cognito):
         ("A Item", 10, 5.0),
         ("B Item", 20, 4.0),
     ):
-        product_id = _new_product(db, name=name, price=price, rating=rating)
+        product_id = _new_product(db, name=name)
+        _add_inventory(db, product_id, 1, 5, price)
+        _add_review(db, product_id, rating)
         client.put(f"/api/me/liked-products/{product_id}")
 
-    def names(sort):
+    def names(sort, **params):
         return [
             item["name"]
             for item in client.get(
-                "/api/me/liked-products", params={"sort": sort}
+                "/api/me/liked-products", params={"sort": sort, **params}
             ).json()["items"]
         ]
 
     assert names("name") == ["A Item", "B Item", "C Item"]
-    assert names("price") == ["A Item", "B Item", "C Item"]
+    # Price sorting is store-scoped: it needs a resolved store, and the
+    # explicit ?store_id= counts as one.
+    assert names("price", store_id=1) == ["A Item", "B Item", "C Item"]
     assert names("rating") == ["A Item", "B Item", "C Item"]
+
+
+def test_likes_price_sort_requires_a_store(client, db, cognito):
+    _sign_in_as(client, "likes-price-no-store")
+
+    response = client.get("/api/me/liked-products", params={"sort": "price"})
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Select a store to sort by price."
+
+
+def test_likes_price_sort_with_saved_store(client, db, cognito):
+    _sign_in_as(client, "likes-price-saved")
+    _save_store(client, 1)
+    product_ids = [
+        _new_product(db, name="Cheap"),       # priced 5.00 at store 1
+        _new_product(db, name="Pricey"),      # priced 50.00 at store 1
+        _new_product(db, name="Middle"),      # priced 25.00 at store 1
+    ]
+    for product_id, price in zip(product_ids, (5.00, 50.00, 25.00)):
+        _add_inventory(db, product_id, 1, 5, price)
+        client.put(f"/api/me/liked-products/{product_id}")
+
+    body = client.get("/api/me/liked-products", params={"sort": "price"}).json()
+
+    assert [item["name"] for item in body["items"]] == ["Cheap", "Middle", "Pricey"]
+
+
+def test_likes_price_sort_second_page_under_same_store(client, db, cognito):
+    _sign_in_as(client, "likes-price-page2")
+    _save_store(client, 1)
+    names_prices = [("A", 1.00), ("B", 2.00), ("C", 3.00), ("D", 4.00)]
+    for name, price in names_prices:
+        product_id = _new_product(db, name=name)
+        _add_inventory(db, product_id, 1, 5, price)
+        client.put(f"/api/me/liked-products/{product_id}")
+
+    first = client.get(
+        "/api/me/liked-products", params={"sort": "price", "limit": 2}
+    ).json()
+    assert [item["name"] for item in first["items"]] == ["A", "B"]
+    assert first["next_cursor"]
+
+    second = client.get(
+        "/api/me/liked-products",
+        params={"sort": "price", "limit": 2, "cursor": first["next_cursor"]},
+    ).json()
+    assert [item["name"] for item in second["items"]] == ["C", "D"]
+    assert second["next_cursor"] is None
+
+
+def test_likes_price_sort_rejects_cross_store_cursor(client, db, cognito):
+    _sign_in_as(client, "likes-price-cross-store")
+    _save_store(client, 1)
+    product_ids = [_new_product(db, name=f"P{i}") for i in range(3)]
+    for i, product_id in enumerate(product_ids):
+        _add_inventory(db, product_id, 1, 5, 10.00 + i)
+        _add_inventory(db, product_id, 2, 5, 90.00 + i)
+        client.put(f"/api/me/liked-products/{product_id}")
+
+    first = client.get(
+        "/api/me/liked-products",
+        params={"sort": "price", "limit": 2, "store_id": 1},
+    ).json()
+
+    # The same cursor under a different store would resume at the wrong
+    # position (or skip rows), so it is rejected instead of mispaginating.
+    response = client.get(
+        "/api/me/liked-products",
+        params={"sort": "price", "limit": 2, "store_id": 2, "cursor": first["next_cursor"]},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cursor does not match the selected store."
 
 
 def test_likes_use_a_cursor_for_the_next_page(client, db, cognito):
@@ -481,3 +618,174 @@ def test_liking_a_missing_product_returns_404(client, db, cognito):
 
     assert client.put("/api/me/liked-products/999999").status_code == 404
     assert client.delete("/api/me/liked-products/999999").status_code == 404
+
+
+# --- store selection (/api/me/store) ---------------------------------------
+
+
+def test_store_routes_require_authentication(client):
+    assert client.get("/api/me/store").status_code == 401
+    assert client.put("/api/me/store", json={"store_id": 1}).status_code == 401
+
+
+def test_store_selection_round_trip_and_repeat_save(client, db, cognito):
+    _sign_in_as(client, "store-round-trip")
+
+    assert client.get("/api/me/store").json() == {"store_id": None}
+
+    first = client.put("/api/me/store", json={"store_id": 1})
+    assert first.status_code == 200
+    assert client.get("/api/me/store").json() == {"store_id": 1}
+
+    # A repeat PUT with a different store must change the value (a bare
+    # ON CONFLICT DO NOTHING would leave store 1 here and fail this test).
+    second = client.put("/api/me/store", json={"store_id": 2})
+    assert second.status_code == 200
+    assert client.get("/api/me/store").json() == {"store_id": 2}
+
+    cleared = client.put("/api/me/store", json={"store_id": None})
+    assert cleared.status_code == 200
+    assert client.get("/api/me/store").json() == {"store_id": None}
+
+
+def test_store_selection_rejects_unknown_store(client, db, cognito):
+    _sign_in_as(client, "store-unknown")
+
+    response = client.put("/api/me/store", json={"store_id": 999999})
+
+    assert response.status_code == 404
+
+
+def test_store_selection_is_per_user(client, db, cognito):
+    _sign_in_as(client, "store-one")
+    client.put("/api/me/store", json={"store_id": 1})
+
+    _sign_in_as(client, "store-two")
+
+    assert client.get("/api/me/store").json() == {"store_id": None}
+
+
+# --- optional_user + saved-store resolution on shopper endpoints ----------
+
+
+def test_shopper_endpoints_use_saved_store_without_param(client, db, cognito):
+    _sign_in_as(client, "saved-store")
+    _save_store(client, 1)
+    # Seeded product 1: 220.00 at store 1, 240.00 (out of stock) at store 2.
+    client.put("/api/me/liked-products/1")
+
+    detail = client.get("/api/me/products/1").json()
+    assert detail["store_inventory"]["price"] == 220.0
+
+    likes = client.get("/api/me/liked-products", params={"sort": "price"}).json()
+    assert likes["items"][0]["store_inventory"]["price"] == 220.0
+
+    # An explicit store_id always wins over the saved store.
+    override = client.get("/api/me/products/1", params={"store_id": 2}).json()
+    assert override["store_inventory"]["price"] == 240.0
+
+
+def test_optional_user_invalid_token_is_rejected(client, db):
+    # optional_user must not quietly downgrade a bad token to anonymous (the
+    # verify_access_token override does not apply to it: it is called as a
+    # plain function inside optional_user, so this exercises the real one).
+    response = client.get(
+        "/api/products/1", headers={"Authorization": "Bearer not-a-real-token"}
+    )
+    assert response.status_code == 401
+
+
+def test_optional_user_valid_token_applies_saved_store(client, db, cognito):
+    # /api/me/* routes authenticate via verify_access_token, which the
+    # _sign_in_as override satisfies. But /api/products/{id} authenticates
+    # through optional_user, which calls verify_access_token as a plain
+    # function — the override does not reach it. Overriding optional_user
+    # directly is the only way to authenticate a shopper on those routes.
+    user_id = _sign_in_as(client, "optional-user")
+    _save_store(client, 1)
+    app.dependency_overrides[auth.optional_user] = lambda: {
+        "user_id": user_id,
+        "cognito_sub": "optional-user",
+        "email": "optional-user@example.com",
+        "is_admin": False,
+    }
+
+    response = client.get("/api/products/1")
+
+    assert response.status_code == 200
+    # Seeded product 1: the saved store (1) prices it, not just an explicit
+    # ?store_id=.
+    assert response.json()["store_inventory"]["price"] == 220.0
+
+
+# --- interactions + history stamped with store context ---------------------
+
+
+def test_interaction_stamps_store_and_price(client, db, cognito):
+    _sign_in_as(client, "interaction-stamp")
+    _save_store(client, 1)
+    product_id = _new_product(db, name="Stamped Boots")
+    _add_inventory(db, product_id, 1, 5, 44.99)
+
+    response = client.post(
+        "/api/me/product-interactions",
+        json={"product_id": product_id, "interaction": "scanned"},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    assert body["store_id"] == 1
+    assert body["price_at_interaction"] == 44.99
+
+    history = client.get("/api/me/product-history").json()["items"]
+    assert history[0]["store_id"] == 1
+    assert history[0]["store_name"]  # seeded store 1 has a name
+    assert history[0]["price_at_interaction"] == 44.99
+
+
+def test_interaction_at_store_without_inventory_records_null_price(
+    client, db, cognito
+):
+    _sign_in_as(client, "interaction-null-price")
+    _save_store(client, 2)
+    product_id = _new_product(db, name="Not At Store 2")
+
+    response = client.post(
+        "/api/me/product-interactions",
+        json={"product_id": product_id, "interaction": "scanned"},
+    )
+
+    assert response.status_code == 201
+    body = response.json()
+    # The store is still recorded even though it carries no row for the
+    # product: "we know where they were, there was no price to see".
+    assert body["store_id"] == 2
+    assert body["price_at_interaction"] is None
+
+
+def test_history_flat_store_fields_differ_from_nested_store_inventory(
+    client, db, cognito
+):
+    _sign_in_as(client, "history-flat-vs-nested")
+    _save_store(client, 1)
+    product_id = _new_product(db, name="Flat vs Nested")
+    _add_inventory(db, product_id, 1, 5, 10.00)
+    _add_inventory(db, product_id, 2, 5, 20.00)
+    client.post(
+        "/api/me/product-interactions",
+        json={"product_id": product_id, "interaction": "scanned"},
+    )
+
+    # Read history with the *other* store resolved: the flat fields keep the
+    # viewing context (store 1, 10.00), while the nested product reflects the
+    # current store (store 2, 20.00). A response that copies one into the
+    # other fails this test.
+    history = client.get(
+        "/api/me/product-history", params={"store_id": 2}
+    ).json()["items"]
+
+    (item,) = history
+    assert item["store_id"] == 1
+    assert item["price_at_interaction"] == 10.0
+    assert item["product"]["store_inventory"]["price"] == 20.0
+    assert item["product"]["store_inventory"]["store_id"] == 2
