@@ -6,24 +6,23 @@ import {
 } from "aws-amplify/auth";
 
 import { Hub } from "aws-amplify/utils";
-import { getUser, type User } from "../api/general";
+import { getUser, type Permission, type User } from "../api/general";
 
 import {
   createContext,
+  useCallback,
   ReactNode,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
 type AuthContextType = {
   user: unknown | null;
   loading: boolean;
-  /**
-   * `true` = confirmed admin, `false` = confirmed non-admin,
-   * `undefined` = not loaded yet or temporarily unavailable.
-   */
-  isAdmin: boolean | undefined;
+  profileLoading: boolean;
+  hasPermission: (permission: Permission) => boolean;
   /** The signed-in user's row from our backend, once it has loaded. */
   profile: User | null;
   /** Asks the backend again, for screens that need to recover from a transient failure. */
@@ -34,47 +33,53 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+async function loadProfile(): Promise<User | null> {
+  try {
+    return await getUser();
+  } catch {
+    return null;
+  }
+}
+
+// Retry once for transient backend or token-verification failures.
+async function loadProfileWithRetry(): Promise<User | null> {
+  return (await loadProfile()) ?? (await loadProfile());
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<unknown | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [isAdmin, setIsAdmin] = useState<boolean | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<User | null>(null);
+  // Ignore account requests that finish after sign-out or a newer refresh.
+  const sessionVersion = useRef(0);
+  const profileRequest = useRef(0);
 
-  async function loadProfile(): Promise<User | null> {
-    try {
-      return await getUser();
-    } catch {
-      return null;
-    }
-  }
-
-  // A failure here is usually a transient 401 (for example a token minted
-  // seconds in the future), so try once more before giving up.
-  async function loadProfileWithRetry(): Promise<User | null> {
-    return (await loadProfile()) ?? (await loadProfile());
-  }
-
-  async function refreshUser() {
+  const refreshUser = useCallback(async () => {
+    const version = ++sessionVersion.current;
+    const request = ++profileRequest.current;
+    setLoading(true);
+    setProfileLoading(true);
+    setProfile(null);
     try {
       const currentUser = await getCurrentUser();
+      if (version !== sessionVersion.current) return;
       setUser(currentUser);
       // Asks our backend who this is. This also creates their row in the users table on first login.
       const loaded = await loadProfileWithRetry();
-      if (loaded) {
+      if (version === sessionVersion.current && request === profileRequest.current) {
         setProfile(loaded);
-        setIsAdmin(loaded.is_admin);
-      } else {
-        // Unknown, not "not an admin": a later refresh can still resolve it.
-        setIsAdmin(undefined);
       }
     } catch {
-      setUser(null);
-      setProfile(null);
-      setIsAdmin(undefined);
+      if (version === sessionVersion.current) {
+        setUser(null);
+        setProfile(null);
+      }
     } finally {
-      setLoading(false);
+      if (version === sessionVersion.current) setLoading(false);
+      if (request === profileRequest.current) setProfileLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = Hub.listen("auth", ({ payload }) => {
@@ -90,17 +95,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (payload.event === "signedOut") {
+        sessionVersion.current++;
+        profileRequest.current++;
         setUser(null);
         setProfile(null);
-        // No user is signed in, so the role is unknown rather than "not an admin"
-        setIsAdmin(undefined);
+        setLoading(false);
+        setProfileLoading(false);
       }
     });
 
     refreshUser();
 
     return unsubscribe;
-  }, []);
+  }, [refreshUser]);
 
   async function signIn(email: string, password: string) {
     const result = await amplifySignIn({
@@ -116,24 +123,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await amplifySignOut();
+    sessionVersion.current++;
+    profileRequest.current++;
     setUser(null);
     setProfile(null);
-    setIsAdmin(undefined);
+    setLoading(false);
+    setProfileLoading(false);
   }
 
   // Refresh the profile on first load, if we haven't already loaded it. 
   // This is important for the case where the user has just signed in and we haven't yet asked the backend who they are.
-  async function refreshProfile() {
-    const loaded = await loadProfileWithRetry();
-    if (loaded) {
-      setProfile(loaded);
-      setIsAdmin(loaded.is_admin);
+  const refreshProfile = useCallback(async () => {
+    const version = sessionVersion.current;
+    const request = ++profileRequest.current;
+    setProfileLoading(true);
+    try {
+      const loaded = await loadProfileWithRetry();
+      if (version === sessionVersion.current && request === profileRequest.current) {
+        setProfile(loaded);
+      }
+    } finally {
+      if (request === profileRequest.current) setProfileLoading(false);
     }
+  }, []);
+
+  function hasPermission(permission: Permission): boolean {
+    return profile?.permissions.includes(permission) ?? false;
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAdmin, profile, refreshProfile, signIn, signOut }}>
+      value={{ user, loading, profileLoading, hasPermission, profile, refreshProfile, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

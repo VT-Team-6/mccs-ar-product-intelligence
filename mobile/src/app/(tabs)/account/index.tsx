@@ -1,15 +1,25 @@
-import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-import { useAuth } from '@/auth/AuthContext';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useAuth } from "@/auth/AuthContext";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 
 export default function AccountScreen() {
-  const { profile, isAdmin, signOut, refreshProfile } = useAuth();
+  const { profile, profileLoading, hasPermission, signOut, refreshProfile } =
+    useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // Tracks the "Try again" press, and makes the automatic retry happen once
@@ -18,10 +28,10 @@ export default function AccountScreen() {
 
   // Refresh the profile on first load, if we haven't already loaded it. This is important for the case where the user has just signed in and we haven't yet asked the backend who they are.
   useEffect(() => {
-    if (isAdmin !== undefined || attempted.current) return;
+    if (profile || profileLoading || attempted.current) return;
     attempted.current = true;
     refreshProfile();
-  }, [isAdmin, refreshProfile]);
+  }, [profile, profileLoading, refreshProfile]);
 
   const retry = async () => {
     setRetrying(true);
@@ -31,11 +41,11 @@ export default function AccountScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <ThemedView style={styles.header}>
           <ThemedText type="subtitle">Account</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            {profile?.email ?? ''}
+            {profile?.email ?? ""}
           </ThemedText>
         </ThemedView>
 
@@ -43,27 +53,50 @@ export default function AccountScreen() {
           contentContainerStyle={[
             styles.list,
             { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
-          ]}>
-          {isAdmin && (
+          ]}
+        >
+          {/* Admin Access */}
+          {hasPermission("manage_products") && (
             <Row
-              label="Admin"
+              label="Manage Products"
               hint="Add, edit and delete products"
-              onPress={() => router.push('/admin')}
+              onPress={() => router.push("/admin/products")}
             />
           )}
 
-          {/* Admin Access */}
-          {isAdmin === undefined && (
+          {(hasPermission("manage_inventory") ||
+            hasPermission("manage_stock")) && (
+            <Row
+              label="Manage Inventory/Stock"
+              hint="Manage the store's products or stock"
+              onPress={() => router.push("/admin/inventory")}
+            />
+          )}
+
+          {(hasPermission("manage_store_admins") ||
+            hasPermission("manage_store_buyers")) && (
+            <Row
+              label="Manage Staff"
+              hint="Add or remove staff"
+              onPress={() => router.push("/admin/staff")}
+            />
+          )}
+
+          {profileLoading && <ActivityIndicator />}
+          {!profile && !profileLoading && (
             <Pressable
               onPress={retry}
               disabled={retrying}
               accessibilityRole="button"
-              style={({ pressed }) => pressed && styles.pressed}>
+              style={({ pressed }) => pressed && styles.pressed}
+            >
               <ThemedView type="backgroundElement" style={styles.row}>
                 <ThemedView type="backgroundElement" style={styles.rowText}>
-                  <ThemedText type="smallBold">Could not load your account</ThemedText>
+                  <ThemedText type="smallBold">
+                    Could not load your account
+                  </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    {retrying ? 'Trying again…' : 'Tap to try again'}
+                    {retrying ? "Trying again…" : "Tap to try again"}
                   </ThemedText>
                 </ThemedView>
                 {retrying && <ActivityIndicator />}
@@ -71,15 +104,13 @@ export default function AccountScreen() {
             </Pressable>
           )}
 
-          <Row 
+          <Row
             label="Preferences"
-            hint="Manage your preferences" 
-            onPress={() => router.push('/account/preferences')} 
+            hint="Manage your preferences"
+            onPress={() => router.push("/account/preferences")}
           />
 
           <Row label="Sign out" onPress={signOut} />
-
-
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -96,7 +127,10 @@ function Row({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => pressed && styles.pressed}
+    >
       <ThemedView type="backgroundElement" style={styles.row}>
         <ThemedView type="backgroundElement" style={styles.rowText}>
           <ThemedText type="smallBold">{label}</ThemedText>
@@ -115,14 +149,15 @@ function Row({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    justifyContent: "center",
+    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.three,
     // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop:
+      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
@@ -134,8 +169,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.three,
     padding: Spacing.three,
     borderRadius: Spacing.three,

@@ -27,7 +27,7 @@ def list_stores() -> list[dict]:
    
 @router.get("/search")
 async def search_locations(q: str = Query(min_length=2, max_length=150)):
-    """Resolve a US city/state or ZIP code into selectable locations."""
+    """Turns a user entered zip code or location into a real location with coordinates."""
     query = q.strip()
     if len(query) < 2:
         raise HTTPException(status_code=422, detail="Enter a city or ZIP code")
@@ -102,7 +102,7 @@ def get_nearby_stores(
     radius_miles: float = Query(default=25, gt=0, le=200, allow_inf_nan=False),
     limit: int = Query(default=20, ge=1, le=100),
 ):
-    """Return stored locations by straight-line distance, nearest first."""
+    """Return stored locations by distance from the coordinates"""
     with get_connection() as conn:
         stores = conn.execute(
             _NEARBY_STORES_SQL,

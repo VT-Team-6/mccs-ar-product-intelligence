@@ -308,3 +308,52 @@ class PushedEntry(BaseModel):
     status: InventoryStatus
     updated_at: datetime
     already_present: bool
+      
+      
+# --- Staff management -----------------------------------------------------
+
+
+UserRole = Literal[
+    "user",
+    "store_buyer",
+    "store_admin",
+    "system_admin",
+]
+
+AssignableStaffRole = Literal["store_buyer", "store_admin"]
+
+class StaffAccessUpdate(BaseModel):
+    role: AssignableStaffRole
+    model_config = {"extra": "forbid"}
+
+class StaffUser(BaseModel):
+    user_id: int
+    email: str
+    role: UserRole
+
+
+class StaffAssignment(BaseModel):
+    user_id: int
+    email: str
+    store_id: int
+    role: AssignableStaffRole
+
+
+class StaffAssignmentResults(BaseModel):
+    assignments: list[StaffAssignment]
+    limit: int
+    offset: int
+
+class StaffUserResults(BaseModel):
+    users: list[StaffUser]
+    limit: int
+    offset: int
+
+class StaffStore(BaseModel):
+    store_id: int
+    name: str
+    address: str
+    allowed_roles: list[AssignableStaffRole]
+
+class StaffOptions(BaseModel):
+    stores: list[StaffStore]
