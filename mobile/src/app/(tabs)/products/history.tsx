@@ -16,6 +16,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
+import { useStore } from '@/store/StoreContext';
 
 const PAGE_SIZE = 20;
 
@@ -28,6 +29,10 @@ const EVENT_LABELS: Record<string, string> = {
   liked: 'Liked',
   unliked: 'Unliked',
 };
+
+// Interactions that mean the shopper was looking at the product at that store,
+// so the row can say where. A like is not a store visit.
+const STORE_VISITS = new Set(['scanned', 'viewed', 'viewed-from-search', 'viewed-from-recommendation']);
 
 type HistorySection = {
   title: string;
@@ -49,12 +54,13 @@ export default function HistoryScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { store } = useStore();
 
   const [text, setText] = useState('');
   const query = useDebouncedValue(text.trim());
   const [reloadKey, setReloadKey] = useState(0);
 
-  const requestKey = `${query}\u0000${reloadKey}`;
+  const requestKey = `${query}\u0000${reloadKey}\u0000${store?.store_id ?? ''}`;
   const [page, setPage] = useState<LoadedHistory | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -204,6 +210,22 @@ export default function HistoryScreen() {
               event={`${EVENT_LABELS[item.interaction] ?? item.interaction} · ${formatTime(
                 item.occurred_at,
               )}`}
+              // Where the event happened, from the row's own flat fields. The
+              // nested product.store_inventory is today's price, not the event's.
+              // Only the interaction types that mean "was looking at it here"
+              // get the location line; a like is not a store visit.
+              meta={[
+                STORE_VISITS.has(item.interaction) && item.store_name
+                  ? `Viewed at ${item.store_name} location.`
+                  : null,
+                // Past price, explicitly labelled: it can differ from today's
+                // price at the same store, and is null on older events.
+                item.price_at_interaction != null
+                  ? `$${Number(item.price_at_interaction).toFixed(2)} when you were here`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || null}
               onPress={() =>
                 router.push({
                   pathname: '/product/[id]',

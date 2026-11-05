@@ -22,6 +22,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
+import { useStore } from '@/store/StoreContext';
 
 const PAGE_SIZE = 20;
 
@@ -48,6 +49,7 @@ export default function LikesScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { store } = useStore();
 
   // The search text, debounced for the backend request
   const [text, setText] = useState('');
@@ -56,7 +58,7 @@ export default function LikesScreen() {
   const [reloadKey, setReloadKey] = useState(0);
 
   // Creates a unique key for this request, so a slow response can't overwrite a newer one.
-  const requestKey = `${query}\u0000${sort}\u0000${reloadKey}`;
+  const requestKey = `${query}\u0000${sort}\u0000${reloadKey}\u0000${store?.store_id ?? ''}`;
   const [page, setPage] = useState<LoadedLikes | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -105,6 +107,13 @@ export default function LikesScreen() {
       cancelled = true;
     };
   }, [requestKey, query, sort]);
+
+  // Switching store changes the prices on every row, and must also cancel any
+  // price sort: the backend rejects sort=price with no store and would answer
+  // 400 on the next page of a cursor started under another store.
+  useEffect(() => {
+    if (store === null && sort === 'price') setSort('recent');
+  }, [store, sort]);
 
   // Stops the undo timer if the screen goes away
   useEffect(
@@ -229,22 +238,25 @@ export default function LikesScreen() {
           style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
 
-        {/* Creates sort options */}
+        {/* Creates sort options. Price sorting needs a store (the backend
+            answers 400 without one), so the chip is only offered with one. */}
         <ThemedView style={styles.sorts}>
-          {SORTS.map((option) => (
-            <Pressable
-              key={option.value}
-              onPress={() => setSort(option.value)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: sort === option.value }}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView
-                type={sort === option.value ? 'backgroundSelected' : 'backgroundElement'}
-                style={styles.chip}>
-                <ThemedText type="small">{option.label}</ThemedText>
-              </ThemedView>
-            </Pressable>
-          ))}
+          {SORTS.filter((option) => option.value !== 'price' || store !== null).map(
+            (option) => (
+              <Pressable
+                key={option.value}
+                onPress={() => setSort(option.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: sort === option.value }}
+                style={({ pressed }) => pressed && styles.pressed}>
+                <ThemedView
+                  type={sort === option.value ? 'backgroundSelected' : 'backgroundElement'}
+                  style={styles.chip}>
+                  <ThemedText type="small">{option.label}</ThemedText>
+                </ThemedView>
+              </Pressable>
+            ),
+          )}
         </ThemedView>
 
         {/* Shows the error message for the current request, not a stale one */}
