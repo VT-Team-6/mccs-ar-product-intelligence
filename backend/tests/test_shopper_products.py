@@ -72,6 +72,7 @@ def test_get_product_with_store_prices_at_that_store(client):
         "price": 220.0,
         "quantity": 12,
         "in_stock": True,
+        "status": "active",
     }
 
 
