@@ -184,14 +184,6 @@ export default function ProductScreen() {
 
             <ThemedView type="backgroundElement" style={styles.facts}>
               <Fact
-                label="Price"
-                value={
-                  product.price == null
-                    ? "No price"
-                    : `$${product.price.toFixed(2)}`
-                }
-              />
-              <Fact
                 label="Rating"
                 value={
                   product.rating === null

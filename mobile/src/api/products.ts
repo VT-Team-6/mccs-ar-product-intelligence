@@ -10,7 +10,7 @@ export type InventoryStatus = "pending" | "active" | "discontinued";
 // different from "no store selected", which the client distinguishes from its own state.
 export type StoreInventory = {
   store_id: number;
-  price?: number | null;
+  price: number | null;
   quantity: number;
   in_stock: boolean;
   status: InventoryStatus;
@@ -22,7 +22,6 @@ export type Product = {
   name: string;
   brand: string | null;
   product_type: string;
-  price?: number | null;
   rating: number | null;
   description: string | null;
   image_url: string | null;
@@ -39,7 +38,6 @@ export type ProductInput = {
   name: string;
   brand: string | null;
   product_type: string;
-  price?: number | null;
   description: string | null;
 };
 
@@ -94,11 +92,14 @@ export async function updateProduct(
   productId: number,
   input: ProductInput,
 ): Promise<Product> {
-  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
+  const response = await authenticatedFetch(
+    `/api/admin/products/${productId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
   if (response.status === 404) {
     throw new Error("Product not found");
   }
@@ -114,9 +115,12 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(productId: number): Promise<void> {
-  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
-    method: "DELETE",
-  });
+  const response = await authenticatedFetch(
+    `/api/admin/products/${productId}`,
+    {
+      method: "DELETE",
+    },
+  );
   if (!response.ok) {
     throw new Error(`Could not delete the product (error ${response.status})`);
   }
@@ -124,7 +128,6 @@ export async function deleteProduct(productId: number): Promise<void> {
 
 // Shopper-facing lookup: same product, but from the public endpoint
 export async function getShopperProduct(productId: number): Promise<Product> {
-  // Signed in, so the product is priced at the shopper's chosen store
   const response = await authenticatedFetch(`/api/products/${productId}`);
   if (response.status === 404) {
     throw new Error("Product not found");
@@ -154,13 +157,17 @@ export function storePrice(product: Product): string {
   const inventory = product.store_inventory;
   if (!inventory) return "Not sold at this store";
   if (inventory.status === "discontinued") return "Discontinued";
-  return inventory.price == null ? "No price" : `$${inventory.price.toFixed(2)}`;
+  return inventory.price == null
+    ? "No price"
+    : `$${inventory.price.toFixed(2)}`;
 }
 
 // The price at the chosen store as a number, or null when there isn't one
 export function storePriceValue(product: Product): number | null {
   const inventory = product.store_inventory;
-  return inventory && inventory.status !== "discontinued" ? inventory.price ?? null : null;
+  return inventory && inventory.status !== "discontinued"
+    ? (inventory.price ?? null)
+    : null;
 }
 
 // Stock at the shopper's chosen store, e.g. "In stock (12)"
@@ -168,5 +175,7 @@ export function storeStock(product: Product): string {
   const inventory = product.store_inventory;
   if (!inventory) return "Not sold at this store";
   if (inventory.status === "discontinued") return "Discontinued";
-  return inventory.in_stock ? `In stock (${inventory.quantity})` : "Out of stock";
+  return inventory.in_stock
+    ? `In stock (${inventory.quantity})`
+    : "Out of stock";
 }
