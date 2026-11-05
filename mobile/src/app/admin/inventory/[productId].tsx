@@ -155,7 +155,7 @@ export default function EditStockScreen() {
                       style={styles.choice}
                     >
                       <ThemedText type={choice === status ? "smallBold" : "small"}>
-                        {choice === "active" ? "On sale" : "Discontinued"}
+                        {choice === "active" ? "For sale" : "Discontinued"}
                       </ThemedText>
                     </ThemedView>
                   </Pressable>
