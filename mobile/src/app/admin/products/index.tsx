@@ -1,6 +1,6 @@
-import { Image } from 'expo-image';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { Image } from "expo-image";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,21 +8,24 @@ import {
   Pressable,
   StyleSheet,
   TextInput,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-import { listProducts, productImageUrl, type Product } from '@/api/products';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { listProducts, productImageUrl, type Product } from "@/api/products";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 export default function AdminScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const theme = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -34,7 +37,7 @@ export default function AdminScreen() {
     try {
       setProducts(await listProducts());
     } catch {
-      setError('Could not reach the backend. Is it running?');
+      setError("Could not reach the backend. Is it running?");
     } finally {
       setLoading(false);
     }
@@ -60,24 +63,26 @@ export default function AdminScreen() {
   const visibleProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(query) ||
-      (product.brand ?? '').toLowerCase().includes(query),
+      (product.brand ?? "").toLowerCase().includes(query),
   );
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         {/* Admin is pushed over the tabs, so it needs a way back to the user view.
             The tabs are anchored in the root stack, so "/" is always below us. */}
         <ThemedView style={styles.topBar}>
           <Pressable
-            onPress={() => router.dismissTo('/')}
+            onPress={() => router.dismissTo("/")}
             hitSlop={12}
-            style={({ pressed }) => pressed && styles.pressed}>
+            style={({ pressed }) => pressed && styles.pressed}
+          >
             <ThemedText type="linkPrimary">‹ User view</ThemedText>
           </Pressable>
           <Pressable
-            onPress={() => router.push('/admin/new')}
-            style={({ pressed }) => pressed && styles.pressed}>
+            onPress={() => router.push("/admin/products/new")}
+            style={({ pressed }) => pressed && styles.pressed}
+          >
             <ThemedView type="backgroundElement" style={styles.addButton}>
               <ThemedText type="smallBold" style={styles.addText}>
                 + Add
@@ -98,7 +103,10 @@ export default function AdminScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           clearButtonMode="while-editing"
-          style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+          style={[
+            styles.search,
+            { color: theme.text, backgroundColor: theme.backgroundElement },
+          ]}
         />
 
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
@@ -118,7 +126,9 @@ export default function AdminScreen() {
           ListEmptyComponent={
             !loading && !error ? (
               <ThemedText themeColor="textSecondary">
-                {query ? `No products match "${search.trim()}".` : 'No products yet.'}
+                {query
+                  ? `No products match "${search.trim()}".`
+                  : "No products yet."}
               </ThemedText>
             ) : null
           }
@@ -129,17 +139,26 @@ export default function AdminScreen() {
 }
 
 function ProductRow({ product }: { product: Product }) {
-  const details = [product.brand, product.product_type].filter(Boolean).join(' · ');
-  const price = product.price === null ? 'No price' : `$${product.price.toFixed(2)}`;
+  const details = [product.brand, product.product_type]
+    .filter(Boolean)
+    .join(" · ");
+  const price =
+    product.price === null ? "No price" : `$${product.price.toFixed(2)}`;
   const imageUrl = productImageUrl(product);
   const router = useRouter();
 
   // Opens this product's page, e.g. /admin/2
   const openProduct = () =>
-    router.push({ pathname: '/admin/[id]', params: { id: String(product.product_id) } });
+    router.push({
+      pathname: "/admin/products/[id]",
+      params: { id: String(product.product_id) },
+    });
 
   return (
-    <Pressable onPress={openProduct} style={({ pressed }) => pressed && styles.pressed}>
+    <Pressable
+      onPress={openProduct}
+      style={({ pressed }) => pressed && styles.pressed}
+    >
       <ThemedView type="backgroundElement" style={styles.row}>
         {imageUrl ? (
           <Image
@@ -157,7 +176,8 @@ function ProductRow({ product }: { product: Product }) {
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             ID {product.product_id}
-            {product.rating !== null && ` · ${product.rating.toFixed(1)} rating`}
+            {product.rating !== null &&
+              ` · ${product.rating.toFixed(1)} rating`}
           </ThemedText>
         </ThemedView>
         <ThemedText type="smallBold">{price}</ThemedText>
@@ -169,26 +189,27 @@ function ProductRow({ product }: { product: Product }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    justifyContent: "center",
+    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.three,
     // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop:
+      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },
   topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   addButton: {
     paddingVertical: Spacing.two,
@@ -196,7 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
   },
   addText: {
-    color: '#19f189',
+    color: "#19f189",
   },
   search: {
     fontSize: 16,
@@ -209,13 +230,13 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
   },
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.three,
     padding: Spacing.three,
     borderRadius: Spacing.three,
   },
-    pressed: {
+  pressed: {
     opacity: 0.6,
   },
   thumbnail: {
@@ -225,7 +246,7 @@ const styles = StyleSheet.create({
   },
   // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
   whiteBackground: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   rowText: {
     flex: 1,
