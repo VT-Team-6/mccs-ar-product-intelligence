@@ -120,7 +120,7 @@ export default function ProductScreen() {
 
   // Goes back to the list. If there's nothing to go back to, opens the list directly.
   const goBack = () =>
-    router.canGoBack() ? router.back() : router.replace("/admin");
+    router.canGoBack() ? router.back() : router.replace("/admin/products");
 
   // Asks for confirmation, deletes the product, then returns to the list
   async function handleDelete() {
@@ -255,7 +255,7 @@ export default function ProductScreen() {
                 label="Edit"
                 onPress={() =>
                   router.push({
-                    pathname: "/admin/edit/[id]",
+                    pathname: "/admin/products/edit/[id]",
                     params: { id: String(product.product_id) },
                   })
                 }

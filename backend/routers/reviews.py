@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from database import get_connection
 from schemas import Review, ReviewAggregate, ReviewShortened
+from auth import require_permission
 
 router = APIRouter(prefix="/api/products/{product_id}/reviews", tags=["reviews"])
 
@@ -100,7 +101,6 @@ from datetime import datetime
 from fastapi import Depends, Query
 from pydantic import BaseModel, Field
 
-from auth import require_admin
 from services.reviews.importer import ReviewImporter
 from services.reviews.models import ReviewCandidate
 from services.reviews.registry import get_provider
@@ -109,7 +109,7 @@ from services.reviews.registry import get_provider
 admin_router = APIRouter(
     prefix="/api/admin/products",
     tags=["admin-reviews"],
-    dependencies=[Depends(require_admin)],
+    dependencies=[Depends(require_permission("aggregate_reviews"))],
 )
 review_importer = ReviewImporter()
 

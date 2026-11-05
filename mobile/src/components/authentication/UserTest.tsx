@@ -1,8 +1,8 @@
-// for debug purposes, just lets the user click and see their information, as well as an admin only version
+// For debugging the signed-in user's profile, role, and permissions.
 
-import { adminTest, getUser, User } from "@/api/general";
+import { getUser, User } from "@/api/general";
 import { useState } from "react";
-import { Button, Text, View } from "react-native";
+import { Button, View } from "react-native";
 import { ThemedText } from "../themed-text";
 
 export default function UserTest() {
@@ -18,15 +18,6 @@ export default function UserTest() {
     }
   }
 
-  async function getAdmin() {
-    try {
-      const user = await adminTest();
-      setUserInfo(user);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
-    }
-  }
-
   return (
     <View>
       <ThemedText>{error}</ThemedText>
@@ -36,14 +27,6 @@ export default function UserTest() {
         onPress={() => {
           setUserInfo(null);
           getUserCall();
-          setError("");
-        }}
-      />
-      <Button
-        title="Get admin"
-        onPress={() => {
-          setUserInfo(null);
-          getAdmin();
           setError("");
         }}
       />
