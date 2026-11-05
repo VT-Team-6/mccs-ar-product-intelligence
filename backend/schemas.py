@@ -227,6 +227,10 @@ class ProductStockEntry(InventoryRecord):
 
     store_name: str
     address: str
+    # Nullable: a store may not have coordinates yet. The client sorts the
+    # stores it can place and leaves the rest in catalog order.
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class ProductStock(BaseModel):
