@@ -360,7 +360,8 @@ def test_text_request_says_how_it_was_read(client):
     assert body["understood"]["max_price"] == 150
     assert body["understood"]["requirements"] == ["waterproof"]
     # The results follow the limit the shopper sees
-    assert all(card["product"]["price"] is None or card["product"]["price"] <= 150 for card in body["best_matches"])
+    prices = [(card["product"]["store_inventory"] or {}).get("price") for card in body["best_matches"]]
+    assert all(price is None or price <= 150 for price in prices)
 
 
 def test_product_only_request_has_nothing_to_read(client, db):
