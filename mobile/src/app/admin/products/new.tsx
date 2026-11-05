@@ -18,13 +18,13 @@ export default function AddProductScreen() {
 
   // Goes back to the list. If there's nothing to go back to, opens the list directly.
   const goBack = () =>
-    router.canGoBack() ? router.back() : router.replace("/admin");
+    router.canGoBack() ? router.back() : router.replace("/admin/products");
 
   function finishReviewSetup() {
     if (!createdProduct) return;
     setReviewSetupVisible(false);
     router.replace({
-      pathname: "/admin/[id]",
+      pathname: "/admin/products/[id]",
       params: { id: String(createdProduct.product_id) },
     });
   }
@@ -38,7 +38,7 @@ export default function AddProductScreen() {
       const sources = await getReviewSources(created.product_id);
       if (sources.length > 0) {
         router.replace({
-          pathname: "/admin/[id]",
+          pathname: "/admin/products/[id]",
           params: { id: String(created.product_id) },
         });
         return;

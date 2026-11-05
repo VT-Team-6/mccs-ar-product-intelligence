@@ -1,4 +1,4 @@
-import { API_URL } from './config';
+import { authenticatedFetch } from './client';
 
 // Matches the structured response from our backend
 export type ProductAnalysis = {
@@ -18,8 +18,8 @@ export type ProductAnalysis = {
 export async function getProductAnalysis(
   productId: number
 ): Promise<ProductAnalysis> {
-  const response = await fetch(
-    `${API_URL}/api/products/${productId}/analysis`
+  const response = await authenticatedFetch(
+    `/api/products/${productId}/analysis`
   );
 
   if (response.status === 404) {

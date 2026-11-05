@@ -1,12 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from database import get_connection
 from review_analysis import analyze_product_reviews
 from openai import OpenAIError
+from auth import require_authenticated_user
 
 router = APIRouter(tags=["analysis"])
 
 @router.get("/api/products/{product_id}/analysis")
-def get_product_analysis(product_id: int):
+def get_product_analysis(product_id: int, user=Depends(require_authenticated_user)):
 
     with get_connection() as conn:
         product = conn.execute(

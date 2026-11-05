@@ -126,13 +126,16 @@ def test_first_sign_in_creates_user_row(db, cognito, client):
     assert body["user_id"] > 0
     assert body["cognito_sub"] == sub
     assert body["email"] == cognito.email
-    assert body["is_admin"] is False
+    assert body["role"] == "user"
+    assert body["permissions"] == []
+    assert body["store_ids"] == []
+    assert "is_admin" not in body
     assert cognito.calls == [FAKE_TOKEN]
 
     rows = db.execute(
-        "SELECT user_id, cognito_sub, email, is_admin FROM users"
+        "SELECT user_id, cognito_sub, email, role FROM users"
     ).fetchall()
-    assert rows == [(body["user_id"], sub, cognito.email, False)]
+    assert rows == [(body["user_id"], sub, cognito.email, "user")]
 
 
 def test_second_sign_in_reuses_existing_row(db, cognito, client):
@@ -178,24 +181,103 @@ def test_missing_sub_is_rejected_without_calling_cognito(db, cognito, client):
     assert _user_count(db) == 0
 
 
-def test_new_user_is_not_admin(db, cognito, client):
+def test_new_user_cannot_manage_products(db, cognito, client):
     _sign_in(client, _new_sub())
 
-    response = client.get("/admin_test")
+    response = client.delete("/api/admin/products/-1")
 
     assert response.status_code == 403
+    assert response.json()["detail"] == "Insufficient permissions"
 
 
-def test_promoted_user_can_access_admin_route(db, cognito, client):
+@pytest.mark.parametrize("role,permissions,can_manage_products", [
+    ("user", [], False),
+    ("store_buyer", ["manage_stock"], False),
+    ("store_admin", ["manage_inventory", "manage_stock", "manage_store_buyers"], False),
+    ("system_admin", [
+        "aggregate_reviews", "manage_all_stores", "manage_inventory",
+        "manage_products", "manage_stock", "manage_store_admins", "manage_store_buyers",
+    ], True),
+])
+def test_role_permissions_are_read_from_database(
+    db, cognito, client, role, permissions, can_manage_products,
+):
     sub = _new_sub()
     signed_in = _sign_in(client, sub).json()
 
-    db.execute("UPDATE users SET is_admin = TRUE WHERE cognito_sub = %s", (sub,))
-    response = client.get("/admin_test")
+    expected_store_ids = []
+    db.execute("UPDATE users SET role = %s WHERE cognito_sub = %s", (role, sub))
+    if role in ("store_buyer", "store_admin"):
+        store_id = db.execute(
+            "INSERT INTO stores (name, address) VALUES ('Role test', 'Test') RETURNING store_id"
+        ).fetchone()[0]
+        db.execute(
+            "INSERT INTO user_stores (user_id, store_id) VALUES (%s, %s)",
+            (signed_in["user_id"], store_id),
+        )
+        expected_store_ids = [store_id]
+    response = client.get("/me")
 
     assert response.status_code == 200
     body = response.json()
     assert body["user_id"] == signed_in["user_id"]
-    assert body["is_admin"] is True
-    # Promotion is read from the database; no second Cognito lookup happens.
+    assert body["role"] == role
+    assert body["permissions"] == permissions
+    assert body["store_ids"] == expected_store_ids
+    # Use a nonexistent product so an allowed request cannot delete real data.
+    # A 404 here means authorization passed and the product lookup ran.
+    protected_response = client.delete("/api/admin/products/-1")
+    assert protected_response.status_code == (404 if can_manage_products else 403)
+    # Role changes use the existing identity; no second Cognito lookup happens.
     assert cognito.calls == [FAKE_TOKEN]
+
+
+def test_demotion_revokes_product_permission_on_next_request(db, cognito, client):
+    sub = _new_sub()
+    _sign_in(client, sub)
+    db.execute("UPDATE users SET role = 'system_admin' WHERE cognito_sub = %s", (sub,))
+    assert client.delete("/api/admin/products/-1").status_code == 404
+
+    db.execute("UPDATE users SET role = 'user' WHERE cognito_sub = %s", (sub,))
+    assert client.delete("/api/admin/products/-1").status_code == 403
+    body = client.get("/me").json()
+    assert body["role"] == "user"
+    assert body["permissions"] == []
+    assert cognito.calls == [FAKE_TOKEN]
+
+
+def test_me_returns_only_current_users_assigned_stores(db, cognito, client):
+    signed_in = _sign_in(client, _new_sub()).json()
+    other_user_id = db.execute(
+        "INSERT INTO users (cognito_sub, email, role) VALUES (%s, %s, 'store_buyer') "
+        "RETURNING user_id",
+        (_new_sub(), "other@example.com"),
+    ).fetchone()[0]
+    store_ids = []
+    for name in ("Assigned A", "Assigned B", "Other user's store"):
+        store_ids.append(db.execute(
+            "INSERT INTO stores (name, address) VALUES (%s, 'Test address') "
+            "RETURNING store_id", (name,),
+        ).fetchone()[0])
+
+    try:
+        db.execute("UPDATE users SET role = 'store_admin' WHERE user_id = %s", (signed_in["user_id"],))
+        # Insert in reverse order to check that /me sorts the assignments.
+        for store_id in reversed(store_ids[:2]):
+            db.execute(
+                "INSERT INTO user_stores (user_id, store_id) VALUES (%s, %s)",
+                (signed_in["user_id"], store_id),
+            )
+        db.execute(
+            "INSERT INTO user_stores (user_id, store_id) VALUES (%s, %s)",
+            (other_user_id, store_ids[2]),
+        )
+
+        response = client.get("/me")
+        assert response.status_code == 200
+        assert response.json()["store_ids"] == sorted(store_ids[:2])
+        assert response.json()["role"] == "store_admin"
+        assert "store_roles" not in response.json()
+        assert cognito.calls == [FAKE_TOKEN]
+    finally:
+        db.execute("DELETE FROM stores WHERE store_id = ANY(%s)", (store_ids,))

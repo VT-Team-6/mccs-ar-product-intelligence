@@ -76,6 +76,11 @@ export default function SearchResultsScreen() {
           clearButtonMode="while-editing"
           style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
+        <Pressable
+          onPress={() => router.push('/advanced-search' as Href)}
+          style={({ pressed }) => pressed && styles.pressed}>
+          <ThemedText type="linkPrimary">Not sure what to search? Try advanced search</ThemedText>
+        </Pressable>
                 {query === '' ? (
           <ThemedText themeColor="textSecondary">Type a search to see matching products.</ThemedText>
         ) : (

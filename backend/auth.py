@@ -32,6 +32,29 @@ jwk_client = PyJWKClient(JWKS_URL)
 # in the past, while still rejecting materially stale or future tokens.
 CLOCK_SKEW_LEEWAY = 15
 
+ROLE_PERMISSIONS = {
+    "user": set(),
+
+    "store_buyer": {
+        "manage_stock",
+    },
+
+    "store_admin": {
+        "manage_stock",
+        "manage_inventory",
+        "manage_store_buyers"
+    },
+
+    "system_admin": {
+        "manage_stock",
+        "manage_inventory",
+        "manage_products",
+        "aggregate_reviews",
+        "manage_all_stores",
+        "manage_store_buyers",
+        "manage_store_admins"
+    },
+}
 
 def verify_access_token(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
@@ -98,7 +121,7 @@ def require_authenticated_user(
     with get_connection() as conn:
         user = conn.execute(
             """
-            SELECT user_id, cognito_sub, email, is_admin
+            SELECT user_id, cognito_sub, email, role
             FROM users
             WHERE cognito_sub = %s
             """,
@@ -124,20 +147,33 @@ def require_authenticated_user(
                 """
                 INSERT INTO users (cognito_sub, email)
                 VALUES (%s, %s)
-                RETURNING user_id, cognito_sub, email, is_admin                    
+                RETURNING user_id, cognito_sub, email, role                    
                 """,
                 (cognito_sub, email),
             ).fetchone()
-    return user
+        return get_user_access(conn, user)
 
 
-def require_admin(
-    user=Depends(require_authenticated_user),
-):
-    if not user["is_admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
-        )
+def get_user_access(conn, user):
+    """One global role determines capabilities; assignments determine scope."""
+    assignments = conn.execute(
+        "SELECT store_id FROM user_stores WHERE user_id = %s ORDER BY store_id",
+        (user["user_id"],),
+    ).fetchall()
+    permissions = set(ROLE_PERMISSIONS.get(user["role"], set()))
+    return {
+        **user,
+        "store_ids": [assignment["store_id"] for assignment in assignments],
+        "permissions": sorted(permissions),
+    }
 
-    return user
+def require_permission(permission: str):
+    def check_permission(user=Depends(require_authenticated_user)):
+        permissions = user["permissions"]
+
+        if permission not in permissions:
+            raise HTTPException(403, "Insufficient permissions")
+
+        return user
+
+    return check_permission

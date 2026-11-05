@@ -1,6 +1,4 @@
-import { fetchAuthSession } from "aws-amplify/auth";
-
-import { API_URL } from "./config";
+import { authenticatedFetch } from "./client";
 
 // The review-provider format is shared by Amazon and future review sources.
 export type ReviewCandidate = {
@@ -26,20 +24,12 @@ export type ReviewImportResult = {
   imported_reviews: number;
 };
 
-// Review-admin routes require a Cognito access token (unlike some older product routes).
+// Review-admin routes require a Cognito access token.
 async function reviewRequest<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const session = await fetchAuthSession();
-  const accessToken = session.tokens?.accessToken?.toString();
-  if (!accessToken) throw new Error("Please sign in to manage review sources.");
-
-  const headers = new Headers(init.headers);
-  headers.set("Authorization", `Bearer ${accessToken}`);
-  if (init.body) headers.set("Content-Type", "application/json");
-
-  const response = await fetch(`${API_URL}${path}`, { ...init, headers });
+  const response = await authenticatedFetch(path, init);
   if (!response.ok) {
     let message = `Request failed (HTTP ${response.status}).`;
     try {
