@@ -1,7 +1,9 @@
--- One row per product per store: how many are in stock and what it costs there
+-- One row per product per store: how many are in stock and what it costs there.
+-- Product 1 is the cross-store coverage fixture: differing prices and quantities between stores. 
+-- all other products are priced the same across stores, with differing quantities.
 INSERT INTO inventory (product_id, store_id, quantity, price) VALUES
     (1, 1, 12, 220.00),
-    (1, 2,  5, 220.00),
+    (1, 2,  0, 240.00),
     (2, 1, 20,  90.00),
     (2, 2,  0,  90.00),
     (3, 1,  8,  50.00),
@@ -99,4 +101,8 @@ INSERT INTO inventory (product_id, store_id, quantity, price) VALUES
     (49, 1, 5, 160.00),
     (49, 2, 8, 160.00),
     (50, 1, 9, 120.00),
-    (50, 2, 4, 120.00);
+    (50, 2, 4, 120.00),
+    (51, 1, 6, 70.00),
+    (51, 2, 3, 70.00),
+    (52, 1, 5, 150.00),
+    (52, 2, 2, 150.00);

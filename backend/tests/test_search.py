@@ -20,19 +20,20 @@ APP_PRODUCT_FIELDS = [
     "name",
     "brand",
     "product_type",
-    "price",
     "rating",
     "description",
     "image_url",
     "created_at",
     "updated_at",
+    "store_inventory",
 ]
 
-# One seed tuple per line: name, brand, type, price, rating, description, image_url.
+# One seed tuple per line: name, brand, type, description, image_url. Price
+# lives in the inventory seed now, so it is not part of this row.
 _STRING = r"'((?:[^']|'')*)'"
 _SEED_ROW = re.compile(
     rf"^\s*\(\s*{_STRING}\s*,\s*(?:{_STRING}|NULL)\s*,\s*{_STRING}\s*,"
-    rf"\s*[^,]+,\s*[^,]+,\s*(?:{_STRING}|NULL)\s*,",
+    rf"\s*(?:{_STRING}|NULL)\s*,",
     re.MULTILINE,
 )
 
@@ -160,7 +161,7 @@ def test_search_requires_text(client):
 
 
 def test_search_results_have_every_field_the_app_uses(client):
-    # The app shows the name, brand, type, price, rating, and image on each result row
+    # The app shows the name, brand, type, rating, and image on each result row
     response = client.get("/api/search", params={"q": "nike"})
     assert response.status_code == 200
     results = response.json()
@@ -169,8 +170,11 @@ def test_search_results_have_every_field_the_app_uses(client):
         for field in APP_PRODUCT_FIELDS:
             assert field in product
         assert isinstance(product["product_id"], int)
-        assert isinstance(product["price"], (int, float))
         assert isinstance(product["rating"], (int, float))
+        # Without a resolved store there is no price to show (anonymous caller,
+        # no ?store_id=): the whole store_inventory object is null, so the app
+        # prompts for a store instead of rendering a wrong price.
+        assert product["store_inventory"] is None
         # The app puts the backend address in front of this path to load the image
         assert product["image_url"].startswith("/static/")
 
@@ -183,3 +187,44 @@ def test_search_results_are_sorted_by_name(client):
     assert names == _matching_names("a")
     assert len(names) > 1, "the query must match more than one product"
     assert names == sorted(names)
+
+
+def test_search_with_explicit_store_prices_results_at_that_store(client):
+    # Store 1 carries every seeded product, so every Nike result is priced.
+    response = client.get("/api/search", params={"q": "nike", "store_id": 1})
+    assert response.status_code == 200
+    results = response.json()
+    assert results
+    for product in results:
+        inventory = product["store_inventory"]
+        assert inventory is not None
+        assert inventory["store_id"] == 1
+        assert isinstance(inventory["price"], (int, float))
+        assert isinstance(inventory["quantity"], int)
+        assert inventory["in_stock"] == (inventory["quantity"] > 0)
+
+
+def test_search_price_is_per_store(client):
+    # Product 1 is the seed's cross-store fixture: 220.00 at store 1 and
+    # 240.00 at store 2. A query that ignores store_id fails this test.
+    by_store = {}
+    for store_id in (1, 2):
+        response = client.get(
+            "/api/search", params={"q": "Timberland 6", "store_id": store_id}
+        )
+        assert response.status_code == 200
+        (result,) = response.json()
+        by_store[store_id] = result["store_inventory"]
+
+    assert by_store[1]["price"] == 220.0
+    assert by_store[2]["price"] == 240.0
+
+
+def test_search_out_of_stock_flag(client):
+    # Store 2 carries product 1 with quantity 0 (the seed's out-of-stock
+    # fixture), so in_stock must be false rather than a missing row.
+    response = client.get("/api/search", params={"q": "Timberland 6", "store_id": 2})
+    assert response.status_code == 200
+    (result,) = response.json()
+    assert result["store_inventory"]["quantity"] == 0
+    assert result["store_inventory"]["in_stock"] is False

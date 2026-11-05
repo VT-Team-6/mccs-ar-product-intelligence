@@ -97,6 +97,10 @@ export default function ShopperProductScreen() {
 
   const imageUrl = product ? productImageUrl(product) : null;
 
+  // The store has this product on record but no longer sells it. Shown as its
+  // own state so a scan never implies a price or availability that isn't there.
+  const discontinued = product?.store_inventory?.status === 'discontinued';
+
    // New questions or results appear below the product, so scroll them to the top of the screen
   const scrollToPanel = () => {
     setTimeout(() => scrollRef.current?.scrollTo({ y: panelY.current, animated: true }), 150);
@@ -164,15 +168,29 @@ export default function ShopperProductScreen() {
             </Pressable>
 
             <ThemedView type="backgroundElement" style={styles.facts}>
-              <Fact
-                label="Price"
-                value={product.price === null ? 'No price' : `$${product.price.toFixed(2)}`}
-              />
+              {discontinued ? (
+                <Fact label="Availability" value="Discontinued at this store" />
+              ) : (
+                <Fact
+                  label="Price"
+                  value={product.price === null ? 'No price' : `$${product.price.toFixed(2)}`}
+                />
+              )}
               <Fact
                 label="Rating"
                 value={product.rating === null ? 'No rating' : `${product.rating.toFixed(1)} / 5`}
               />
             </ThemedView>
+
+            {discontinued && (
+              <ThemedView type="backgroundSelected" style={styles.discontinuedNotice}>
+                <ThemedText type="smallBold">No longer available at this store</ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  This product has been discontinued here. Try another store to see if it is
+                  still available.
+                </ThemedText>
+              </ThemedView>
+            )}
 
             {product.description && <ThemedText>{product.description}</ThemedText>}
 
@@ -283,6 +301,11 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     padding: Spacing.three,
     gap: Spacing.two,
+  },
+  discontinuedNotice: {
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    gap: Spacing.one,
   },
   fact: {
     flex: 1,

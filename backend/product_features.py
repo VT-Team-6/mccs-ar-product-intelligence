@@ -118,6 +118,9 @@ def refresh_product_scores() -> int:
     """Recalculate every product's scores and replace the product_scores table.
 
     Deleted products are skipped (and their old scores removed).
+
+    Store-agnostic prices are used: the average price of a product across all stores is used for scoring.
+
     Returns how many products were scored.
     """
     with get_connection() as conn:
@@ -127,9 +130,14 @@ def refresh_product_scores() -> int:
                 p.product_id,
                 p.product_type,
                 p.brand,
-                p.price,
+                ip.price,
                 s.average_rating AS rating
             FROM products p
+            LEFT JOIN (
+                SELECT product_id, AVG(price) AS price
+                FROM inventory
+                GROUP BY product_id
+            ) ip ON ip.product_id = p.product_id
             LEFT JOIN product_review_stats s
                 ON p.product_id = s.product_id
             WHERE p.deleted_at IS NULL

@@ -1,6 +1,21 @@
 import { authenticatedFetch, publicFetch } from "./client";
 import { API_URL } from "./config";
 
+// Lifecycle of a product at one store. Only 'active' is ever shown as sellable;
+// 'discontinued' drives the discontinued screen; 'pending' is staff-only and
+// never reaches a shopper response.
+export type InventoryStatus = "pending" | "active" | "discontinued";
+
+// Price and stock at one store. Null when the store has no row for the product
+// different from "no store selected", which the client distinguishes from its own state.
+export type StoreInventory = {
+  store_id: number;
+  price: number | null;
+  quantity: number;
+  in_stock: boolean;
+  status: InventoryStatus;
+};
+
 // Matches what the backend sends for each product
 export type Product = {
   product_id: number;
@@ -13,6 +28,9 @@ export type Product = {
   image_url: string | null;
   created_at: string;
   updated_at: string;
+  // Resolved by the backend for the shopper's active store; null when no store
+  // was resolved or the store doesn't carry (or hasn't approved) the product.
+  store_inventory?: StoreInventory | null;
 };
 
 // What the admin fills in when adding or editing a product.

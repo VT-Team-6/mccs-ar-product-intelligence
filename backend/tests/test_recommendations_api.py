@@ -97,7 +97,10 @@ def _product_id(db, name_part):
 
 
 def _recommend(client, **body):
-    return client.post("/api/recommendations", json=body)
+    # store_id is a query parameter, not part of the strict body model.
+    store_id = body.pop("store_id", None)
+    params = {"store_id": store_id} if store_id is not None else None
+    return client.post("/api/recommendations", json=body, params=params)
 
 
 def _ids(cards):
@@ -213,6 +216,128 @@ def test_deleted_products_are_not_recommended(client, db):
         db.execute("UPDATE products SET deleted_at = NULL WHERE product_id = %s", (timberland,))
         refresh_recommendation_data()
 
+
+# --- store context (prices shown, never the ranking itself) ---------------
+
+
+def test_recommendation_cards_carry_store_inventory(client, db):
+    _sign_in_as(client, "rec-store")
+
+    response = _recommend(client, product_id=_product_id(db, "Sorel"), store_id=1)
+
+    assert response.status_code == 200
+    cards = response.json()["best_matches"]
+    assert cards
+    for card in cards:
+        # Every card is priced at store 1 — a missing join here would leave
+        # them null and the client would render "no price".
+        assert card["product"]["store_inventory"] is not None
+        assert card["product"]["store_inventory"]["store_id"] == 1
+
+
+def test_recommendation_prices_follow_the_store_parameter(client, db):
+    _sign_in_as(client, "rec-store-price")
+    sorel = _product_id(db, "Sorel")
+    # Product 1 differs across stores (220.00 vs 240.00), so if it appears on
+    # a card its price proves which store priced the response. Ask for both
+    # stores directly with the same query and compare the whole card set.
+    at_one = _recommend(client, text="warm boots for snow", store_id=1).json()
+    at_two = _recommend(client, text="warm boots for snow", store_id=2).json()
+
+    for card_one, card_two in zip(at_one["best_matches"], at_two["best_matches"]):
+        assert card_one["product"]["product_id"] == card_two["product"]["product_id"]
+        inv_one = card_one["product"]["store_inventory"]
+        inv_two = card_two["product"]["store_inventory"]
+        assert inv_one["store_id"] == 1
+        assert inv_two["store_id"] == 2
+
+
+def test_recommendation_ordering_does_not_change_with_store(client, db):
+    # Ranking is store-agnostic on purpose: the engine scores on the
+    # catalog-wide baseline, so "Best matches" must not reshuffle when the
+    # shopper switches stores. (Prices on the cards do change.)
+    _sign_in_as(client, "rec-store-order")
+    query = dict(text="warm boots for snow", ranking=PRICE_FIRST)
+
+    at_one = _recommend(client, **query, store_id=1).json()["best_matches"]
+    at_two = _recommend(client, **query, store_id=2).json()["best_matches"]
+    no_store = _recommend(client, **query).json()["best_matches"]
+
+    assert _ids(at_one) == _ids(at_two) == _ids(no_store)
+
+
+def test_recommendation_without_store_has_null_prices(client, db):
+    _sign_in_as(client, "rec-no-store")
+
+    body = _recommend(client, text="warm boots for snow").json()
+
+    assert body["best_matches"]
+    for card in body["best_matches"]:
+        assert card["product"]["store_inventory"] is None
+
+
+# --- price scores from inventory (store-agnostic baseline) -----------------
+
+
+def _temporary_product(db, name: str) -> int:
+    return db.execute(
+        "INSERT INTO products (name, product_type, brand, description)"
+        " VALUES (%s, 'Boot', 'Temp Brand', 'temporary score-fixture boot')"
+        " RETURNING product_id",
+        (name,),
+    ).fetchone()["product_id"]
+
+
+def test_product_without_inventory_gets_neutral_price_score(client, db):
+    # Every seeded product has inventory after §1.1, so the no-inventory case
+    # needs a temporary product. Missing price data must score 0.5 (neutral),
+    # not break the rebuild or default the product to "worst price".
+    product_id = _temporary_product(db, "Temporary Unpriced Boot")
+    try:
+        refresh_recommendation_data()
+        row = db.execute(
+            "SELECT price_score FROM product_scores WHERE product_id = %s",
+            (product_id,),
+        ).fetchone()
+        assert row is not None
+        assert row["price_score"] == 0.5
+    finally:
+        db.execute("DELETE FROM products WHERE product_id = %s", (product_id,))
+        refresh_recommendation_data()
+
+
+def test_price_scores_use_averaged_inventory_prices(client, db):
+    # Two temporary boots: A priced 200.00 at one store; B priced 100.00 at
+    # store 1 and 300.00 at store 2, averaging 200.00. Equal average prices
+    # must produce equal price scores — a join that read one store's price
+    # (or MIN/MAX) instead of the average breaks the tie and fails this.
+    single_store = _temporary_product(db, "Temporary Single-Store Boot")
+    two_store = _temporary_product(db, "Temporary Two-Store Boot")
+    db.execute(
+        "INSERT INTO inventory (product_id, store_id, quantity, price)"
+        " VALUES (%s, 1, 5, 200.00), (%s, 1, 5, 100.00), (%s, 2, 5, 300.00)",
+        (single_store, two_store, two_store),
+    )
+    try:
+        refresh_recommendation_data()
+        scores = db.execute(
+            "SELECT product_id, price_score FROM product_scores"
+            " WHERE product_id IN (%s, %s)",
+            (single_store, two_store),
+        ).fetchall()
+        by_product = {row["product_id"]: row["price_score"] for row in scores}
+        assert by_product[single_store] == by_product[two_store]
+    finally:
+        db.execute(
+            "DELETE FROM inventory WHERE product_id IN (%s, %s)",
+            (single_store, two_store),
+        )
+        db.execute(
+            "DELETE FROM products WHERE product_id IN (%s, %s)",
+            (single_store, two_store),
+        )
+        refresh_recommendation_data()
+        
 def test_unrelated_text_returns_no_matches(client, db):
     _sign_in_as(client, "rec-unrelated")
 
@@ -235,7 +360,8 @@ def test_text_request_says_how_it_was_read(client):
     assert body["understood"]["max_price"] == 150
     assert body["understood"]["requirements"] == ["waterproof"]
     # The results follow the limit the shopper sees
-    assert all(card["product"]["price"] <= 150 for card in body["best_matches"])
+    prices = [(card["product"]["store_inventory"] or {}).get("price") for card in body["best_matches"]]
+    assert all(price is None or price <= 150 for price in prices)
 
 
 def test_product_only_request_has_nothing_to_read(client, db):
