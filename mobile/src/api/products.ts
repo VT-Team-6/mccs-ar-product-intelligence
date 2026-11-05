@@ -22,7 +22,6 @@ export type Product = {
   name: string;
   brand: string | null;
   product_type: string;
-  price?: number | null;
   rating: number | null;
   description: string | null;
   image_url: string | null;
@@ -35,11 +34,11 @@ export type Product = {
 
 // What the admin fills in when adding or editing a product.
 // The ID and the dates are set by the backend, so they aren't here.
+// No price: each store sets its own on its inventory row.
 export type ProductInput = {
   name: string;
   brand: string | null;
   product_type: string;
-  price?: number | null;
   description: string | null;
 };
 
@@ -149,24 +148,75 @@ export function productQrUrl(productId: number): string {
   return `${API_URL}/api/products/${productId}/qr`;
 }
 
-// The price at the shopper's chosen store, e.g. "$89.99", or why there isn't one
-export function storePrice(product: Product): string {
+// What the shopper should read where a price would go. The payload cannot tell
+// "no store selected" from "this store doesn't carry it" (both are a null
+// store_inventory), so the active store decides which copy is true.
+export type StorePriceLine = {
+  /** Context under the product details, e.g. "Price at MCCS Main Exchange location." */
+  label: string;
+  /** The right-hand price, e.g. "$89.99"; null when there is nothing to show. */
+  price: string | null;
+  /** Nothing is selected yet, so the label is a button that opens the selector. */
+  needsStore: boolean;
+};
+
+// The price at the shopper's chosen store, or why there isn't one.
+// `storeName`/`storeId` come from StoreContext: the payload carries only the id,
+// and the name is what makes the copy truthful.
+export function storePriceLine(
+  product: Product,
+  selectedStoreId: number | null,
+  selectedStoreName: string | null,
+): StorePriceLine {
   const inventory = product.store_inventory;
-  if (!inventory) return "Not sold at this store";
-  if (inventory.status === "discontinued") return "Discontinued";
-  return inventory.price == null ? "No price" : `$${inventory.price.toFixed(2)}`;
+
+  // No store resolved at all: prompt for one rather than claiming the product
+  // isn't sold anywhere.
+  if (selectedStoreId === null) {
+    return {
+      label: "Select a store to view price and availability.",
+      price: null,
+      needsStore: true,
+    };
+  }
+
+  // A response that names a different store is stale: the shopper switched
+  // while it was in flight, so printing its price would be a lie.
+  if (inventory && inventory.store_id !== selectedStoreId) {
+    return { label: "Updating…", price: null, needsStore: false };
+  }
+
+  if (
+    !inventory ||
+    inventory.status === "discontinued" ||
+    !inventory.in_stock ||
+    inventory.price == null
+  ) {
+    return { label: "Unavailable at this location.", price: null, needsStore: false };
+  }
+
+  const atStore = selectedStoreName ? ` at ${selectedStoreName} location` : "";
+  return {
+    label: `Price${atStore}.`,
+    price: `$${inventory.price.toFixed(2)}`,
+    needsStore: false,
+  };
 }
 
-// The price at the chosen store as a number, or null when there isn't one
+// The price at the chosen store as a number, or null when there isn't one.
+// Never NaN: compare's badges rely on this being a real number or null.
 export function storePriceValue(product: Product): number | null {
   const inventory = product.store_inventory;
-  return inventory && inventory.status !== "discontinued" ? inventory.price ?? null : null;
+  if (!inventory || inventory.status === "discontinued") return null;
+  if (!inventory.in_stock) return null;
+  const price = inventory.price;
+  return typeof price === "number" && Number.isFinite(price) ? price : null;
 }
 
 // Stock at the shopper's chosen store, e.g. "In stock (12)"
 export function storeStock(product: Product): string {
   const inventory = product.store_inventory;
-  if (!inventory) return "Not sold at this store";
+  if (!inventory) return "Unavailable at this location.";
   if (inventory.status === "discontinued") return "Discontinued";
   return inventory.in_stock ? `In stock (${inventory.quantity})` : "Out of stock";
 }

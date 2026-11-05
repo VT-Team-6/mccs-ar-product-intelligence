@@ -5,12 +5,12 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getComparison, type CompareItem, type ComparisonData } from '@/api/compare';
-import { productImageUrl } from '@/api/products';
+import { productImageUrl, storePriceLine, storePriceValue } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { compareHref, readSelection, selectionProblem } from '@/compare/selection';
-import {storePrice, storePriceValue, storeStock} from '@/api/products';
+import { useStore } from '@/store/StoreContext';
 
 // The blue used for links elsewhere in the app
 const ACCENT = '#3c87f7';
@@ -22,6 +22,7 @@ export default function CompareScreen() {
   const router = useRouter();
   const { ids: idsParam } = useLocalSearchParams<{ ids?: string }>();
   const selection = useMemo(() => readSelection(idsParam), [idsParam]);
+  const { store } = useStore();
 
   const [data, setData] = useState<ComparisonData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,7 +56,7 @@ export default function CompareScreen() {
     return () => {
       cancelled = true;
     };
-  }, [selection, attempt]);
+  }, [selection, attempt, store?.store_id]);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/' as Href));
 
@@ -126,9 +127,9 @@ function MissingNote({ count }: { count: number }) {
 
 // One column per product and one row per detail, so the same detail lines up across products
 function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (item: CompareItem) => void }) {
-  // Compare the values as they're shown (cents and one decimal), so a badge
-  // never picks between two numbers that look the same on screen
-  // Prices at the shopper's chosen store
+  const { store } = useStore();
+  // Prices at the shopper's chosen store. storePriceValue already returns null
+  // rather than NaN for a missing or non-finite price.
   const prices = items.map(({ product }) => {
     const price = storePriceValue(product);
     return price === null ? null : Math.round(price * 100) / 100;
@@ -166,13 +167,20 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
         </Row>
 
         <Row label="Price">
-          {items.map((item, index) => (
-            <Cell
-              key={item.product.product_id}
-              value={storePrice(item.product)}
-              badge={lowestPrice.has(index) ? 'Lowest price' : null}
-            />
-          ))}
+          {items.map((item, index) => {
+            const line = storePriceLine(
+              item.product,
+              store?.store_id ?? null,
+              store?.name ?? null,
+            );
+            return (
+              <Cell
+                key={item.product.product_id}
+                value={line.price ?? line.label}
+                badge={lowestPrice.has(index) ? 'Lowest price' : null}
+              />
+            );
+          })}
         </Row>
 
         <Row label="Rating">
@@ -272,8 +280,12 @@ function Cell({
 
 // Which products have the best value. Ties all count. Only marked when at least
 // two products have a value and they aren't all the same, so the badge means something.
+// Non-finite values are dropped too: a NaN survives a null-only filter and would
+// poison Math.min/Math.max, silently removing every badge.
 function bestIndexes(values: (number | null)[], want: 'lowest' | 'highest'): Set<number> {
-  const known = values.filter((value): value is number => value !== null);
+  const known = values.filter(
+    (value): value is number => value !== null && Number.isFinite(value),
+  );
   if (known.length < 2 || Math.min(...known) === Math.max(...known)) return new Set();
   const best = want === 'lowest' ? Math.min(...known) : Math.max(...known);
   return new Set(values.flatMap((value, index) => (value === best ? [index] : [])));

@@ -5,13 +5,14 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } 
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
-import { productImageUrl, type Product } from '@/api/products';
+import { productImageUrl, storePriceLine, storeStock, type Product } from '@/api/products';
 import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { AIAnalysisPanel} from '@/components/ai-analysis-panel';
-import {storePrice, storeStock} from '@/api/products';
+import { NearbyStores } from '@/components/nearby-stores';
+import { useStore } from '@/store/StoreContext';
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
@@ -19,6 +20,7 @@ export default function ShopperProductScreen() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { store, stores, setStore, openStoreSelector } = useStore();
 
   const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export default function ShopperProductScreen() {
 
   // Loads this product and the caller's like state when the page opens.
   // A product from a different page is ignored while the new one loads.
+  // The store is a dependency: switching it refetches so the price follows.
   useEffect(() => {
     let cancelled = false;
     getMyProduct(Number(id))
@@ -49,7 +52,7 @@ export default function ShopperProductScreen() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, store?.store_id]);
 
   // Records that this product was opened in user history.
   useEffect(() => {
@@ -98,9 +101,26 @@ export default function ShopperProductScreen() {
 
   const imageUrl = product ? productImageUrl(product) : null;
 
+  // Picking a nearby store is the same action as picking one in the sheet, so it
+  // goes through setStore: the active store changes app-wide and the page
+  // refetches, rather than this section swapping prices on its own.
+  const pickStore = async (storeId: number) => {
+    const picked = stores.find((item) => item.store_id === storeId);
+    if (!picked) return;
+    try {
+      await setStore(picked);
+    } catch {
+      setError('Could not save your store. Check your connection and try again.');
+    }
+  };
+
   // The store has this product on record but no longer sells it. Shown as its
   // own state so a scan never implies a price or availability that isn't there.
   const discontinued = product?.store_inventory?.status === 'discontinued';
+  // Never prints a price without a matching store behind it.
+  const price = product
+    ? storePriceLine(product, store?.store_id ?? null, store?.name ?? null)
+    : null;
 
    // New questions or results appear below the product, so scroll them to the top of the screen
   const scrollToPanel = () => {
@@ -173,8 +193,10 @@ export default function ShopperProductScreen() {
                 <Fact label="Availability" value="Discontinued at this store" />
               ) : (
                 <>
-                  <Fact label="Price" value={storePrice(product)} />
-                  <Fact label="Availability" value={storeStock(product)} />
+                  <Fact label="Price" value={price?.price ?? '—'} />
+                  {product.store_inventory && (
+                    <Fact label="Availability" value={storeStock(product)} />
+                  )}
                 </>
               )}
               <Fact
@@ -182,6 +204,32 @@ export default function ShopperProductScreen() {
                 value={product.rating === null ? 'No rating' : `${product.rating.toFixed(1)} / 5`}
               />
             </ThemedView>
+
+            {/* The store behind the price, or a prompt to pick one. Tap targets
+                the same shared sheet as every other surface. */}
+            {!discontinued && !price?.price && (
+              <Pressable
+                onPress={() => openStoreSelector()}
+                accessibilityRole="button"
+                hitSlop={8}>
+                <ThemedText type={price?.needsStore ? 'linkPrimary' : 'small'} themeColor="textSecondary">
+                  {price?.needsStore
+                    ? 'Select a store to view price and availability.'
+                    : price?.label}
+                </ThemedText>
+              </Pressable>
+            )}
+
+            {/* The cross-sell: reuses the active-store selector, so picking a
+                location reprices the whole catalog and this page refetches. */}
+            {store !== null && (
+              <Pressable
+                onPress={() => openStoreSelector()}
+                accessibilityRole="button"
+                hitSlop={8}>
+                <ThemedText type="linkPrimary">Check another store</ThemedText>
+              </Pressable>
+            )}
 
             {discontinued && (
               <ThemedView type="backgroundSelected" style={styles.discontinuedNotice}>
@@ -192,6 +240,14 @@ export default function ShopperProductScreen() {
                 </ThemedText>
               </ThemedView>
             )}
+
+            <NearbyStores
+              productId={product.product_id}
+              selectedStore={store}
+              selectedStoreName={store?.name ?? null}
+              onPick={pickStore}
+              onSelectStore={() => openStoreSelector()}
+            />
 
             {product.description && <ThemedText>{product.description}</ThemedText>}
 

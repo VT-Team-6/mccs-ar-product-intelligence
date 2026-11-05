@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { DEFAULT_PREFERENCES, rankedCount, type Preferences } from '@/preferences/criteria';
+import { useStore } from '@/store/StoreContext';
 
 // The blue used for links elsewhere in the app
 const ACCENT = '#3c87f7';
@@ -28,11 +29,17 @@ type Props = {
 // Used at the bottom of product details, and on its own for Advanced Search.
 export function RecommendationPanel({ productId, textRequired = false, onOpenProduct, onStepChange }: Props) {
   const theme = useTheme();
+  const { store } = useStore();
   const [ranking, setRanking] = useState<Preferences>(DEFAULT_PREFERENCES);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RecommendationResult | null>(null);
+  // Results carry the prices of the store they were fetched under, so switching
+  // store makes them stale. Tagging them with the store they belong to means a
+  // stale set is never shown, without an effect that clears state.
+  const [resultStoreId, setResultStoreId] = useState<number | null>(null);
+  const storeId = store?.store_id ?? null;
 
   const ready = rankedCount(ranking) > 0 && (!textRequired || text.trim() !== '');
 
@@ -42,13 +49,13 @@ export function RecommendationPanel({ productId, textRequired = false, onOpenPro
     setError(null);
     try {
       const trimmed = text.trim();
-      setResult(
-        await getRecommendations({
-          product_id: productId,
-          text: trimmed === '' ? undefined : trimmed,
-          ranking,
-        }),
-      );
+      const loaded = await getRecommendations({
+        product_id: productId,
+        text: trimmed === '' ? undefined : trimmed,
+        ranking,
+      });
+      setResult(loaded);
+      setResultStoreId(storeId);
       onStepChange?.();
     } catch (problem) {
       setError(
@@ -63,8 +70,9 @@ export function RecommendationPanel({ productId, textRequired = false, onOpenPro
     }
   };
 
-  // Results: the answers stay saved, so "Change answers" brings them back as they were
-  if (result) {
+  // Results: the answers stay saved, so "Change answers" brings them back as they were.
+  // A set fetched under a different store is stale, so it is treated as absent.
+  if (result && resultStoreId === storeId) {
     return (
       <View style={styles.panel}>
         <ThemedView style={styles.headerRow}>
