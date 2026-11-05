@@ -27,7 +27,6 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [brand, setBrand] = useState(initial?.brand ?? "");
   const [productType, setProductType] = useState(initial?.product_type ?? "");
-  const [price, setPrice] = useState(initial?.price?.toString() ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
 
   const [problems, setProblems] = useState<string[]>([]);
@@ -35,16 +34,9 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
 
   async function handleSave() {
     const found: string[] = [];
-    const priceNumber = toNumber(price);
 
     if (!name.trim()) found.push("Name is required.");
     if (!productType.trim()) found.push("Type is required.");
-    if (
-      Number.isNaN(priceNumber) ||
-      (priceNumber !== null && priceNumber < 0)
-    ) {
-      found.push("Price must be a number, 0 or higher.");
-    }
 
     setProblems(found);
     if (found.length > 0) return;
@@ -55,7 +47,6 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         name: name.trim(),
         brand: brand.trim() || null,
         product_type: productType.trim(),
-        price: priceNumber,
         description: description.trim() || null,
       });
     } catch (problem) {
@@ -86,13 +77,12 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         value={productType}
         onChangeText={setProductType}
       />
-      <Field
-        label="Price"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="decimal-pad"
-        placeholder="0.00"
-      />
+      {/* Price is not a product field: each store sets its own, in Manage
+          Inventory/Stock. */}
+      <ThemedText type="small" themeColor="textSecondary">
+        Prices are managed per store. Set this product&apos;s price and stock in
+        Manage Inventory/Stock.
+      </ThemedText>
       <Field
         label="Description"
         value={description}
@@ -120,14 +110,6 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
       </Pressable>
     </ScrollView>
   );
-}
-
-// Turns typed text into a number. Empty text means "no value" (null),
-// and text that isn't a number gives NaN so the form can show a message.
-function toNumber(text: string): number | null {
-  const cleaned = text.trim().replace(",", ".");
-  if (cleaned === "") return null;
-  return Number(cleaned);
 }
 
 function Field({

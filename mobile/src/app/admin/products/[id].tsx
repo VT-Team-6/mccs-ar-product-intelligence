@@ -183,14 +183,9 @@ export default function ProductScreen() {
             </ThemedView>
 
             <ThemedView type="backgroundElement" style={styles.facts}>
-              <Fact
-                label="Price"
-                value={
-                  product.price == null
-                    ? "No price"
-                    : `$${product.price.toFixed(2)}`
-                }
-              />
+              {/* Not "No price": the price isn't missing, it belongs to each
+                  store's inventory row. */}
+              <Fact label="Price" value="Price set per store" />
               <Fact
                 label="Rating"
                 value={

@@ -142,8 +142,9 @@ function ProductRow({ product }: { product: Product }) {
   const details = [product.brand, product.product_type]
     .filter(Boolean)
     .join(" · ");
-  const price =
-    product.price == null ? "No price" : `$${product.price.toFixed(2)}`;
+  // Not "No price": the price isn't missing, it belongs to each store's
+  // inventory row.
+  const price = "Price set per store";
   const imageUrl = productImageUrl(product);
   const router = useRouter();
 
