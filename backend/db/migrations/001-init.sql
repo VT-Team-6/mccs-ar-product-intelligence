@@ -2,7 +2,7 @@ CREATE TABLE users (
     user_id         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cognito_sub     VARCHAR(255) UNIQUE NOT NULL,
     email           VARCHAR(255) UNIQUE NOT NULL,
-    role            VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'branch_admin', 'store_buyer', 'store_admin')),
+    role            VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'system_admin', 'store_buyer', 'store_admin')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -1,4 +1,4 @@
-import { publicFetch } from "./client";
+import { authenticatedFetch, publicFetch } from "./client";
 import { API_URL } from "./config";
 
 // Matches what the backend sends for each product
@@ -56,7 +56,7 @@ export async function getProduct(productId: number): Promise<Product> {
 }
 
 export async function createProduct(input: ProductInput): Promise<Product> {
-  const response = await fetch(`${API_URL}/api/admin/products`, {
+  const response = await authenticatedFetch("/api/admin/products", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -76,7 +76,7 @@ export async function updateProduct(
   productId: number,
   input: ProductInput,
 ): Promise<Product> {
-  const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
+  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -96,7 +96,7 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(productId: number): Promise<void> {
-  const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
+  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
     method: "DELETE",
   });
   if (!response.ok) {

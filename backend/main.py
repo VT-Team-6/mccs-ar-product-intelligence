@@ -5,11 +5,10 @@ from qr import make_qr_png
 from pathlib import Path
 from contextlib import asynccontextmanager
 from product_features import refresh_recommendation_data
-from database import get_connection
 
 from fastapi.staticfiles import StaticFiles
 
-from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores
+from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, admin
 import auth
 
 
@@ -39,6 +38,7 @@ app.include_router(reviews.admin_router)
 app.include_router(analysis.router)
 app.include_router(recommendations.router)
 app.include_router(stores.router)
+app.include_router(admin.router)
 
 # Serves the files in backend/static, such as product images
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
@@ -57,16 +57,4 @@ def product_qr(product_id: int):
 
 @app.get("/me")
 def get_me(user=Depends(auth.require_authenticated_user)):
-    with get_connection() as conn:
-        stores = conn.execute("""
-            SELECT store_id
-            FROM user_stores
-            WHERE user_id = %s
-            ORDER BY store_id
-        """, (user["user_id"],)).fetchall()
-
-    return {
-        **user, 
-        "permissions": sorted(auth.ROLE_PERMISSIONS.get(user["role"], set())),
-        "store_ids": [store["store_id"] for store in stores]
-            }
+    return user

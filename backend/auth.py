@@ -42,14 +42,17 @@ ROLE_PERMISSIONS = {
     "store_admin": {
         "manage_stock",
         "manage_inventory",
+        "manage_store_buyers"
     },
 
-    "branch_admin": {
+    "system_admin": {
         "manage_stock",
         "manage_inventory",
         "manage_products",
         "aggregate_reviews",
         "manage_all_stores",
+        "manage_store_buyers",
+        "manage_store_admins"
     },
 }
 
@@ -148,11 +151,25 @@ def require_authenticated_user(
                 """,
                 (cognito_sub, email),
             ).fetchone()
-    return user
+        return get_user_access(conn, user)
+
+
+def get_user_access(conn, user):
+    """One global role determines capabilities; assignments determine scope."""
+    assignments = conn.execute(
+        "SELECT store_id FROM user_stores WHERE user_id = %s ORDER BY store_id",
+        (user["user_id"],),
+    ).fetchall()
+    permissions = set(ROLE_PERMISSIONS.get(user["role"], set()))
+    return {
+        **user,
+        "store_ids": [assignment["store_id"] for assignment in assignments],
+        "permissions": sorted(permissions),
+    }
 
 def require_permission(permission: str):
     def check_permission(user=Depends(require_authenticated_user)):
-        permissions = ROLE_PERMISSIONS.get(user["role"], set())
+        permissions = user["permissions"]
 
         if permission not in permissions:
             raise HTTPException(403, "Insufficient permissions")
