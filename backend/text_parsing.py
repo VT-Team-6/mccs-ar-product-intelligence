@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 REQUIREMENTS = {
     "waterproof": (
         ["waterproof", "water proof", "water resistant", "water-resistant", "rain", "rainy",
-         "wet", "puddle", "puddles", "snow", "mud", "muddy"],
+         "wet", "puddle", "puddles", "snow"],
         ["waterproof", "water-resistant", "water resistant", "gore-tex", "rain boot", "rain boots"],
     ),
     "insulated": (

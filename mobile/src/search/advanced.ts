@@ -9,7 +9,7 @@ export const MAX_REQUEST_LENGTH = 200;
 
 // Tapping one fills the box, so shoppers can see what kind of request works
 export const EXAMPLE_REQUESTS = [
-  'Waterproof hiking boots under $150',
+  'Waterproof hiking boots under $175',
   'Comfortable running shoes for long runs',
   'Something formal for a wedding',
 ];
