@@ -8,7 +8,7 @@ from product_features import refresh_recommendation_data
 
 from fastapi.staticfiles import StaticFiles
 
-from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, admin
+from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, admin, compare
 import auth
 
 
@@ -37,6 +37,7 @@ app.include_router(reviews.router)
 app.include_router(reviews.admin_router)
 app.include_router(analysis.router)
 app.include_router(recommendations.router)
+app.include_router(compare.router)
 app.include_router(stores.router)
 app.include_router(admin.router)
 

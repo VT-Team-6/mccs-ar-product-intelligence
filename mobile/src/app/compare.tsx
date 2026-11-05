@@ -104,6 +104,15 @@ export default function CompareScreen() {
           ) : data ? (
             <>
               {data.missing.length > 0 && <MissingNote count={data.missing.length} />}
+              {data.best_for_you !== null && (
+                <ThemedText type="smallBold" style={styles.bestForYou}>
+                  Best for you: {
+                    items.find(
+                    (item) => item.product.product_id === data.best_for_you
+                  )?.product.name ?? 'Selected product'
+                }
+              </ThemedText>
+            )}
               <ComparisonTable items={items} onOpen={openProduct} />
             </>
           ) : null}
@@ -210,6 +219,49 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
               value={item.product.description ?? 'No description'}
               small
               lines={6}
+            />
+          ))}
+        </Row>
+
+        <Row label="Pros">
+          {items.map((item) => (
+            <Cell
+              key={item.product.product_id}
+              value={
+                item.pros.length > 0
+                  ? item.pros.map((pro) => `✓ ${pro}`).join('\n\n')
+                  : 'No notable advantages'
+              }
+              small
+            />
+          ))}
+        </Row>
+
+        <Row label="Cons">
+          {items.map((item) => (
+            <Cell
+              key={item.product.product_id}
+              value={
+                item.cons.length > 0
+                  ? item.cons.map((con) => `− ${con}`).join('\n\n')
+                  : 'No notable disadvantages'
+              }
+              small
+            />
+          ))}
+        </Row>
+
+        {/* Missing review information */}
+        <Row label="Notes">
+          {items.map((item) => (
+            <Cell
+              key={item.product.product_id}
+              value={
+                item.notes.length > 0
+                  ? item.notes.join('\n\n')
+                  : 'No additional notes'
+              }
+              small
             />
           ))}
         </Row>
@@ -328,6 +380,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   badge: {
+    color: ACCENT,
+  },
+    bestForYou: {
     color: ACCENT,
   },
   pressed: {
