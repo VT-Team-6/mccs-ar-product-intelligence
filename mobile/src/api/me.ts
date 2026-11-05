@@ -126,3 +126,21 @@ export async function recordInteraction(
     throw new Error(`Could not record the interaction (error ${response.status})`);
   }
 }
+
+
+// The store the shopper is shopping at, or null if they haven't picked one
+export async function getSelectedStore(): Promise<number | null> {
+  const response = await authenticatedFetch("/api/me/store");
+  const body = await readJson<{ store_id: number | null }>(response, "Could not load your store");
+  return body.store_id;
+}
+
+// Saves the store the shopper is shopping at. Prices and stock follow it.
+export async function saveSelectedStore(storeId: number): Promise<number | null> {
+  const response = await authenticatedFetch("/api/me/store", {
+    method: "PUT",
+    body: JSON.stringify({ store_id: storeId }),
+  });
+  const body = await readJson<{ store_id: number | null }>(response, "Could not save your store");
+  return body.store_id;
+}

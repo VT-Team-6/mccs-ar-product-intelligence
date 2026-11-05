@@ -10,7 +10,8 @@ import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { AIAnalysisPanel} from '@/components/ai-analysis-panel'
+import { AIAnalysisPanel} from '@/components/ai-analysis-panel';
+import {storePrice, storeStock} from '@/api/products';
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
@@ -171,10 +172,10 @@ export default function ShopperProductScreen() {
               {discontinued ? (
                 <Fact label="Availability" value="Discontinued at this store" />
               ) : (
-                <Fact
-                  label="Price"
-                  value={product.price === null ? 'No price' : `$${product.price.toFixed(2)}`}
-                />
+                <>
+                  <Fact label="Price" value={storePrice(product)} />
+                  <Fact label="Availability" value={storeStock(product)} />
+                </>
               )}
               <Fact
                 label="Rating"
