@@ -32,6 +32,26 @@ jwk_client = PyJWKClient(JWKS_URL)
 # in the past, while still rejecting materially stale or future tokens.
 CLOCK_SKEW_LEEWAY = 15
 
+ROLE_PERMISSIONS = {
+    "user": set(),
+
+    "store_buyer": {
+        "manage_stock",
+    },
+
+    "store_admin": {
+        "manage_stock",
+        "manage_inventory",
+    },
+
+    "branch_admin": {
+        "manage_stock",
+        "manage_inventory",
+        "manage_products",
+        "aggregate_reviews",
+        "manage_all_stores",
+    },
+}
 
 def verify_access_token(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
@@ -98,7 +118,7 @@ def require_authenticated_user(
     with get_connection() as conn:
         user = conn.execute(
             """
-            SELECT user_id, cognito_sub, email, is_admin
+            SELECT user_id, cognito_sub, email, role
             FROM users
             WHERE cognito_sub = %s
             """,
@@ -124,20 +144,19 @@ def require_authenticated_user(
                 """
                 INSERT INTO users (cognito_sub, email)
                 VALUES (%s, %s)
-                RETURNING user_id, cognito_sub, email, is_admin                    
+                RETURNING user_id, cognito_sub, email, role                    
                 """,
                 (cognito_sub, email),
             ).fetchone()
     return user
 
+def require_permission(permission: str):
+    def check_permission(user=Depends(require_authenticated_user)):
+        permissions = ROLE_PERMISSIONS.get(user["role"], set())
 
-def require_admin(
-    user=Depends(require_authenticated_user),
-):
-    if not user["is_admin"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
-        )
+        if permission not in permissions:
+            raise HTTPException(403, "Insufficient permissions")
 
-    return user
+        return user
+
+    return check_permission

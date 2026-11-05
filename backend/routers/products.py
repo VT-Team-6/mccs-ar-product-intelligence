@@ -1,8 +1,9 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status, Depends
 
 from database import get_connection
 from schemas import Product, ProductCreate, ProductUpdate
 from product_features import refresh_recommendation_data
+from auth import require_permission
 
 router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 
@@ -50,7 +51,10 @@ def read_product(product_id: int) -> dict:
     with get_connection() as conn:
         return _fetch_product(conn, product_id)
     
-@router.post("", response_model=Product, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Product, 
+    status_code=status.HTTP_201_CREATED, 
+    dependencies=[Depends(require_permission("manage_products"))]
+)
 def create_product(product: ProductCreate, background_tasks: BackgroundTasks) -> dict:
     with get_connection() as conn:
         row = conn.execute(
@@ -74,7 +78,10 @@ def create_product(product: ProductCreate, background_tasks: BackgroundTasks) ->
     
 
 
-@router.put("/{product_id}", response_model=Product)
+@router.put("/{product_id}", 
+    response_model=Product, 
+    dependencies=[Depends(require_permission("manage_products"))]
+)
 def update_product(product_id: int, product: ProductUpdate, background_tasks: BackgroundTasks) -> dict:
     updates = product.model_dump(exclude_unset=True)
 
@@ -104,7 +111,7 @@ def update_product(product_id: int, product: ProductUpdate, background_tasks: Ba
         return row
 
 
-@router.delete("/{product_id}")
+@router.delete("/{product_id}", dependencies=[Depends(require_permission("manage_products"))])
 def delete_product(product_id: int, background_tasks: BackgroundTasks) -> dict:
     with get_connection() as conn:
         cursor = conn.execute(

@@ -2,7 +2,7 @@ CREATE TABLE users (
     user_id         INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     cognito_sub     VARCHAR(255) UNIQUE NOT NULL,
     email           VARCHAR(255) UNIQUE NOT NULL,
-    is_admin        BOOLEAN NOT NULL DEFAULT FALSE,
+    role            VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'branch_admin', 'store_buyer', 'store_admin')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -25,6 +25,12 @@ CREATE TABLE stores (
     address         VARCHAR(300) NOT NULL,
     latitude        NUMERIC(10,8) CHECK (latitude BETWEEN -90 AND 90),
     longitude       NUMERIC(11,8) CHECK (longitude BETWEEN -180 AND 180)
+);
+
+CREATE TABLE user_stores (
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    store_id INTEGER NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, store_id)
 );
 
 CREATE TABLE inventory (

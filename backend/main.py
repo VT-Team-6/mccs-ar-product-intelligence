@@ -5,6 +5,7 @@ from qr import make_qr_png
 from pathlib import Path
 from contextlib import asynccontextmanager
 from product_features import refresh_recommendation_data
+from database import get_connection
 
 from fastapi.staticfiles import StaticFiles
 
@@ -56,8 +57,16 @@ def product_qr(product_id: int):
 
 @app.get("/me")
 def get_me(user=Depends(auth.require_authenticated_user)):
-    return user
+    with get_connection() as conn:
+        stores = conn.execute("""
+            SELECT store_id
+            FROM user_stores
+            WHERE user_id = %s
+            ORDER BY store_id
+        """, (user["user_id"],)).fetchall()
 
-@app.get("/admin_test")
-def admin_test(user=Depends(auth.require_admin)):
-    return user
+    return {
+        **user, 
+        "permissions": sorted(auth.ROLE_PERMISSIONS.get(user["role"], set())),
+        "store_ids": [store["store_id"] for store in stores]
+            }
