@@ -4,10 +4,14 @@ import { authenticatedFetch, publicFetch } from "./client";
 // on sale, or no longer sold there
 export type InventoryStatus = "pending" | "active" | "discontinued";
 
+// A location the shopper can pick. Mirrors the backend `Store` schema, so the
+// coordinates are here even where a screen only shows the name and address.
 export type Store = {
   store_id: number;
   name: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 // One product's stock at one store, as the inventory screen lists it
@@ -45,6 +49,39 @@ async function problem(response: Response, fallback: string): Promise<Error> {
 export async function listStores(): Promise<Store[]> {
   const response = await publicFetch("/api/stores");
   if (!response.ok) throw await problem(response, "Could not load stores");
+  return response.json();
+}
+
+// One store that actively sells a product, with its own price and stock.
+export type ProductStockEntry = {
+  product_id: number;
+  store_id: number;
+  store_name: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  quantity: number;
+  price: number | null;
+  in_stock: boolean;
+  status: InventoryStatus;
+  updated_at: string;
+};
+
+export type ProductStock = {
+  product_id: number;
+  name: string;
+  // Every store with an active entry, including ones at quantity 0: those are
+  // exactly the "available elsewhere" rows this is used for.
+  stores: ProductStockEntry[];
+};
+
+// Where a product can be bought. Public: no token needed, and an unknown
+// product is a 404 while a product sold nowhere is a 200 with no stores.
+export async function getProductStock(productId: number): Promise<ProductStock> {
+  const response = await publicFetch(`/api/products/${productId}/stock`);
+  if (!response.ok) {
+    throw await problem(response, "Could not load nearby stores");
+  }
   return response.json();
 }
 

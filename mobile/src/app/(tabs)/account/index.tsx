@@ -16,10 +16,12 @@ import { useAuth } from "@/auth/AuthContext";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { useStore } from "@/store/StoreContext";
 
 export default function AccountScreen() {
   const { profile, profileLoading, hasPermission, signOut, refreshProfile } =
     useAuth();
+  const { store, openStoreSelector } = useStore();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // Tracks the "Try again" press, and makes the automatic retry happen once
@@ -108,6 +110,14 @@ export default function AccountScreen() {
             label="Preferences"
             hint="Manage your preferences"
             onPress={() => router.push("/account/preferences")}
+          />
+
+          {/* The only surface that offers clearing, since clearing is never
+              what a shopper tapping a price prompt meant. */}
+          <Row
+            label="Store"
+            hint={store ? store.name : "Choose the store you shop at"}
+            onPress={() => openStoreSelector({ allowClear: true })}
           />
 
           <Row label="Sign out" onPress={signOut} />
