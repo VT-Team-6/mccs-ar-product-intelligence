@@ -150,6 +150,18 @@ class Recommendation(BaseModel):
     reasons: list[str]
 
 
+class UnderstoodRequest(BaseModel):
+    """How the typed text was read: limits and requirements the results follow."""
+
+    min_price: float | None
+    max_price: float | None
+    brands: list[str]
+    product_types: list[str]
+    requirements: list[str]
+
+
 class RecommendationResponse(BaseModel):
     best_matches: list[Recommendation]
     for_you: Recommendation | None
+    # Only when text was sent. Lets the app show "Under $150 · Waterproof"
+    understood: UnderstoodRequest | None = None
