@@ -30,12 +30,13 @@ _PRODUCT_KEYS = (
 # avoiding positional-parameter ordering mistakes where same-length,
 # incorrectly ordered parameters could bind without raising an error.
 _STORE_INVENTORY = """
-    CASE WHEN i.product_id IS NULL THEN NULL ELSE
+    CASE WHEN i.product_id IS NULL OR i.status = 'pending' THEN NULL ELSE
         json_build_object(
             'store_id', i.store_id,
             'price',    i.price,
             'quantity', i.quantity,
-            'in_stock', i.quantity > 0
+            'in_stock', i.quantity > 0 AND i.status = 'active',
+            'status',   i.status
         )
     END AS store_inventory
 """

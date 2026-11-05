@@ -163,3 +163,13 @@ def require_admin(
         )
 
     return user
+
+
+def require_inventory_writer(
+    user=Depends(require_admin),
+):
+    """Who may change store inventory.
+
+    Currently uses placeholder admin requirement.
+    """
+    return user

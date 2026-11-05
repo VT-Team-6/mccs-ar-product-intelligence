@@ -11,12 +11,13 @@ router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 # Admin routes pass store_id=None, which matches no rows, so admin responses
 # carry store_inventory: null.
 _STORE_INVENTORY = """
-    CASE WHEN i.product_id IS NULL THEN NULL ELSE
+    CASE WHEN i.product_id IS NULL OR i.status = 'pending' THEN NULL ELSE
         json_build_object(
             'store_id', i.store_id,
             'price',    i.price,
             'quantity', i.quantity,
-            'in_stock', i.quantity > 0
+            'in_stock', i.quantity > 0 AND i.status = 'active',
+            'status',   i.status
         )
     END AS store_inventory
 """

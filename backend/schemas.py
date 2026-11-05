@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -22,6 +23,10 @@ class ProductUpdate(BaseModel):
     image_url: str | None = Field(default=None, max_length=500)
 
 
+# Lifecycle of a product at one store. Only 'active' is visible to shoppers.
+InventoryStatus = Literal["pending", "active", "discontinued"]
+
+
 class StoreInventory(BaseModel):
     """Price and stock at one store. Null when the store has no row for the
     product — a different thing from "no store selected", which the client
@@ -31,6 +36,9 @@ class StoreInventory(BaseModel):
     price: float | None
     quantity: int
     in_stock: bool
+    # 'discontinued' lets the client show its discontinued screen; a 'pending'
+    # entry never reaches a shopper, so it is never reported here.
+    status: InventoryStatus = "active"
 
 
 class Product(BaseModel):
@@ -185,3 +193,118 @@ class Recommendation(BaseModel):
 class RecommendationResponse(BaseModel):
     best_matches: list[Recommendation]
     for_you: Recommendation | None
+
+
+# --- Inventory ------------------------------------------------------------
+
+
+class InventoryRecord(BaseModel):
+    """One product's stock at one store, as the API writes and reports it."""
+
+    product_id: int
+    store_id: int
+    quantity: int
+    price: float | None
+    in_stock: bool
+    status: InventoryStatus
+    updated_at: datetime
+
+
+class ProductStockEntry(InventoryRecord):
+    """Where else a product is on sale: the store, its address, and the stock."""
+
+    store_name: str
+    address: str
+
+
+class ProductStock(BaseModel):
+    product_id: int
+    name: str
+    stores: list[ProductStockEntry]
+
+
+class StoreStockEntry(InventoryRecord):
+    """What a store sells: the product's name and brand, and its stock there."""
+
+    product_name: str
+    brand: str | None
+
+
+class StoreStock(BaseModel):
+    store_id: int
+    name: str
+    items: list[StoreStockEntry]
+    next_cursor: str | None
+
+
+class InventoryWrite(BaseModel):
+    """Replace stock for one product+store. Omitted fields keep their value.
+
+    price is a Decimal rather than a float so a value like 9.999 is
+    rejected instead of silently rounding to the column's two decimals.
+    """
+
+    quantity: int | None = Field(default=None, ge=0)
+    price: Decimal | None = Field(
+        default=None, ge=0, max_digits=10, decimal_places=2
+    )
+    status: InventoryStatus | None = None
+
+    @model_validator(mode="after")
+    def needs_a_change(self):
+        if self.quantity is None and self.price is None and self.status is None:
+            raise ValueError("Give a quantity, a price, or a status")
+        return self
+
+
+class InventoryBatchEntry(InventoryWrite):
+    product_id: int = Field(gt=0)
+    store_id: int = Field(gt=0)
+
+
+class InventoryBatch(BaseModel):
+    """Many product+store rows applied together, or not at all."""
+
+    items: list[InventoryBatchEntry] = Field(min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def no_duplicate_pairs(self):
+        seen = set()
+        for entry in self.items:
+            pair = (entry.product_id, entry.store_id)
+            if pair in seen:
+                raise ValueError(
+                    f"Product {pair[0]} at store {pair[1]} appears more than once"
+                )
+            seen.add(pair)
+        return self
+
+
+class InventoryPush(BaseModel):
+    """Push catalog products to stores; each becomes a pending entry."""
+
+    product_ids: list[int] = Field(min_length=1, max_length=200)
+    store_ids: list[int] = Field(min_length=1, max_length=200)
+
+
+class InventoryApproval(BaseModel):
+    """Approve a pending entry, supplying whatever the store still needs."""
+
+    quantity: int | None = Field(default=None, ge=0)
+    price: Decimal | None = Field(
+        default=None, ge=0, max_digits=10, decimal_places=2
+    )
+
+
+class PushedEntry(BaseModel):
+    """One product+store pair after a push, including whether it already had
+    an entry (in which case nothing was changed)."""
+
+    product_id: int
+    store_id: int
+    quantity: int
+    price: float | None
+    in_stock: bool
+    status: InventoryStatus
+    updated_at: datetime
+    already_present: bool

@@ -33,10 +33,11 @@ def search_products(
             product_select(resolved)
             + sql.SQL("""
             WHERE
-                p.name ILIKE %s OR
-                p.brand ILIKE %s OR
-                p.product_type ILIKE %s OR
-                p.description ILIKE %s
+                (p.name ILIKE %s OR
+                 p.brand ILIKE %s OR
+                 p.product_type ILIKE %s OR
+                 p.description ILIKE %s)
+                AND (i.product_id IS NULL OR i.status = 'active')
             ORDER BY p.name
             """),
             (pattern, pattern, pattern, pattern),
