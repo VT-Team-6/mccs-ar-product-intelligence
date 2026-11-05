@@ -1,6 +1,7 @@
 // Shared pieces for advanced search: the request a shopper writes in their own
 // words, plus an optional "what matters most" ranking.
 
+import type { UnderstoodRequest } from '@/api/recommendations';
 import { CRITERIA, DEFAULT_PREFERENCES, type CriterionKey, type Preferences } from '@/preferences/criteria';
 
 // The backend accepts up to 200 characters of text for a recommendation
@@ -34,4 +35,19 @@ export function rankingFromParam(param: string | undefined): Preferences {
     }
   }
   return ranking;
+}
+
+// Short labels for how the search was read, e.g. ["Under $150", "Boot", "Waterproof"]
+export function describeUnderstood(understood: UnderstoodRequest | null | undefined): string[] {
+  if (!understood) return [];
+  const money = (amount: number) => `$${Number.isInteger(amount) ? amount : amount.toFixed(2)}`;
+  const labels: string[] = [];
+  const { min_price: low, max_price: high } = understood;
+  if (low !== null && high !== null) labels.push(`${money(low)} to ${money(high)}`);
+  else if (high !== null) labels.push(`Under ${money(high)}`);
+  else if (low !== null) labels.push(`Over ${money(low)}`);
+  labels.push(...understood.brands);
+  labels.push(...understood.product_types);
+  labels.push(...understood.requirements.map((r) => r.charAt(0).toUpperCase() + r.slice(1)));
+  return labels;
 }
