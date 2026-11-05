@@ -17,12 +17,22 @@ export type Recommendation = {
   reasons: string[];
 };
 
+// How typed text was read: the limits and requirements the results follow
+export type UnderstoodRequest = {
+  min_price: number | null;
+  max_price: number | null;
+  brands: string[];
+  product_types: string[];
+  requirements: string[];
+};
+
 export type RecommendationResult = {
   best_matches: Recommendation[];
   // Uses saved preferences and likes too; null when the user has neither
   for_you: Recommendation | null;
+  // Only when text was sent
+  understood?: UnderstoodRequest | null;
 };
-
 export async function getRecommendations(request: RecommendationRequest): Promise<RecommendationResult> {
   const response = await authenticatedFetch("/api/recommendations", {
     method: "POST",
