@@ -41,7 +41,6 @@ app.include_router(recommendations.router)
 app.include_router(inventory.product_stock_router)
 app.include_router(inventory.store_stock_router)
 app.include_router(inventory.writer_router)
-app.include_router(stores.router)
 app.include_router(admin.router)
 
 # Serves the files in backend/static, such as product images
