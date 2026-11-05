@@ -38,7 +38,6 @@ app.include_router(reviews.router)
 app.include_router(reviews.admin_router)
 app.include_router(analysis.router)
 app.include_router(recommendations.router)
-app.include_router(stores.router)
 
 # Serves the files in backend/static, such as product images
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
