@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
+import { useCallback, useState } from "react";
+import { Alert, Linking, Modal, Pressable, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useRouter, type Href } from "expo-router";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
 
 import { API_URL } from "@/api/config";
-import { recordInteraction } from "@/api/me";
+import { listStores, type Store } from "@/api/inventory";
+import { getSelectedStore, recordInteraction, saveSelectedStore } from "@/api/me";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, Spacing, type ThemeColor } from "@/constants/theme";
@@ -23,6 +24,51 @@ export default function ScanScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const styles = createStyles(theme);
+
+  const [stores, setStores] = useState<Store[]>([]);
+  const [storeId, setStoreId] = useState<number | null>(null);
+  const [choosingStore, setChoosingStore] = useState(false);
+  const store = stores.find((item) => item.store_id === storeId);
+
+  // Loads the stores and the shopper's saved one each time Home comes into view.
+  // With no store saved yet, the list opens right away.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      Promise.all([listStores(), getSelectedStore()])
+        .then(([all, saved]) => {
+          if (cancelled) return;
+          setStores(all);
+          setStoreId(saved);
+          if (saved === null) setChoosingStore(true);
+        })
+        .catch(() => undefined);
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
+
+  const chooseStore = async (id: number) => {
+    const previous = storeId;
+    setStoreId(id);
+    setChoosingStore(false);
+    try {
+      await saveSelectedStore(id);
+    } catch {
+      setStoreId(previous);
+      Alert.alert("Could not save your store", "Check your connection and try again.");
+    }
+  };
+
+  // Prices and stock depend on the store, so scanning or searching needs one first.
+  // Returns true (and opens the store list) when no store is chosen yet.
+  const needsStore = () => {
+    if (storeId !== null) return false;
+    setChoosingStore(true);
+    Alert.alert("Choose a store first", "Prices and stock depend on the store you're shopping at.");
+    return true;
+  };
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     console.log("Scanned QR:", data);
@@ -156,9 +202,49 @@ export default function ScanScreen() {
             { paddingBottom: insets.bottom + BottomTabInset + Spacing.one },
           ]}
         >
+          {/* One line, so the camera keeps its height. The list opens on top. */}
+          <Pressable
+            onPress={() => setChoosingStore(true)}
+            style={({ pressed }) => [styles.storeBar, pressed && { opacity: 0.6 }]}
+          >
+            <ThemedText style={styles.storeLabel}>{store ? "Shopping at" : "Store"}</ThemedText>
+            <ThemedText style={styles.storeName} numberOfLines={1}>
+              {store ? store.name : "Choose a store"}
+            </ThemedText>
+            <ThemedText style={styles.storeChevron}>▾</ThemedText>
+          </Pressable>
+
+          <Modal
+            visible={choosingStore}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setChoosingStore(false)}
+          >
+            <Pressable style={styles.backdrop} onPress={() => setChoosingStore(false)}>
+              <Pressable style={styles.sheet} onPress={() => undefined}>
+                <ThemedText style={styles.sheetTitle}>Choose your store</ThemedText>
+                <ThemedText style={styles.storeLabel}>
+                  Prices and stock are shown for this store.
+                </ThemedText>
+                {stores.map((item) => (
+                  <Pressable
+                    key={item.store_id}
+                    onPress={() => chooseStore(item.store_id)}
+                    style={({ pressed }) => [styles.storeOption, pressed && { opacity: 0.6 }]}
+                  >
+                    <ThemedText style={styles.storeOptionName}>
+                      {`${item.store_id === storeId ? "✓ " : ""}${item.name}`}
+                    </ThemedText>
+                    <ThemedText style={styles.storeLabel}>{item.address}</ThemedText>
+                  </Pressable>
+                ))}
+              </Pressable>
+            </Pressable>
+          </Modal>
+
           <Pressable
             style={styles.primaryButton}
-            onPress={() => setIsScanning(true)}
+            onPress={() => !needsStore() && setIsScanning(true)}
             disabled={isLoading}
           >
             <ThemedText style={styles.primaryButtonText}>
@@ -172,7 +258,7 @@ export default function ScanScreen() {
 
           <Pressable
             style={styles.secondaryButton}
-            onPress={() => router.push("/search")}
+            onPress={() => !needsStore() && router.push("/search")}
           >
             <ThemedText style={styles.secondaryButtonText}>
               Enter product manually
@@ -289,6 +375,55 @@ function createStyles(theme: Record<ThemeColor, string>) {
       marginBottom: 18,
     },
 
+    storeBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.two,
+      backgroundColor: theme.backgroundElement,
+      borderRadius: Spacing.three,
+      paddingVertical: Spacing.two,
+      paddingHorizontal: Spacing.three,
+    },
+    storeLabel: {
+      fontSize: 13,
+      color: theme.textSecondary,
+    },
+    storeName: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: "600",
+      color: theme.text,
+    },
+    storeChevron: {
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+    backdrop: {
+      flex: 1,
+      justifyContent: "center",
+      padding: Spacing.four,
+      backgroundColor: "rgba(0, 0, 0, 0.45)",
+    },
+    sheet: {
+      backgroundColor: theme.background,
+      borderRadius: Spacing.four,
+      padding: Spacing.four,
+      gap: Spacing.one,
+    },
+    sheetTitle: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: theme.text,
+    },
+    storeOption: {
+      paddingVertical: Spacing.two,
+      gap: Spacing.half,
+    },
+    storeOptionName: {
+      fontSize: 15,
+      fontWeight: "600",
+      color: theme.text,
+    },
     actions: {
       backgroundColor: theme.background,
       borderTopWidth: 1,

@@ -10,6 +10,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { compareHref, readSelection, selectionProblem } from '@/compare/selection';
+import {storePrice, storePriceValue, storeStock} from '@/api/products';
 
 // The blue used for links elsewhere in the app
 const ACCENT = '#3c87f7';
@@ -127,9 +128,11 @@ function MissingNote({ count }: { count: number }) {
 function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (item: CompareItem) => void }) {
   // Compare the values as they're shown (cents and one decimal), so a badge
   // never picks between two numbers that look the same on screen
-  const prices = items.map(({ product }) =>
-    product.price === null ? null : Math.round(product.price * 100) / 100,
-  );
+  // Prices at the shopper's chosen store
+  const prices = items.map(({ product }) => {
+    const price = storePriceValue(product);
+    return price === null ? null : Math.round(price * 100) / 100;
+  });
   const ratings = items.map(({ product }) =>
     product.rating === null ? null : Math.round(product.rating * 10) / 10,
   );
@@ -166,7 +169,7 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
           {items.map((item, index) => (
             <Cell
               key={item.product.product_id}
-              value={item.product.price === null ? 'No price' : `$${item.product.price.toFixed(2)}`}
+              value={storePrice(item.product)}
               badge={lowestPrice.has(index) ? 'Lowest price' : null}
             />
           ))}

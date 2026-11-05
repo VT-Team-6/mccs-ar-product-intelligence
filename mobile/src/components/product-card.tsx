@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-import { productImageUrl, type Product } from '@/api/products';
+import { productImageUrl, storePrice, type Product } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -31,7 +31,7 @@ export function ProductCard({
   style,
 }: ProductCardProps) {
   const details = [product.brand, product.product_type].filter(Boolean).join(' · ');
-  const price = product.price === null ? 'No price' : `$${product.price.toFixed(2)}`;
+  const price = storePrice(product);
   const imageUrl = productImageUrl(product);
 
   return (
