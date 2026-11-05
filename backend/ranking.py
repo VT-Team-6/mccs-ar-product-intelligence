@@ -294,6 +294,8 @@ def rebuild_engine() -> int:
 
     The new engine replaces the old one only once it's fully built, so requests
     in the meantime keep using the old one. Returns how many products it holds.
+
+    Store-agnostic prices are used: the average price of a product across all stores is used for scoring.
     """
     global _engine
     from product_features import load_product_scores  # avoids a circular import
@@ -306,10 +308,15 @@ def rebuild_engine() -> int:
                 p.name,
                 p.brand,
                 p.product_type,
-                p.price,
+                ip.price,
                 s.average_rating AS rating,
                 p.description
             FROM products p
+            LEFT JOIN (
+                SELECT product_id, AVG(price) AS price
+                FROM inventory
+                GROUP BY product_id
+            ) ip ON ip.product_id = p.product_id
             LEFT JOIN product_review_stats s
                 ON p.product_id = s.product_id
             WHERE p.deleted_at IS NULL

@@ -131,6 +131,28 @@ def require_authenticated_user(
     return user
 
 
+bearer_optional = HTTPBearer(auto_error=False)
+
+
+def optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_optional),
+):
+    """Anonymous callers pass through as None; an invalid token still 401s.
+
+    Handles token-less anonymous requests, but does not silently downgrade a 
+    signed-in user whose token is invalid or expired. A quiet downgrade would 
+    show storeless prices to a signed-in user whose session expired, with no 
+    actionable error. A supplied-but-invalid/expired token must fail 
+    loudly (401), never fall back to anonymous.
+    """
+    if credentials is None:
+        return None
+    # verify_access_token returns {"claims", "token"}; feeding that dict into
+    # require_authenticated_user keeps the create-user-on-first-sight behavior
+    # identical to authenticated routes.
+    return require_authenticated_user(verify_access_token(credentials))
+
+
 def require_admin(
     user=Depends(require_authenticated_user),
 ):

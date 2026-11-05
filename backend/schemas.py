@@ -8,7 +8,6 @@ class ProductCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     product_type: str = Field(min_length=1, max_length=100)
     brand: str | None = Field(default=None, max_length=100)
-    price: float | None = Field(default=None, ge=0)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
 
@@ -19,22 +18,49 @@ class ProductUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     product_type: str | None = Field(default=None, min_length=1, max_length=100)
     brand: str | None = Field(default=None, max_length=100)
-    price: float | None = Field(default=None, ge=0)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
+
+
+class StoreInventory(BaseModel):
+    """Price and stock at one store. Null when the store has no row for the
+    product — a different thing from "no store selected", which the client
+    distinguishes from its own state."""
+
+    store_id: int
+    price: float | None
+    quantity: int
+    in_stock: bool
 
 
 class Product(BaseModel):
     product_id: int
     name: str
     brand: str | None
-    price: float | None
     product_type: str
     rating: float | None
     description: str | None
     image_url: str | None
     created_at: datetime
     updated_at: datetime
+    # resolved at runtime by the API layer, not stored in the database.
+    store_inventory: StoreInventory | None = None
+
+
+class Store(BaseModel):
+    """A location the shopper can pick. Public catalog data."""
+
+    store_id: int
+    name: str
+    address: str
+    latitude: float | None
+    longitude: float | None
+
+
+class StoreSelection(BaseModel):
+    """The shopper's active store: null means "no store selected"."""
+
+    store_id: int | None
 
 
 # --- Shopper screens (likes and history) ---------------------------------
@@ -58,11 +84,17 @@ class LikedProductPage(BaseModel):
 
 
 class HistoryItem(BaseModel):
-    """One interaction event. The same product can appear more than once."""
+    """One interaction event. The same product can appear more than once.
+    Records the store and price at the time of the interaction, can differ 
+    from user's current store selection and the product's current price.
+    """
 
     history_id: int
     interaction: str
     occurred_at: datetime
+    store_id: int | None
+    store_name: str | None
+    price_at_interaction: float | None
     product: MyProduct
 
 
