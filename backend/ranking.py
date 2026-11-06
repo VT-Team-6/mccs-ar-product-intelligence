@@ -241,20 +241,29 @@ class RecommendationEngine:
         now_ranks: dict | None = None,
         saved_ranks: dict | None = None,
         liked_ids: list[int] | None = None,
+        store_stock: dict[int, dict] | None = None,
     ) -> dict:
-        """Up to 3 best matches plus one "for you" pick, each with reasons."""
+        """Up to 3 best matches plus one "for you" pick, each with reasons.
+
+        store_stock is what the shopper's store sells: {product_id: {"price": ..,
+        "in_stock": ..}}. With it, only those products are recommended, priced at
+        that store, and in-stock ones come first. Without it, the whole catalog
+        is used at its average price.
+        """
         text = (text or "").strip()
         if product_id is None and not text:
             raise ValueError("Give a product, some text, or both")
         if product_id is not None and product_id not in self.index:
             raise KeyError(f"Product {product_id} is not in the catalog")
 
+        prices = self._prices_at(store_stock)
         parsed = parse_request(text, self.brands) if text else None
         named_types = types_named_in(text, set(self.types)) if text else set()
         candidates = np.array([
             i for i, pid in enumerate(self.ids)
             if pid != product_id
-            and self._within_limits(i, parsed)
+            and (store_stock is None or pid in store_stock)
+            and self._within_limits(i, parsed, prices)
             and (not named_types or self.types[i] in named_types)
         ])
         if len(candidates) == 0:
@@ -281,7 +290,7 @@ class RecommendationEngine:
         # Price and rating are compared among the pool: the products being chosen between
         scores = self.scores[candidates].copy()
         members = candidates[pool]
-        scores[pool, CRITERIA.index("price")] = compare_within(self.prices[members], higher_is_better=False)
+        scores[pool, CRITERIA.index("price")] = compare_within(prices[members], higher_is_better=False)
         scores[pool, CRITERIA.index("rating")] = compare_within(self.ratings[members], higher_is_better=True)
 
         personalized = bool(now_ranks) and has_ranking(now_ranks)
@@ -294,7 +303,12 @@ class RecommendationEngine:
         final = final + REQUIREMENT_FINAL_BONUS * met
 
         # Products meeting more of what they asked for come first; their ranking orders the rest
-        order = sorted(pool, key=lambda j: (-met[j], -final[j], ids[j]))
+                # Products meeting more of what they asked for come first, then ones in stock
+        # at their store; their ranking orders the rest
+        out_of_stock = np.array([
+            store_stock is not None and not store_stock[pid].get("in_stock", False) for pid in ids
+        ])
+        order = sorted(pool, key=lambda j: (-met[j], out_of_stock[j], -final[j], ids[j]))
         top = order[:BEST_MATCHES]
 
         best = [
@@ -306,11 +320,21 @@ class RecommendationEngine:
         )
         return {"best_matches": best, "for_you": for_you}
 
-    def _within_limits(self, i: int, parsed) -> bool:
+    def _prices_at(self, store_stock: dict[int, dict] | None) -> np.ndarray:
+        """Each product's price at the store, or the catalog average without one."""
+        if store_stock is None:
+            return self.prices
+        prices = np.full(len(self.ids), np.nan)
+        for pid, stock in store_stock.items():
+            if pid in self.index and stock.get("price") is not None:
+                prices[self.index[pid]] = float(stock["price"])
+        return prices
+
+    def _within_limits(self, i: int, parsed, prices: np.ndarray) -> bool:
         """Price range and brand from the text are hard limits."""
         if parsed is None:
             return True
-        price = self.prices[i]
+        price = prices[i]
         if parsed.min_price is not None and not (price >= parsed.min_price):
             return False
         if parsed.max_price is not None and not (price <= parsed.max_price):
