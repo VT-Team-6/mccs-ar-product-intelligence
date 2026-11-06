@@ -1,3 +1,4 @@
+import { Image } from "expo-image";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -18,6 +19,7 @@ import {
   type Store,
   type StoreStockEntry,
 } from "@/api/inventory";
+import { productImageUrl } from "@/api/products";
 import { useAuth } from "@/auth/AuthContext";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -117,6 +119,7 @@ export default function InventoryScreen() {
         storeId: String(item.store_id),
         storeName: store?.name ?? "",
         name: item.product_name,
+        image: productImageUrl(item) ?? "",
         price: item.price === null ? "" : item.price.toFixed(2),
         quantity: String(item.quantity),
         status: item.status,
@@ -244,10 +247,20 @@ function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => voi
   const price = item.price === null ? "No price" : `$${item.price.toFixed(2)}`;
   const stock =
     item.status === "pending" ? "Needs approval" : item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock";
+  const imageUrl = productImageUrl(item);
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView type="backgroundElement" style={styles.row}>
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={[styles.thumbnail, styles.whiteBackground]}
+            contentFit="contain"
+          />
+        ) : (
+          <ThemedView type="backgroundSelected" style={styles.thumbnail} />
+        )}
         <ThemedView type="backgroundElement" style={styles.rowText}>
           <ThemedText type="smallBold">{item.product_name}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -315,6 +328,15 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     padding: Spacing.three,
     borderRadius: Spacing.three,
+  },
+  thumbnail: {
+    width: 56,
+    height: 56,
+    borderRadius: Spacing.two,
+  },
+  // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
+  whiteBackground: {
+    backgroundColor: "#ffffff",
   },
   rowText: {
     flex: 1,

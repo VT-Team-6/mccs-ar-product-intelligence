@@ -101,15 +101,24 @@ from datetime import datetime
 from fastapi import Depends, Query
 from pydantic import BaseModel, Field
 
+from product_access import require_product_owner
 from services.reviews.importer import ReviewImporter
 from services.reviews.models import ReviewCandidate
 from services.reviews.registry import get_provider
 
 
+def require_review_access(
+    product_id: int, user=Depends(require_permission("create_products"))
+) -> None:
+    """Review sources follow product ownership: the app admin, or the owning store."""
+    with get_connection() as conn:
+        require_product_owner(conn, user, product_id)
+
+
 admin_router = APIRouter(
     prefix="/api/admin/products",
     tags=["admin-reviews"],
-    dependencies=[Depends(require_permission("aggregate_reviews"))],
+    dependencies=[Depends(require_review_access)],
 )
 review_importer = ReviewImporter()
 

@@ -193,9 +193,9 @@ def test_new_user_cannot_manage_products(db, cognito, client):
 @pytest.mark.parametrize("role,permissions,can_manage_products", [
     ("user", [], False),
     ("store_buyer", ["manage_stock"], False),
-    ("store_admin", ["manage_inventory", "manage_stock", "manage_store_buyers"], False),
+    ("store_admin", ["create_products", "manage_inventory", "manage_stock", "manage_store_buyers"], False),
     ("system_admin", [
-        "aggregate_reviews", "manage_all_stores", "manage_inventory",
+        "aggregate_reviews", "create_products", "manage_all_stores", "manage_inventory",
         "manage_products", "manage_stock", "manage_store_admins", "manage_store_buyers",
     ], True),
 ])

@@ -58,10 +58,14 @@ export default function AccountScreen() {
           ]}
         >
           {/* Admin Access */}
-          {hasPermission("manage_products") && (
+          {hasPermission("create_products") && (
             <Row
               label="Manage Products"
-              hint="Add, edit and delete products"
+              hint={
+                hasPermission("manage_products")
+                  ? "Add, edit and delete products"
+                  : "Add products for your store and print QR codes"
+              }
               onPress={() => router.push("/admin/products")}
             />
           )}
