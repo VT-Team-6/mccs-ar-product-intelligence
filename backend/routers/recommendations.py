@@ -29,10 +29,10 @@ def recommend(
     ),
     user=Depends(auth.require_authenticated_user),
 ):
-    """Ranking is store-agnostic: the engine's price criterion keeps reading the
-    catalog-wide baseline (AVG(inventory.price)), so changing stores never
-    reorders "Best matches". The resolved store only sets the price displayed on
-    each card via store_inventory."""
+    """Recommendations for the shopper's store (task 39): only products that store
+    sells (active), priced at that store, in-stock ones first. Without a store,
+    the whole catalog at its average price. The store also sets the price shown
+    on each card via store_inventory."""
     with get_connection() as conn:
         saved_ranks = preferences.get_preferences(conn, user["user_id"])
         resolved = store_selection.resolve_store_id(conn, user["user_id"], store_id)
@@ -43,6 +43,20 @@ def recommend(
                 (user["user_id"],),
             ).fetchall()
         ]
+        # What the shopper's store sells right now, at its own prices
+        store_stock = None
+        if resolved is not None:
+            store_stock = {
+                row["product_id"]: {"price": row["price"], "in_stock": row["in_stock"]}
+                for row in conn.execute(
+                    """
+                    SELECT product_id, price, quantity > 0 AS in_stock
+                    FROM inventory
+                    WHERE store_id = %s AND status = 'active'
+                    """,
+                    (resolved,),
+                ).fetchall()
+            }
 
     try:
         engine = get_engine()
@@ -52,6 +66,7 @@ def recommend(
             now_ranks=body.ranking.model_dump(),
             saved_ranks=saved_ranks,
             liked_ids=liked_ids,
+            store_stock=store_stock,
         )
     except KeyError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, f"Product {body.product_id} not found")
