@@ -40,12 +40,14 @@ ROLE_PERMISSIONS = {
     },
 
     "store_admin": {
+        "create_products",
         "manage_stock",
         "manage_inventory",
         "manage_store_buyers"
     },
 
     "system_admin": {
+        "create_products",
         "manage_stock",
         "manage_inventory",
         "manage_products",

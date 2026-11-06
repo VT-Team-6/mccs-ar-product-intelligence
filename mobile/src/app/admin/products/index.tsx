@@ -142,9 +142,6 @@ function ProductRow({ product }: { product: Product }) {
   const details = [product.brand, product.product_type]
     .filter(Boolean)
     .join(" · ");
-  // Not "No price": the price isn't missing, it belongs to each store's
-  // inventory row.
-  const price = "Price set per store";
   const imageUrl = productImageUrl(product);
   const router = useRouter();
 
@@ -181,7 +178,6 @@ function ProductRow({ product }: { product: Product }) {
               ` · ${product.rating.toFixed(1)} rating`}
           </ThemedText>
         </ThemedView>
-        <ThemedText type="smallBold">{price}</ThemedText>
       </ThemedView>
     </Pressable>
   );

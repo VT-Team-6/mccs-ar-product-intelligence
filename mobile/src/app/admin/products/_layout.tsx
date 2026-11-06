@@ -10,6 +10,8 @@ import { useAuth } from "@/auth/AuthContext";
 export default function AdminProductsLayout() {
   const { loading, profileLoading, hasPermission } = useAuth();
   if (loading || profileLoading) return <ActivityIndicator />;
-  if (!hasPermission("manage_products")) return <Redirect href="/" />;
+  // Store admins can open it too: they add products for their store and
+  // print QR codes. What they can change on each product is checked per screen.
+  if (!hasPermission("create_products")) return <Redirect href="/" />;
   return <Slot />;
 }
