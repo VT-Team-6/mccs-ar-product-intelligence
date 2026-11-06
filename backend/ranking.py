@@ -37,6 +37,8 @@ Rules (8.10):
                 similarity + 0.4 x likes. likes = how close it is to the
                 closest liked product, on a fixed scale (0.5 or less = 0,
                 0.9 or more = 1). Only when the shopper has a saved ranking or likes.
+                Once trained (task 9, scripts/train_for_you.py), learned weights
+                for the 3 signals replace these, with a missing signal counting 0.
   compare     = for 2+ picked products: up to 3 pros and 3 cons each, strongest
                 first, from what they typed (requirements, budget), best/worst
                 among the picks when the gap matters (10% on price, 0.3 stars
@@ -53,6 +55,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from database import get_connection
 from embeddings import build_product_embeddings, embed_query
+from for_you_model import load_weights
 from preferences import CRITERIA, has_ranking, rank_weights
 from recommendation import build_tfidf_matrix
 from text_parsing import REQUIREMENTS, mentions, parse_request
@@ -267,7 +270,7 @@ class RecommendationEngine:
             and (not named_types or self.types[i] in named_types)
         ])
         if len(candidates) == 0:
-            return {"best_matches": [], "for_you": None}
+            return {"best_matches": [], "for_you": None, "signals": {}}
 
         # Price phrases say nothing about the product, so they're left out of the match
         match_text = parsed.remaining_text if parsed and parsed.remaining_text else text
@@ -285,7 +288,7 @@ class RecommendationEngine:
             if strong[j] and (n < MIN_POOL or similarity[j] >= cutoff)
         ]
         if not pool:
-            return {"best_matches": [], "for_you": None}
+            return {"best_matches": [], "for_you": None, "signals": {}}
 
         # Price and rating are compared among the pool: the products being chosen between
         scores = self.scores[candidates].copy()
@@ -315,10 +318,12 @@ class RecommendationEngine:
             self._card(candidates[j], final[j], similarity[j], scores[j], now_ranks if personalized else None)
             for j in top
         ]
-        for_you = self._for_you(
+        for_you, signals = self._for_you(
             candidates, order, final, similarity, scores, now_ranks, saved_ranks, liked_ids or [], met
         )
-        return {"best_matches": best, "for_you": for_you}
+        # signals: the for-you signals of each product in the pool, so the cards
+        # shown can be logged for learning to rank
+        return {"best_matches": best, "for_you": for_you, "signals": signals}
 
     def _prices_at(self, store_stock: dict[int, dict] | None) -> np.ndarray:
         """Each product's price at the store, or the catalog average without one."""
@@ -357,12 +362,12 @@ class RecommendationEngine:
         has_saved = bool(saved_ranks) and has_ranking(saved_ranks)
         liked = [self.index[pid] for pid in liked_ids if pid in self.index]
         if not has_saved and not liked:
-            return None
+            return None, {}
 
         liked_set = set(liked)
         pool = [j for j in order if candidates[j] not in liked_set]
         if not pool:
-            return None
+            return None, {}
 
         # Based on who the shopper is (saved ranking + likes), still within the relevant pool
         personal = preference_scores(scores[pool], rank_weights(saved_ranks)) if has_saved else None
@@ -374,7 +379,17 @@ class RecommendationEngine:
             closest_like = [liked[k] for k in to_liked.argmax(axis=1)]
             likes = np.clip((closeness - LIKE_FLOOR) / (LIKE_CEILING - LIKE_FLOOR), 0, 1)
 
-        if has_saved and liked:
+        # The 3 signals, with a missing one counting 0
+        signal_values = np.column_stack([
+            similarity[pool],
+            personal if has_saved else np.zeros(len(pool)),
+            likes if liked else np.zeros(len(pool)),
+        ])
+
+        learned = load_weights()
+        if learned is not None:
+            pick = signal_values @ np.array([learned["similarity"], learned["preference"], learned["likes"]])
+        elif has_saved and liked:
             pick = 0.4 * similarity[pool] + 0.4 * personal + 0.2 * likes
         elif has_saved:
             pick = 0.5 * similarity[pool] + 0.5 * personal
@@ -390,10 +405,15 @@ class RecommendationEngine:
         liked_name = None
         if closeness is not None and closeness[best] >= LIKED_REASON:
             liked_name = self.products[closest_like[best]]["name"]
-        return self._card(
+        signals = {
+            int(ids[candidates[k]]): tuple(round(float(v), 4) for v in signal_values[n])
+            for n, k in enumerate(pool)
+        }
+        card = self._card(
             candidates[j], pick[best], similarity[j], scores[j], saved_ranks if has_saved else None,
             liked_name=liked_name,
         )
+        return card, signals
 
     def _card(self, i: int, score: float, similarity: float, criterion_scores: np.ndarray,
               ranks: dict | None, liked_name: str | None = None) -> dict:

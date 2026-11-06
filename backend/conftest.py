@@ -3,6 +3,8 @@
 
 from pathlib import Path
 
+import pytest
+
 DB_DIR = Path(__file__).parent / "db"
 
 
@@ -17,3 +19,11 @@ def apply_init_sql(conn) -> None:
     for path in [*top_level, *nested]:
         conn.execute(path.read_text())
 
+
+
+@pytest.fixture(autouse=True)
+def _no_learned_for_you_weights(monkeypatch, tmp_path):
+    """A locally trained models/for_you_weights.json must not change test results."""
+    import for_you_model
+
+    monkeypatch.setattr(for_you_model, "WEIGHTS_FILE", tmp_path / "for_you_weights.json")

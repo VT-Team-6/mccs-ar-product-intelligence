@@ -17,7 +17,8 @@ import { useStore } from '@/store/StoreContext';
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
   // "from" is the page to return to, such as /search?q=nike (optional).
-  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  // "via" is "recommendation" when opened from a recommendation card.
+  const { id, from, via } = useLocalSearchParams<{ id: string; from?: string; via?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { store, stores, setStore, openStoreSelector } = useStore();
@@ -60,11 +61,16 @@ export default function ShopperProductScreen() {
     if (recorded.current || !Number.isInteger(productId)) return;
     recorded.current = true;
     const fromSearch = (from ?? '').startsWith('/search');
+    // Opens from recommendation cards teach "Recommended for You" what people pick
+    const interaction =
+      via === 'recommendation'
+        ? 'viewed-from-recommendation'
+        : fromSearch
+          ? 'viewed-from-search'
+          : 'viewed';
     // Fire and forget: history must never block showing the product
-    recordInteraction(productId, fromSearch ? 'viewed-from-search' : 'viewed').catch(
-      () => undefined,
-    );
-  }, [id, from]);
+    recordInteraction(productId, interaction).catch(() => undefined);
+  }, [id, from, via]);
 
   // Go to the previous page, else the "from" page, else the home page. 
   const goBack = () => {
@@ -129,7 +135,7 @@ export default function ShopperProductScreen() {
 
   // Opens a recommended product on its own details page. Back returns here, results intact.
   const openProduct = (picked: Product) => {
-    router.push(`/product/${picked.product_id}` as Href);
+    router.push(`/product/${picked.product_id}?via=recommendation` as Href);
   };
 
   return (
