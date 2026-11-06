@@ -37,7 +37,11 @@ export type HistoryPage = {
 
 // Interactions the client may report. Likes are recorded by the server when
 // the like state actually changes, so they are not accepted here.
-export type ClientInteraction = "scanned" | "viewed" | "viewed-from-search";
+export type ClientInteraction =
+  | "scanned"
+  | "viewed"
+  | "viewed-from-search"
+  | "viewed-from-recommendation";
 
 export type LikedSort = "recent" | "name" | "rating" | "price";
 

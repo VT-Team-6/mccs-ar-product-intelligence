@@ -5,6 +5,9 @@ them right now. The backend adds their saved ranking and liked products, asks
 the engine, and returns each result with the product details the screen needs.
 """
 
+import logging
+
+import psycopg
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from psycopg import sql
 
@@ -18,6 +21,33 @@ from routers.products import product_select
 from search_understanding import understand
 
 router = APIRouter(prefix="/api/recommendations", tags=["recommendations"])
+logger = logging.getLogger(__name__)
+
+
+def _log_impressions(user_id: int, best: list, for_you: dict | None, signals: dict) -> None:
+    """Saves the cards shown, with their for-you signals, for learning to rank (task 9).
+
+    Cards with no signals (a product they already liked, or a shopper with no
+    saved ranking or likes) are skipped. Never blocks the recommendations.
+    """
+    shown = [("best", card["product"]["product_id"]) for card in best]
+    if for_you:
+        shown.append(("for_you", for_you["product"]["product_id"]))
+    rows = [(user_id, pid, slot, *signals[pid]) for slot, pid in shown if pid in signals]
+    if not rows:
+        return
+    try:
+        with get_connection() as conn, conn.cursor() as cursor:
+            cursor.executemany(
+                """
+                INSERT INTO recommendation_impressions
+                    (user_id, product_id, slot, similarity, preference, likes)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                rows,
+            )
+    except psycopg.Error:
+        logger.exception("Could not log recommendation impressions")
 
 
 @router.post("", response_model=RecommendationResponse)
@@ -93,6 +123,7 @@ def recommend(
 
     best = [c for c in (with_product(card) for card in result["best_matches"]) if c]
     for_you = with_product(result["for_you"]) if result["for_you"] else None
+    _log_impressions(user["user_id"], best, for_you, result.get("signals", {}))
 
     # How the text was read, so the shopper can see the limits the results follow
     understood = understand(body.text, engine.brands, types_named_in(body.text or "", set(engine.types)))

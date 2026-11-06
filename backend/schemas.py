@@ -113,7 +113,7 @@ class HistoryPage(BaseModel):
 
 # Interactions the client is allowed to report. 'liked'/'unliked' are written
 # by the server when the like state actually changes, so they are not listed.
-ClientInteraction = Literal["scanned", "viewed", "viewed-from-search"]
+ClientInteraction = Literal["scanned", "viewed", "viewed-from-search", "viewed-from-recommendation"]
 
 class InteractionCreate(BaseModel):
     product_id: int
