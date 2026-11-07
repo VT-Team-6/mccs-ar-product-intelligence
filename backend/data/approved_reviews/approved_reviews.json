@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "products": [
+    {
+      "name": "Timberland 6\" Premium Waterproof Boots",
+      "brand": "Timberland",
+      "product_type": "Boot",
+      "sources": [
+        {
+          "source": "amazon",
+          "source_product_id": "B079G3B9S4",
+          "source_url": "https://www.amazon.com/dp/B079G3B9S4",
+          "reviews": [
+            {
+              "source_review_id": "28e3deaa711cf88ff7ce85c51556603c18303e2c411b03c7e6429656c04e0fe3",
+              "rating": 5.0,
+              "title": "Fits well",
+              "body": "Good",
+              "review_date": "2019-02-17T02:38:13.135000+00:00"
+            }
+          ]
+        },
+        {
+          "source": "amazon",
+          "source_product_id": "B09824BH5R",
+          "source_url": "https://www.amazon.com/dp/B09824BH5R",
+          "reviews": [
+            {
+              "source_review_id": "3a24054bba4bef7ee2bad551ee0df7997e9057a0f63b07e5b637cfa79ca4f485",
+              "rating": 5.0,
+              "title": "Super comfy",
+              "body": "It’s really comfy and true to size as expected.",
+              "review_date": "2022-02-22T23:41:11.541000+00:00"
+            },
+            {
+              "source_review_id": "3c863924971bda39ac2f580f2ec445c96da0559258692fb957be68d2b85380fc",
+              "rating": 5.0,
+              "title": "Sexy Boots",
+              "body": "I am a boots connoisseur and these look great on a tall person. My go to boots for venturing out since I got them.",
+              "review_date": "2022-02-11T21:06:25.568000+00:00"
+            },
+            {
+              "source_review_id": "604a0f81aa8fed2b8c9c6524b43badbf0c37bfc560e59ad77d358f214d6b09a7",
+              "rating": 5.0,
+              "title": "Great boots",
+              "body": "Fit a bit snugly at first, but broke in well. Fit is dead on after this break in period. Soles are soft, and feel pretty nice. Boots don’t feel too heavy after a full day of use. Seem to be waterproof as advertised, although I haven’t submerged them in puddles yet. Purchased to muck stalls, and seem to be holding up for that use. I wear them in public, alternating with my Solovairs.",
+              "review_date": "2022-05-03T20:29:27.825000+00:00"
+            },
+            {
+              "source_review_id": "60a6162c21441d4dbfc670e910e658980d02016730592af02549a4b5781c26f2",
+              "rating": 5.0,
+              "title": "Traction is great!",
+              "body": "I have a steep and occasionally icy driveway. My highest priority when I bought these boots was TRACTION, and these have great traction!<br /><br />Same soft rubber bumps on the sole as Sorel’s big boot, but now in a smaller, more nimble boot.<br /><br />Love everything about this boot. So well made.",
+              "review_date": "2022-01-24T05:33:38.783000+00:00"
+            },
+            {
+              "source_review_id": "650642f1a56e5598246dcfe894213735a9ae1e5c1d1954b1e600694865d7f5e3",
+              "rating": 4.0,
+              "title": "Fits perfectly. comfortable Very nice leather",
+              "body": "Dislike : I expected the leather shines little. But it wasn't.<br />Like : when I wears it feels perfectly fit.",
+              "review_date": "2022-04-30T22:22:22.874000+00:00"
+            },
+            {
+              "source_review_id": "7921d875cbc98963d6c241e4ae4371faa55bc0dee90f480544c27aeddd50183d",
+              "rating": 4.0,
+              "title": "Great style, but not true to size.",
+              "body": "I like the style and I was surprised it’s more cushiony now. But the problem is too big for my usual size. Tried to get another size but the prize is different 😬",
+              "review_date": "2022-03-12T22:25:55.227000+00:00"
+            },
+            {
+              "source_review_id": "88752e5aba8d73cb89b0cf79a5df0c66bc1239dbb7342b42f5a9d591fed45ba0",
+              "rating": 5.0,
+              "title": "Fits well, feet stay dry and warm",
+              "body": "Well built boot that fits well. The boot has a bit of a heel cup to keep your foot in place and leave good room in the toe box. I wear a size 9D. I am wearing these now in Chicago that received 10” of snow yesterday. Through snow, sludge, and water my feet have stayed dry. Couple them with a good pair of wool socks and my feet do not get cold in single digit weather.",
+              "review_date": "2022-02-03T13:44:45.025000+00:00"
+            },
+            {
+              "source_review_id": "9b7650bcb66b0ec2559373f84001cfda921e5a92d010f000c6db281a363b8859",
+              "rating": 5.0,
+              "title": "Good quality",
+              "body": "Good fit<br />You get what you pay for.<br />Excellent quality",
+              "review_date": "2022-01-14T21:19:17.427000+00:00"
+            },
+            {
+              "source_review_id": "a5cd8a9f8cee9aaee7f9e7bb3db512db10743a3838f1908af4aace69be6b9e21",
+              "rating": 5.0,
+              "title": "Comfort",
+              "body": "I have 5 pairs of Sorel - I love the fit the quality and the comfort!!",
+              "review_date": "2023-01-11T22:59:17.419000+00:00"
+            },
+            {
+              "source_review_id": "f045dba86cefbf1df660203bf071a6f375fc9290bde3dbcbbe670c39cb3f81e4",
+              "rating": 5.0,
+              "title": "More comfortable than expected!",
+              "body": "I know Sorels are supposed to last a long time, but I thought I would have to sacrifice a little comfort. I can wear these all day long and they feel great",
+              "review_date": "2022-01-16T15:27:47.902000+00:00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
