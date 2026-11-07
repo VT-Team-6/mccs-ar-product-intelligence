@@ -11,7 +11,7 @@ export type InventoryStatus = "pending" | "active" | "discontinued";
 // different from "no store selected", which the client distinguishes from its own state.
 export type StoreInventory = {
   store_id: number;
-  price?: number | null;
+  price: number | null;
   quantity: number;
   in_stock: boolean;
   status: InventoryStatus;
@@ -109,11 +109,14 @@ export async function updateProduct(
   productId: number,
   input: ProductInput,
 ): Promise<Product> {
-  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
+  const response = await authenticatedFetch(
+    `/api/admin/products/${productId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
   if (response.status === 404) {
     throw new Error("Product not found");
   }
@@ -129,9 +132,12 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(productId: number): Promise<void> {
-  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
-    method: "DELETE",
-  });
+  const response = await authenticatedFetch(
+    `/api/admin/products/${productId}`,
+    {
+      method: "DELETE",
+    },
+  );
   if (!response.ok) {
     throw new Error(`Could not delete the product (error ${response.status})`);
   }
@@ -151,7 +157,6 @@ async function problem(response: Response, fallback: string): Promise<Error> {
 
 // Shopper-facing lookup: same product, but from the public endpoint
 export async function getShopperProduct(productId: number): Promise<Product> {
-  // Signed in, so the product is priced at the shopper's chosen store
   const response = await authenticatedFetch(`/api/products/${productId}`);
   if (response.status === 404) {
     throw new Error("Product not found");
@@ -247,5 +252,7 @@ export function storeStock(product: Product): string {
   const inventory = product.store_inventory;
   if (!inventory) return "Unavailable at this location.";
   if (inventory.status === "discontinued") return "Discontinued";
-  return inventory.in_stock ? `In stock (${inventory.quantity})` : "Out of stock";
+  return inventory.in_stock
+    ? `In stock (${inventory.quantity})`
+    : "Out of stock";
 }
