@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useStore } from '@/store/StoreContext';
 
 export default function SearchResultsScreen() {
   // The text after "?q=" in the address: /search?q=boot gives q = "boot"
@@ -16,6 +17,8 @@ export default function SearchResultsScreen() {
   const query = (q ?? '').trim();
   const router = useRouter();
   const theme = useTheme();
+  // Reprice when the shopper switches stores.
+  const { store } = useStore();
   // What's typed in the search box. Starts with the current search, if any.
   const [text, setText] = useState(query);
 
@@ -51,7 +54,7 @@ export default function SearchResultsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [query, attempt]);
+  }, [query, attempt, store?.store_id]);
 
   return (
     <ThemedView style={styles.container}>

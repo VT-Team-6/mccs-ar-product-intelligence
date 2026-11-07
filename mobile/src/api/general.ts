@@ -8,6 +8,7 @@ export type Permission =
   | "manage_stock"
   | "manage_inventory"
   | "manage_products"
+  | "create_products"
   | "aggregate_reviews"
   | "manage_all_stores"
   | "manage_store_buyers"

@@ -12,10 +12,15 @@ export type LikedProduct = Product & {
 };
 
 // One interaction event. The same product can appear more than once.
+// The store fields are flat and describe the event, not the product: they can
+// differ from the shopper's current store and the product's current price.
 export type HistoryItem = {
   history_id: number;
   interaction: string;
   occurred_at: string;
+  store_id: number | null;
+  store_name: string | null;
+  price_at_interaction: number | null;
   product: MyProduct;
 };
 
@@ -32,7 +37,11 @@ export type HistoryPage = {
 
 // Interactions the client may report. Likes are recorded by the server when
 // the like state actually changes, so they are not accepted here.
-export type ClientInteraction = "scanned" | "viewed" | "viewed-from-search";
+export type ClientInteraction =
+  | "scanned"
+  | "viewed"
+  | "viewed-from-search"
+  | "viewed-from-recommendation";
 
 export type LikedSort = "recent" | "name" | "rating" | "price";
 
@@ -136,7 +145,9 @@ export async function getSelectedStore(): Promise<number | null> {
 }
 
 // Saves the store the shopper is shopping at. Prices and stock follow it.
-export async function saveSelectedStore(storeId: number): Promise<number | null> {
+// Passing null clears the selection, which is a real state: the app goes back
+// to prompting for a store and drops the price sort.
+export async function saveSelectedStore(storeId: number | null): Promise<number | null> {
   const response = await authenticatedFetch("/api/me/store", {
     method: "PUT",
     body: JSON.stringify({ store_id: storeId }),

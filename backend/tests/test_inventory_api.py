@@ -166,6 +166,22 @@ def test_product_stock_lists_every_active_store(client):
     assert body["stores"][1]["in_stock"] is False
 
 
+def test_product_stock_carries_store_coordinates(client):
+    """The client measures distance, so each entry needs the store's location."""
+    body = client.get("/api/products/1/stock").json()
+
+    for store in body["stores"]:
+        # Both seeded stores have coordinates; the fields must be present so a
+        # store without them can be told apart from one at (0, 0).
+        assert "latitude" in store
+        assert "longitude" in store
+        assert isinstance(store["latitude"], float)
+        assert isinstance(store["longitude"], float)
+
+    assert body["stores"][0]["latitude"] == pytest.approx(38.5221, abs=1e-4)
+    assert body["stores"][0]["longitude"] == pytest.approx(-77.3052, abs=1e-4)
+
+
 def test_product_stock_is_public(client):
     # No token, no ?store_id=: stock must never require auth.
     assert client.get("/api/products/1/stock").status_code == 200

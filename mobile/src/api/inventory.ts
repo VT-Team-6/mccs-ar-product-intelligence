@@ -1,13 +1,18 @@
 import { authenticatedFetch, publicFetch } from "./client";
+import type { User } from "./general";
 
 // Where a product is in a store's lifecycle: pushed and waiting for approval,
 // on sale, or no longer sold there
 export type InventoryStatus = "pending" | "active" | "discontinued";
 
+// A location the shopper can pick. Mirrors the backend `Store` schema, so the
+// coordinates are here even where a screen only shows the name and address.
 export type Store = {
   store_id: number;
   name: string;
   address: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 // One product's stock at one store, as the inventory screen lists it
@@ -16,6 +21,7 @@ export type StoreStockEntry = {
   store_id: number;
   product_name: string;
   brand: string | null;
+  image_url: string | null;
   quantity: number;
   price: number | null;
   in_stock: boolean;
@@ -45,6 +51,39 @@ async function problem(response: Response, fallback: string): Promise<Error> {
 export async function listStores(): Promise<Store[]> {
   const response = await publicFetch("/api/stores");
   if (!response.ok) throw await problem(response, "Could not load stores");
+  return response.json();
+}
+
+// One store that actively sells a product, with its own price and stock.
+export type ProductStockEntry = {
+  product_id: number;
+  store_id: number;
+  store_name: string;
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  quantity: number;
+  price: number | null;
+  in_stock: boolean;
+  status: InventoryStatus;
+  updated_at: string;
+};
+
+export type ProductStock = {
+  product_id: number;
+  name: string;
+  // Every store with an active entry, including ones at quantity 0: those are
+  // exactly the "available elsewhere" rows this is used for.
+  stores: ProductStockEntry[];
+};
+
+// Where a product can be bought. Public: no token needed, and an unknown
+// product is a 404 while a product sold nowhere is a 200 with no stores.
+export async function getProductStock(productId: number): Promise<ProductStock> {
+  const response = await publicFetch(`/api/products/${productId}/stock`);
+  if (!response.ok) {
+    throw await problem(response, "Could not load nearby stores");
+  }
   return response.json();
 }
 
@@ -98,6 +137,35 @@ export async function approveEntry(
     { method: "POST", body: JSON.stringify(values) },
   );
   if (!response.ok) throw await problem(response, "Could not approve the product");
+  return response.json();
+}
+
+// The stores this user manages: every store for the app admin, otherwise the
+// ones they're assigned to
+export function manageableStores(stores: Store[], profile: User | null): Store[] {
+  if (!profile) return [];
+  if (profile.permissions.includes("manage_all_stores")) return stores;
+  return stores.filter((store) => profile.store_ids.includes(store.store_id));
+}
+
+export type PushedEntry = {
+  product_id: number;
+  store_id: number;
+  status: InventoryStatus;
+  // True when the store already had it, so nothing changed there
+  already_present: boolean;
+};
+
+// Sends products to stores. Each one lands in that store's Pending tab.
+export async function pushToStores(
+  productIds: number[],
+  storeIds: number[],
+): Promise<PushedEntry[]> {
+  const response = await authenticatedFetch("/api/admin/inventory/push", {
+    method: "POST",
+    body: JSON.stringify({ product_ids: productIds, store_ids: storeIds }),
+  });
+  if (!response.ok) throw await problem(response, "Could not send the product");
   return response.json();
 }
 

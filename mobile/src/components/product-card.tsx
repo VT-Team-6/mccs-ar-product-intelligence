@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-import { productImageUrl, storePrice, type Product } from '@/api/products';
+import { productImageUrl, storePriceLine, type Product } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useStore } from '@/store/StoreContext';
 
 export type ProductCardProps = {
   product: Product;
@@ -31,7 +32,9 @@ export function ProductCard({
   style,
 }: ProductCardProps) {
   const details = [product.brand, product.product_type].filter(Boolean).join(' · ');
-  const price = storePrice(product);
+  const { store, openStoreSelector } = useStore();
+  // One shared sheet, reached from the prompt rather than a modal per card.
+  const price = storePriceLine(product, store?.store_id ?? null, store?.name ?? null);
   const imageUrl = productImageUrl(product);
 
   return (
@@ -75,9 +78,27 @@ export function ProductCard({
               {meta}
             </ThemedText>
           )}
+
+          {/* The price never appears without a store behind it. Without one the
+              label is a button opening the same sheet as every other surface. */}
+          {price.needsStore ? (
+            <Pressable
+              onPress={() => openStoreSelector()}
+              accessibilityRole="button"
+              accessibilityLabel="Select a store to view price and availability"
+              hitSlop={8}>
+              <ThemedText type="small" themeColor="textSecondary">
+                {price.label}
+              </ThemedText>
+            </Pressable>
+          ) : (
+            <ThemedText type="small" themeColor="textSecondary">
+              {price.label}
+            </ThemedText>
+          )}
         </ThemedView>
 
-        <ThemedText type="smallBold">{price}</ThemedText>
+        {price.price && <ThemedText type="smallBold">{price.price}</ThemedText>}
       </Pressable>
 
       {onToggleLike && (

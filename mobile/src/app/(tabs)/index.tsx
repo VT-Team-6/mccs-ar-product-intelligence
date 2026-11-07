@@ -1,19 +1,20 @@
-import { useCallback, useState } from "react";
-import { Alert, Linking, Modal, Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Linking, Pressable, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 
+import { authenticatedFetch } from "@/api/client";
 import { API_URL } from "@/api/config";
-import { listStores, type Store } from "@/api/inventory";
-import { getSelectedStore, recordInteraction, saveSelectedStore } from "@/api/me";
+import { recordInteraction } from "@/api/me";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, Spacing, type ThemeColor } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { useStore } from "@/store/StoreContext";
 import SignoutButton from "@/components/authentication/SignoutButton";
 
 export default function ScanScreen() {
@@ -25,47 +26,23 @@ export default function ScanScreen() {
   const theme = useTheme();
   const styles = createStyles(theme);
 
-  const [stores, setStores] = useState<Store[]>([]);
-  const [storeId, setStoreId] = useState<number | null>(null);
-  const [choosingStore, setChoosingStore] = useState(false);
-  const store = stores.find((item) => item.store_id === storeId);
+  // The one active store, shared with every other screen.
+  const { store, loading: storeLoading, openStoreSelector } = useStore();
+  // Offers the list once on arrival if nothing is picked yet, so a new shopper
+  // isn't stuck at a disabled Scan button. Closing it is respected.
+  const offeredStore = useRef(false);
 
-  // Loads the stores and the shopper's saved one each time Home comes into view.
-  // With no store saved yet, the list opens right away.
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false;
-      Promise.all([listStores(), getSelectedStore()])
-        .then(([all, saved]) => {
-          if (cancelled) return;
-          setStores(all);
-          setStoreId(saved);
-          if (saved === null) setChoosingStore(true);
-        })
-        .catch(() => undefined);
-      return () => {
-        cancelled = true;
-      };
-    }, []),
-  );
-
-  const chooseStore = async (id: number) => {
-    const previous = storeId;
-    setStoreId(id);
-    setChoosingStore(false);
-    try {
-      await saveSelectedStore(id);
-    } catch {
-      setStoreId(previous);
-      Alert.alert("Could not save your store", "Check your connection and try again.");
-    }
-  };
+  useEffect(() => {
+    if (storeLoading || offeredStore.current) return;
+    offeredStore.current = true;
+    if (store === null) openStoreSelector();
+  }, [store, storeLoading, openStoreSelector]);
 
   // Prices and stock depend on the store, so scanning or searching needs one first.
   // Returns true (and opens the store list) when no store is chosen yet.
   const needsStore = () => {
-    if (storeId !== null) return false;
-    setChoosingStore(true);
+    if (store !== null) return false;
+    openStoreSelector();
     Alert.alert("Choose a store first", "Prices and stock depend on the store you're shopping at.");
     return true;
   };
@@ -82,8 +59,9 @@ export default function ScanScreen() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/api/scan?code=${encodeURIComponent(data)}`,
+      // Authenticated, so the backend prices the result at the saved store.
+      const response = await authenticatedFetch(
+        `/api/scan?code=${encodeURIComponent(data)}`,
       );
 
       const result = await response.json();
@@ -101,7 +79,7 @@ export default function ScanScreen() {
       // view itself. Recording never blocks opening the product.
       recordInteraction(result.product_id, "scanned").catch(() => undefined);
       router.push(`/product/${result.product_id}?from=/` as Href);
-    } catch (error) {
+    } catch {
       Alert.alert(
         "Connection error",
         "Unable to connect to the product server.",
@@ -202,9 +180,9 @@ export default function ScanScreen() {
             { paddingBottom: insets.bottom + BottomTabInset + Spacing.one },
           ]}
         >
-          {/* One line, so the camera keeps its height. The list opens on top. */}
+          {/* One line, so the camera keeps its height. The shared sheet opens on top. */}
           <Pressable
-            onPress={() => setChoosingStore(true)}
+            onPress={() => openStoreSelector()}
             style={({ pressed }) => [styles.storeBar, pressed && { opacity: 0.6 }]}
           >
             <ThemedText style={styles.storeLabel}>{store ? "Shopping at" : "Store"}</ThemedText>
@@ -213,34 +191,6 @@ export default function ScanScreen() {
             </ThemedText>
             <ThemedText style={styles.storeChevron}>▾</ThemedText>
           </Pressable>
-
-          <Modal
-            visible={choosingStore}
-            transparent
-            animationType="fade"
-            onRequestClose={() => setChoosingStore(false)}
-          >
-            <Pressable style={styles.backdrop} onPress={() => setChoosingStore(false)}>
-              <Pressable style={styles.sheet} onPress={() => undefined}>
-                <ThemedText style={styles.sheetTitle}>Choose your store</ThemedText>
-                <ThemedText style={styles.storeLabel}>
-                  Prices and stock are shown for this store.
-                </ThemedText>
-                {stores.map((item) => (
-                  <Pressable
-                    key={item.store_id}
-                    onPress={() => chooseStore(item.store_id)}
-                    style={({ pressed }) => [styles.storeOption, pressed && { opacity: 0.6 }]}
-                  >
-                    <ThemedText style={styles.storeOptionName}>
-                      {`${item.store_id === storeId ? "✓ " : ""}${item.name}`}
-                    </ThemedText>
-                    <ThemedText style={styles.storeLabel}>{item.address}</ThemedText>
-                  </Pressable>
-                ))}
-              </Pressable>
-            </Pressable>
-          </Modal>
 
           <Pressable
             style={styles.primaryButton}
@@ -397,32 +347,6 @@ function createStyles(theme: Record<ThemeColor, string>) {
     storeChevron: {
       fontSize: 14,
       color: theme.textSecondary,
-    },
-    backdrop: {
-      flex: 1,
-      justifyContent: "center",
-      padding: Spacing.four,
-      backgroundColor: "rgba(0, 0, 0, 0.45)",
-    },
-    sheet: {
-      backgroundColor: theme.background,
-      borderRadius: Spacing.four,
-      padding: Spacing.four,
-      gap: Spacing.one,
-    },
-    sheetTitle: {
-      fontSize: 18,
-      fontWeight: "600",
-      color: theme.text,
-    },
-    storeOption: {
-      paddingVertical: Spacing.two,
-      gap: Spacing.half,
-    },
-    storeOptionName: {
-      fontSize: 15,
-      fontWeight: "600",
-      color: theme.text,
     },
     actions: {
       backgroundColor: theme.background,

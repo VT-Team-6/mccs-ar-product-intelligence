@@ -295,3 +295,26 @@ def test_compare_picks_best_for_you_from_the_ranking():
 
 def _says(sentences, start):
     return any(s.startswith(start) for s in sentences)
+
+def _store_engine():
+    products = [
+        {"product_id": i, "name": f"Boot {i}", "brand": "B", "product_type": "Boot",
+         "price": 100.0 + i * 10, "rating": 4.0, "description": "leather boot"}
+        for i in range(1, 6)
+    ]
+    embeddings = np.ones((5, 4))
+    embeddings[:, 0] += np.arange(5) * 0.01
+    embeddings /= np.linalg.norm(embeddings, axis=1, keepdims=True)
+    return RecommendationEngine(products, {}, embeddings=embeddings)
+
+
+def test_store_only_recommends_what_it_sells_in_stock_first():
+    stock = {3: {"price": 50, "in_stock": False}, 4: {"price": 60, "in_stock": True}, 5: {"price": 70, "in_stock": True}}
+    result = _store_engine().recommend(product_id=1, store_stock=stock)
+    shown = ids(result["best_matches"])
+    assert set(shown) <= {3, 4, 5}
+    assert shown[-1] == 3  # out of stock comes last
+
+
+def test_store_that_sells_nothing_recommends_nothing():
+    assert _store_engine().recommend(product_id=1, store_stock={})["best_matches"] == []

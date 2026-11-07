@@ -59,7 +59,7 @@ def _product_columns(store_id: int | None) -> sql.Composed:
 
 # Interactions the client may report itself. Like changes are recorded by
 # set_liked, so a client cannot forge them.
-CLIENT_INTERACTIONS = ("scanned", "viewed", "viewed-from-search")
+CLIENT_INTERACTIONS = ("scanned", "viewed", "viewed-from-search", "viewed-from-recommendation")
 
 
 LikedSort = Literal["recent", "name", "rating", "price"]

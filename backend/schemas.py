@@ -11,6 +11,10 @@ class ProductCreate(BaseModel):
     brand: str | None = Field(default=None, max_length=100)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
+    # The store adding the product: it owns it, and the product starts pending
+    # there. Required for store admins; the app admin can leave it out to add
+    # an MCCS catalog product with no owner.
+    store_id: int | None = Field(default=None, gt=0)
 
 
 class ProductUpdate(BaseModel):
@@ -51,6 +55,8 @@ class Product(BaseModel):
     image_url: str | None
     created_at: datetime
     updated_at: datetime
+    # The store that added it, or None for an MCCS catalog product.
+    created_by_store_id: int | None = None
     # resolved at runtime by the API layer, not stored in the database.
     store_inventory: StoreInventory | None = None
 
@@ -113,7 +119,7 @@ class HistoryPage(BaseModel):
 
 # Interactions the client is allowed to report. 'liked'/'unliked' are written
 # by the server when the like state actually changes, so they are not listed.
-ClientInteraction = Literal["scanned", "viewed", "viewed-from-search"]
+ClientInteraction = Literal["scanned", "viewed", "viewed-from-search", "viewed-from-recommendation"]
 
 class InteractionCreate(BaseModel):
     product_id: int
@@ -227,6 +233,10 @@ class ProductStockEntry(InventoryRecord):
 
     store_name: str
     address: str
+    # Nullable: a store may not have coordinates yet. The client sorts the
+    # stores it can place and leaves the rest in catalog order.
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class ProductStock(BaseModel):
@@ -236,10 +246,11 @@ class ProductStock(BaseModel):
 
 
 class StoreStockEntry(InventoryRecord):
-    """What a store sells: the product's name and brand, and its stock there."""
+    """What a store sells: the product's name, brand and photo, and its stock there."""
 
     product_name: str
     brand: str | None
+    image_url: str | None = None
 
 
 class StoreStock(BaseModel):

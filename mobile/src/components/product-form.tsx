@@ -77,6 +77,12 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         value={productType}
         onChangeText={setProductType}
       />
+      {/* Price is not a product field: each store sets its own, in Manage
+          Inventory/Stock. */}
+      <ThemedText type="small" themeColor="textSecondary">
+        Prices are managed per store. Set this product&apos;s price and stock in
+        Manage Inventory/Stock.
+      </ThemedText>
       <Field
         label="Description"
         value={description}
@@ -104,14 +110,6 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
       </Pressable>
     </ScrollView>
   );
-}
-
-// Turns typed text into a number. Empty text means "no value" (null),
-// and text that isn't a number gives NaN so the form can show a message.
-function toNumber(text: string): number | null {
-  const cleaned = text.trim().replace(",", ".");
-  if (cleaned === "") return null;
-  return Number(cleaned);
 }
 
 function Field({

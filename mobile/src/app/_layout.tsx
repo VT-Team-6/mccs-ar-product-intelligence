@@ -7,6 +7,7 @@ import { useColorScheme } from "react-native";
 
 import { AuthProvider } from "../auth/AuthContext";
 import AuthenticatedApp from "../auth/AuthenticatedApp";
+import { StoreProvider } from "../store/StoreContext";
 
 SplashScreen.preventAutoHideAsync();
 // Keeps the tabs underneath pushed pages like /product/1 and /admin, so Back
@@ -19,9 +20,13 @@ export default function TabLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <AuthProvider>
         <AnimatedSplashOverlay />
-        <AuthenticatedApp>
-          <Stack screenOptions={{ headerShown: false }} />
-        </AuthenticatedApp>
+        {/* Above the Stack, so every screen shares one active store. The
+            splash overlay stays outside it: it does not need the store. */}
+        <StoreProvider>
+          <AuthenticatedApp>
+            <Stack screenOptions={{ headerShown: false }} />
+          </AuthenticatedApp>
+        </StoreProvider>
       </AuthProvider>
     </ThemeProvider>
   );

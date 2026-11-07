@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -6,16 +6,19 @@ import {
   SectionList,
   StyleSheet,
   TextInput,
+  View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { likeProduct, listProductHistory, unlikeProduct, type HistoryItem } from '@/api/me';
 import { ProductCard } from '@/components/product-card';
+import { MAX_COMPARE, compareHref, selectionProblem } from '@/compare/selection';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
+import { useStore } from '@/store/StoreContext';
 
 const PAGE_SIZE = 20;
 
@@ -28,6 +31,10 @@ const EVENT_LABELS: Record<string, string> = {
   liked: 'Liked',
   unliked: 'Unliked',
 };
+
+// Interactions that mean the shopper was looking at the product at that store,
+// so the row can say where. A like is not a store visit.
+const STORE_VISITS = new Set(['scanned', 'viewed', 'viewed-from-search', 'viewed-from-recommendation']);
 
 type HistorySection = {
   title: string;
@@ -49,14 +56,19 @@ export default function HistoryScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { store } = useStore();
 
   const [text, setText] = useState('');
   const query = useDebouncedValue(text.trim());
   const [reloadKey, setReloadKey] = useState(0);
 
-  const requestKey = `${query}\u0000${reloadKey}`;
+  const requestKey = `${query}\u0000${reloadKey}\u0000${store?.store_id ?? ''}`;
   const [page, setPage] = useState<LoadedHistory | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Track products selected for comparison
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectionMessage, setSelectionMessage] = useState<string | null>(null);
 
   const items = page?.items ?? [];
   const nextCursor = page?.nextCursor ?? null;
@@ -121,6 +133,26 @@ export default function HistoryScreen() {
     }
   };
 
+  // Select or deselect a product
+  const toggleCompare = (productId: number) => {
+    if (selectedIds.includes(productId)) {
+      setSelectedIds((current) =>
+        current.filter((id) => id !== productId),
+      );
+      setSelectionMessage(null);
+    } else if (selectedIds.length >= MAX_COMPARE) {
+      setSelectionMessage(
+        `You can compare up to ${MAX_COMPARE} products at a time.`,
+      );
+    } else {
+      setSelectedIds((current) => [...current, productId]);
+      setSelectionMessage(null);
+    }
+  };
+
+  // Determine whether comparison is allowed
+  const compareProblem = selectionProblem(selectedIds.length);
+
   // The heart shows the product's current state, not its state at event time,
   // so changing it updates every row for that product.
   const toggleLike = async (item: HistoryItem) => {
@@ -169,6 +201,62 @@ export default function HistoryScreen() {
           style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
 
+        <ThemedView
+          type="backgroundElement"
+          style={styles.compareToolbar}
+        >
+          <View style={styles.compareToolbarText}>
+            <ThemedText type="smallBold">
+              Compare products
+            </ThemedText>
+
+            <ThemedText type="small" themeColor="textSecondary">
+              {selectedIds.length} of {MAX_COMPARE} selected · Choose at least 2
+            </ThemedText>
+          </View>
+
+          {selectedIds.length > 0 && (
+            <Pressable
+              onPress={() => {
+                setSelectedIds([]);
+                setSelectionMessage(null);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear comparison selection"
+            >
+              <ThemedText type="linkPrimary">
+                Clear
+              </ThemedText>
+            </Pressable>
+          )}
+
+          <Pressable
+            disabled={compareProblem !== null}
+            accessibilityRole="button"
+            accessibilityState={{
+              disabled: compareProblem !== null,
+            }}
+            onPress={() =>
+              router.push(compareHref(selectedIds) as Href)
+            }
+            style={[
+              styles.compareButton,
+              compareProblem !== null &&
+                styles.compareButtonDisabled,
+            ]}
+          >
+            <ThemedText style={styles.compareButtonText}>
+              Compare
+            </ThemedText>
+          </Pressable>
+        </ThemedView>
+
+        {selectionMessage && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {selectionMessage}
+          </ThemedText>
+        )}
+
         {error && (
           <ThemedView style={styles.message}>
             <ThemedText themeColor="textSecondary">{error}</ThemedText>
@@ -196,22 +284,73 @@ export default function HistoryScreen() {
               {section.title}
             </ThemedText>
           )}
-          renderItem={({ item }) => (
-            <ProductCard
-              product={item.product}
-              isLiked={item.product.is_liked}
-              onToggleLike={() => toggleLike(item)}
-              event={`${EVENT_LABELS[item.interaction] ?? item.interaction} · ${formatTime(
-                item.occurred_at,
-              )}`}
+          
+          renderItem={({ item }) => {
+            const productId = item.product.product_id;
+            const selected = selectedIds.includes(productId);
+
+            return (
+              <View style={styles.historyEntry}>
+                <Pressable
+                  onPress={() => toggleCompare(productId)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: selected }}
+                  accessibilityLabel={`${
+                    selected ? 'Deselect' : 'Select'
+                  } ${item.product.name} for comparison`}
+                  style={styles.selectionButton}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      selected && styles.checkboxSelected,
+                    ]}
+                  >
+                    {selected && (
+                      <ThemedText style={styles.checkmark}>✓</ThemedText>
+                    )}
+                  </View>
+                </Pressable>
+
+                <View style={styles.productCardWrapper}>
+                  <ProductCard
+                    product={item.product}
+                    isLiked={item.product.is_liked}
+                    onToggleLike={() => toggleLike(item)}
+                    event={`${EVENT_LABELS[item.interaction] ?? item.interaction} · ${formatTime(
+                      item.occurred_at,
+                    )}`}
+                    // Where the event happened, from the row's own flat fields. The
+              // nested product.store_inventory is today's price, not the event's.
+              // Only the interaction types that mean "was looking at it here"
+              // get the location line; a like is not a store visit.
+              meta={[
+                STORE_VISITS.has(item.interaction) && item.store_name
+                  ? `Viewed at ${item.store_name} location.`
+                  : null,
+                // Past price, explicitly labelled: it can differ from today's
+                // price at the same store, and is null on older events.
+                item.price_at_interaction != null
+                  ? `$${Number(item.price_at_interaction).toFixed(2)} when you were here`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || null}
               onPress={() =>
-                router.push({
-                  pathname: '/product/[id]',
-                  params: { id: String(item.product.product_id), from: '/products/history' },
-                })
-              }
-            />
-          )}
+                      router.push({
+                        pathname: '/product/[id]',
+                        params: {
+                          id: String(productId),
+                          from: '/products/history',
+                        },
+                      })
+                    }
+                  />
+                </View>
+              </View>
+            );
+          }}
+
           ListEmptyComponent={
             !loading && !error ? (
               <EmptyHistory
@@ -368,6 +507,62 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
   },
   sectionTitle: {    paddingTop: Spacing.two,
+  },
+  compareToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    padding: Spacing.two,
+    borderRadius: Spacing.two,
+  },
+  compareToolbarText: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  compareButton: {
+    backgroundColor: '#3c87f7',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.two,
+  },
+  compareButtonDisabled: {
+    opacity: 0.4,
+  },
+  compareButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  historyEntry: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  selectionButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.one,
+  },
+  productCardWrapper: {
+    flex: 1,
+    minWidth: 0,
+  },
+  checkbox: {
+    height: 20,
+    width: 20,
+    borderWidth: 1.5,
+    borderColor: '#777777',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxSelected: {
+    borderColor: '#3c87f7',
+    backgroundColor: '#3c87f7',
+  },
+  checkmark: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
   },
   loadMore: {
     paddingVertical: Spacing.two,

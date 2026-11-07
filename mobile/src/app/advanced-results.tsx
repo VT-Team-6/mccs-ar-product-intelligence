@@ -11,6 +11,7 @@ import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { CRITERIA } from '@/preferences/criteria';
 import { describeUnderstood, rankingFromParam } from '@/search/advanced';
+import { useStore } from '@/store/StoreContext';
 
 // The blue used for links elsewhere in the app
 const ACCENT = '#3c87f7';
@@ -22,6 +23,8 @@ export default function AdvancedResultsScreen() {
   const query = (params.q ?? '').trim();
   const rankParam = params.rank ?? '';
   const ranking = useMemo(() => rankingFromParam(rankParam), [rankParam]);
+  // Reprice the cards when the shopper switches stores.
+  const { store } = useStore();
 
   const [result, setResult] = useState<RecommendationResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,13 +69,15 @@ export default function AdvancedResultsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [query, ranking, attempt]);
+  }, [query, ranking, attempt, store?.store_id]);
 
   const thisPage = `/advanced-results?q=${encodeURIComponent(query)}&rank=${encodeURIComponent(rankParam)}`;
 
   // Opens product details. "from" brings Back to these results.
   const openProduct = (product: Product) => {
-    router.push(`/product/${product.product_id}?from=${encodeURIComponent(thisPage)}` as Href);
+    router.push(
+      `/product/${product.product_id}?from=${encodeURIComponent(thisPage)}&via=recommendation` as Href,
+    );
   };
 
   // Back to the form with the same words and ranking filled in. The form is
@@ -162,7 +167,7 @@ export default function AdvancedResultsScreen() {
                   <ThemedText type="small" themeColor="textSecondary">
                     Also based on your saved preferences and likes
                   </ThemedText>
-                  <ResultCard item={result.for_you} onOpen={openProduct} highlight />
+                  <ResultCard item={result.for_you} onOpen={openProduct} />
                 </View>
               )}
             </>
