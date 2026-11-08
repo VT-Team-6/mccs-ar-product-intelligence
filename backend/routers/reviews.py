@@ -107,6 +107,15 @@ from services.reviews.models import ReviewCandidate
 from services.reviews.registry import get_provider
 
 
+import logging
+
+from starlette.concurrency import run_in_threadpool
+from services.product_analysis_cache import (
+    refresh_product_analysis,
+)
+
+logger = logging.getLogger(__name__)
+
 def require_review_access(
     product_id: int, user=Depends(require_permission("create_products"))
 ) -> None:
@@ -228,7 +237,7 @@ async def set_product_review_sources(product_id: int, selection: ReviewSourceSel
         _get_review_product(conn, product_id)
 
         # Replace selections for this provider only. Other providers stay intact.
-        conn.execute(
+        removed = conn.execute(
             """
             DELETE FROM product_review_sources
             WHERE product_id = %s AND source = %s
@@ -237,21 +246,39 @@ async def set_product_review_sources(product_id: int, selection: ReviewSourceSel
             """,
             (product_id, source, ids),
         )
+
+        sources_changed = removed.rowcount > 0
+
         for source_product_id in ids:
             url = (
                 f"https://www.amazon.com/dp/{source_product_id}"
                 if source == "amazon" else None
             )
-            conn.execute(
+            inserted = conn.execute(
                 """
                 INSERT INTO product_review_sources
                     (product_id, source, source_product_id, source_url)
                 VALUES (%s, %s, %s, %s)
                 ON CONFLICT (product_id, source, source_product_id)
                 DO NOTHING
+                RETURNING review_source_id
                 """,
                 (product_id, source, source_product_id, url),
+            ).fetchone()
+
+            if inserted is not None:
+                sources_changed = True
+
+        if sources_changed:
+            conn.execute(
+                """
+                UPDATE product_ai_analyses
+                SET is_stale = TRUE
+                WHERE product_id = %s
+                """,
+                (product_id,),
             )
+            
         rows = _approved_review_sources(conn, product_id, source)
     return {"sources": rows}
 
@@ -264,4 +291,23 @@ async def import_product_reviews(product_id: int):
             result = await review_importer.import_product_reviews(conn, product_id)
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
+    # Review imports are committed before we generate AI analysis.
+    # The fingerprint check avoids ARC calls for identical content.
+    try:
+        analysis_result = await run_in_threadpool(
+            refresh_product_analysis,
+            product_id,
+        )
+        logger.info(
+            "Product %s AI analysis: %s",
+            product_id,
+            analysis_result["status"],
+        )
+    except Exception:
+        # Imported reviews must remain saved even if ARC is unavailable.
+        logger.exception(
+            "Reviews imported for product %s, but AI analysis "
+            "regeneration failed",
+            product_id,
+        )
     return result

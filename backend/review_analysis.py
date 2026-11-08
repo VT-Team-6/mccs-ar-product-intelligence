@@ -53,7 +53,11 @@ def analyze_product_reviews(product_id: int):
             JOIN product_review_sources prs
                 ON r.review_source_id = prs.review_source_id
             WHERE r.product_id = %s
-            ORDER BY r.review_date DESC NULLS LAST, r.review_id DESC
+            ORDER BY 
+                r.review_date DESC NULLS LAST, 
+                prs.source,
+                prs.source_product_id NULLS FIRST,
+                r.source_review_id NULLS FIRST
             LIMIT 50
             """,
             (product_id,),
