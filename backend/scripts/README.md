@@ -23,3 +23,19 @@ python scripts/amazon_reviews.py extract --candidates data/reviews/amazon_candid
 Scans the category reviews, saving up to **100 reviews per distinct Amazon listing** (not per shoe). The admin will choose the correct listing(s) later; these commands do not modify PostgreSQL.
 
 **Files:** Keep `amazon_reviews.py` in `backend/scripts/` and `amazon_targets.csv` in `backend/data/reviews/`. Keep generated review text out of Git unless redistribution is authorized.
+
+## SQLite archive builder (five product types)
+
+From `backend/`:
+
+```powershell
+python scripts/build_amazon_sqlite.py short
+python scripts/build_amazon_sqlite.py full
+```
+
+Short mode has a 25-minute total budget and preserves partial results. Full mode
+streams the source files with an approximately 3 GB database ceiling. Both produce
+five top-50 seed-candidate lists, a JSON export, and coverage/error reports.
+
+See [README_amazon_sqlite.md](README_amazon_sqlite.md) for options, package filters,
+output paths, progress indicators, sampling limits, and offline test instructions.

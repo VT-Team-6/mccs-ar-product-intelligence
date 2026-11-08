@@ -9,6 +9,7 @@ class ReviewCandidate(BaseModel):
     description: str | None = None
     url: str | None = None
     review_count: int | None = None
+    image_url: str | None = None
 
 class ReviewData(BaseModel):
     source_review_id: str | None = None
