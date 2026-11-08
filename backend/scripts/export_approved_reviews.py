@@ -28,6 +28,18 @@ def serialize(value):
 
 def export_approved_reviews():
     with get_connection() as conn:
+        # Load every active MCCS product, including products
+        # that do not currently have approved Amazon reviews.
+        product_rows = conn.execute(
+            """
+            SELECT name, brand, product_type
+            FROM products
+            WHERE deleted_at IS NULL
+            ORDER BY name, brand NULLS FIRST, product_type
+            """
+        ).fetchall()
+
+        # Load only real imported reviews from approved Amazon sources.
         rows = conn.execute(
             """
             SELECT
@@ -61,22 +73,35 @@ def export_approved_reviews():
             """
         ).fetchall()
 
+    # Initialize ALL active products with empty source lists.
     products = {}
 
+    for row in product_rows:
+        product_key = (
+            row["name"],
+            row["brand"],
+            row["product_type"],
+        )
+
+        if product_key in products:
+            raise ValueError(
+                f"Duplicate product identity: {product_key}"
+            )
+
+        products[product_key] = {
+            "name": row["name"],
+            "brand": row["brand"],
+            "product_type": row["product_type"],
+            "sources": {},
+        }
+
+    # Attach imported Amazon reviews to their approved listings.
     for row in rows:
         product_key = (
             row["product_name"],
             row["product_brand"],
             row["product_type"],
         )
-
-        if product_key not in products:
-            products[product_key] = {
-                "name": row["product_name"],
-                "brand": row["product_brand"],
-                "product_type": row["product_type"],
-                "sources": {},
-            }
 
         asin = row["source_product_id"]
         sources = products[product_key]["sources"]
@@ -99,6 +124,7 @@ def export_approved_reviews():
             }
         )
 
+    # Convert internal source dictionaries into JSON lists.
     snapshot = {
         "version": 1,
         "products": [
@@ -113,13 +139,20 @@ def export_approved_reviews():
     }
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+
     OUTPUT.write_text(
         json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
+    approved_count = sum(
+        bool(product["sources"])
+        for product in snapshot["products"]
+    )
+
     print(f"Exported {len(snapshot['products'])} products.")
-    print(f"Total reviews: {len(rows)}")
+    print(f"Products with Amazon reviews: {approved_count}")
+    print(f"Total Amazon reviews: {len(rows)}")
     print(f"Saved to: {OUTPUT}")
 
 if __name__ == "__main__":

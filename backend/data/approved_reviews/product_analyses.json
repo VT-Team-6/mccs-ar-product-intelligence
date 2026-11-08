@@ -1,0 +1,1823 @@
+{
+  "version": 1,
+  "products": [
+    {
+      "name": "Adidas Samba OG",
+      "brand": "Adidas",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally praise the shoes for their bright orange color and stylish, classic look, but some express disappointment with inaccurate color representations and sizing inconsistencies.",
+        "pros": [
+          "Bright orange color and stylish design",
+          "Classic look that appeals to many shoppers",
+          "Overall positive appearance and vibe"
+        ],
+        "cons": [
+          "Color shown in images does not match the actual product",
+          "Sizing can run small for some buyers"
+        ],
+        "review_count": 7,
+        "total_review_count": 7,
+        "average_rating": 3.71,
+        "rating_distribution": {
+          "1": 2,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 4
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "36a338c299dc0768462ceb26b1d2b9411ba1d3805823f6c83b8d99553722e15b",
+        "generated_at": "2026-11-07T13:17:55.441527+00:00"
+      }
+    },
+    {
+      "name": "Adidas Stan Smith",
+      "brand": "Adidas",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally find the shoes solid, comfortable, and true to size, though some note flatter cushioning and quick creasing.",
+        "pros": [
+          "Solid material construction",
+          "Comfortable for everyday wear",
+          "Sizing fits expectations",
+          "Easy to style with outfits"
+        ],
+        "cons": [
+          "Cushioning flatter than expected",
+          "Creases quickly"
+        ],
+        "review_count": 4,
+        "total_review_count": 4,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 2
+        },
+        "sources": [
+          "brand_site",
+          "foot_locker",
+          "zappos"
+        ],
+        "review_fingerprint": "305aedd5190a80a2d77618c95ca7c246271309acaa0428e14752768a3e4f36bd",
+        "generated_at": "2026-11-08T07:45:13.365974+00:00"
+      }
+    },
+    {
+      "name": "Adidas Ultraboost Light",
+      "brand": "Adidas",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers generally find the Ultraboost Light shoes comfortable, lightweight, and well-designed, with supportive features and good cushioning, but many note that the fit runs small and can feel tight on the top of the foot.",
+        "pros": [
+          "Comfortable fit with excellent cushioning",
+          "Lightweight construction",
+          "Attractive design and quality materials",
+          "Supportive elements such as top wrap and arch posting",
+          "Breathable uppers"
+        ],
+        "cons": [
+          "Runs small; reviewers often need to size up",
+          "Tightness around the top of the foot",
+          "Some perceive low material quality",
+          "Appearance may be less attractive than expected",
+          "Occasional shipping errors delivering the wrong model"
+        ],
+        "review_count": 14,
+        "total_review_count": 14,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 1,
+          "3": 0,
+          "4": 4,
+          "5": 9
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "e8f5a3e9392bf7260bbf07b2e39608740f0e1553f2138f3553d82642ae93f637",
+        "generated_at": "2026-11-07T13:17:41.461422+00:00"
+      }
+    },
+    {
+      "name": "Aldo Stessy Ballet Flats",
+      "brand": "Aldo",
+      "product_type": "Flat",
+      "analysis": {
+        "summary": "Customers generally find the shoes polished and comfortable with a good office fit, though some note a narrow forefoot and a slick sole.",
+        "pros": [
+          "Polished appearance",
+          "Comfortable without feeling too stiff",
+          "Fit works well for office wear"
+        ],
+        "cons": [
+          "Forefoot can feel narrow",
+          "Sole may be slippery on smooth floors"
+        ],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 4.0,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 0
+        },
+        "sources": [
+          "brand_site",
+          "nordstrom"
+        ],
+        "review_fingerprint": "db2c257c83b519c7b925b83ea1e72158d09af4f59386d0d3b08784a127993134",
+        "generated_at": "2026-11-08T07:49:47.207412+00:00"
+      }
+    },
+    {
+      "name": "Allbirds Tree Runners",
+      "brand": "Allbirds",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers generally find the Allbirds Tree Runners comfortable, with a secure heel fit, smooth ride, and good cushioning for longer runs, though some note heel rubbing early on, a heavier feel, and firmer cushioning than expected.",
+        "pros": [
+          "Secure heel fit that holds the heel",
+          "Good cushioning on longer runs",
+          "Smooth ride for daily miles",
+          "Comfortable and breathable upper",
+          "Sizing matches expectations"
+        ],
+        "cons": [
+          "Heel may rub during the first few wears",
+          "Shoes feel heavier than anticipated",
+          "Cushioning can feel firmer than desired"
+        ],
+        "review_count": 9,
+        "total_review_count": 9,
+        "average_rating": 4.44,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 3,
+          "5": 5
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "ea396740c1e11587b1178881a8a4f14f8e416e1478cb136f4766c5535ce44790",
+        "generated_at": "2026-11-08T07:48:08.395384+00:00"
+      }
+    },
+    {
+      "name": "Allen Edmonds Park Avenue",
+      "brand": "Allen Edmonds",
+      "product_type": "Dress Shoe",
+      "analysis": {
+        "summary": "Customers find the Allen Edmonds Park Avenue shoes comfortable with better-than-expected cushioning and reliable for regular wear.",
+        "pros": [
+          "Better-than-expected cushioning",
+          "Comfortable for everyday use",
+          "Reliable performance"
+        ],
+        "cons": [],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 5.0,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 2
+        },
+        "sources": [
+          "dsw",
+          "zappos"
+        ],
+        "review_fingerprint": "c741a9ac6cfe0b39449c1890fc53bea1e2e77183e6f722a3e7649cd53e3839cf",
+        "generated_at": "2026-11-08T07:47:22.158731+00:00"
+      }
+    },
+    {
+      "name": "Asics Gel-Kayano 30",
+      "brand": "Asics",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers generally find the Asics Gel‑Kayano 30 comfortable and reliable, highlighting its smooth ride, good grip on wet surfaces and cushioning, though a few experience heel rubbing early on.",
+        "pros": [
+          "Smooth ride for daily miles",
+          "Dependable grip on wet pavement",
+          "Comfortable cushioning on longer runs",
+          "Sizing close to expectations",
+          "Often chosen as a go‑to shoe"
+        ],
+        "cons": [
+          "Heel rubbed during the first few wears",
+          "Fit may be uncomfortable for some users"
+        ],
+        "review_count": 9,
+        "total_review_count": 9,
+        "average_rating": 4.67,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 7
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "cd141be2c432358090105c47c7d175c5f8c3496c419e02a0ef63b4884fb717f4",
+        "generated_at": "2026-11-08T07:44:07.450098+00:00"
+      }
+    },
+    {
+      "name": "Birkenstock Arizona Soft Footbed",
+      "brand": "Birkenstock",
+      "product_type": "Sandal",
+      "analysis": {
+        "summary": "Customers generally find the Birkenstock Arizona Soft Footbed comfortable, supportive, and reliable for everyday wear, noting secure straps, accurate sizing, and quick drying, though some mention the footbed feeling stiff initially.",
+        "pros": [
+          "Secure straps that do not rub",
+          "Good sole support compared to other sandals",
+          "Quick drying after getting wet",
+          "Sizing close to expectations",
+          "Reliable and comfortable for regular, all‑day use"
+        ],
+        "cons": [
+          "Footbed felt stiff at first for some users"
+        ],
+        "review_count": 8,
+        "total_review_count": 8,
+        "average_rating": 4.75,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 7
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "1e9be133294443b410b29cbede072febe3b07c6920eb3339cb13a80ac0cecb46",
+        "generated_at": "2026-11-08T07:45:27.114132+00:00"
+      }
+    },
+    {
+      "name": "Blundstone 500 Chelsea Boots",
+      "brand": "Blundstone",
+      "product_type": "Boot",
+      "analysis": {
+        "summary": "Customers rate the boots highly, highlighting solid ankle support, good wet‑weather handling, accurate sizing, sturdy leather, and reliability, while noting a rough break‑in period and heaviness after long wear as minor issues.",
+        "pros": [
+          "Solid ankle support",
+          "Handles wet weather well",
+          "Sizing matches expectations",
+          "Sturdy, well‑finished leather",
+          "Reliable for regular use"
+        ],
+        "cons": [
+          "Break‑in period can be rough",
+          "Feels heavy after several hours of wear",
+          "Fit may not suit all preferences"
+        ],
+        "review_count": 9,
+        "total_review_count": 9,
+        "average_rating": 4.67,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 7
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "nordstrom",
+          "zappos"
+        ],
+        "review_fingerprint": "cc9c4ea85eb36e1b1a8f929b027b728e8e87d6f5e08098202afbdf0acfafa6bd",
+        "generated_at": "2026-11-08T07:46:31.921503+00:00"
+      }
+    },
+    {
+      "name": "Brooks Ghost 15",
+      "brand": "Brooks",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers generally praise the Brooks Ghost 15 for its smooth ride, comfortable breathable upper, reliable everyday performance, and accurate sizing, though some note the fit can run slightly small.",
+        "pros": [
+          "Smooth ride for daily miles",
+          "Comfortable and breathable upper",
+          "Sizing matches expectations",
+          "Secure heel fit",
+          "Reliable for regular use"
+        ],
+        "cons": [
+          "Fit may run slightly small"
+        ],
+        "review_count": 9,
+        "total_review_count": 9,
+        "average_rating": 4.78,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 8
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "403f1f3b7e17637536d6e9f1c1813687e41c5370311f006237d5cec8f72ecaad",
+        "generated_at": "2026-11-08T07:44:18.495730+00:00"
+      }
+    },
+    {
+      "name": "Chaco Z/Cloud Sandals",
+      "brand": "Chaco",
+      "product_type": "Sandal",
+      "analysis": {
+        "summary": "Customers find the Chaco Z/Cloud Sandals comfortable for all‑day wear with supportive footbeds and reliable performance, though some note the footbed can feel stiff initially.",
+        "pros": [
+          "Comfortable for all‑day wear",
+          "Supportive sole compared to most sandals",
+          "Reliable for regular use and long walks",
+          "Sizing matches expectations",
+          "Footbed comfortable after break‑in"
+        ],
+        "cons": [
+          "Footbed may feel stiff initially"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.8,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 4
+        },
+        "sources": [
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "bcb84462c29b0ee91b072bbb052573f0577e82a3966352deebe6473a88ac346f",
+        "generated_at": "2026-11-08T07:45:42.977993+00:00"
+      }
+    },
+    {
+      "name": "Clarks Desert Boot",
+      "brand": "Clarks",
+      "product_type": "Boot",
+      "analysis": {
+        "summary": "Customers find the Clarks Desert Boot generally comfortable and well-made, noting solid ankle support, accurate sizing, and a quick break-in period, though some experience initial fit rubbing.",
+        "pros": [
+          "Solid ankle support",
+          "Sizing matches expectations",
+          "Comfortable after a short break-in",
+          "Sturdy, well-finished leather",
+          "Suitable for regular, everyday wear"
+        ],
+        "cons": [
+          "Initial ankle rubbing due to fit"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.6,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 4
+        },
+        "sources": [
+          "brand_site",
+          "nordstrom",
+          "zappos"
+        ],
+        "review_fingerprint": "5066bef48fbf0ee18684a3ef27616a2b8d5073bcf93b0045a8109446e1de7cde",
+        "generated_at": "2026-11-08T07:46:06.135457+00:00"
+      }
+    },
+    {
+      "name": "Clarks Wallabee",
+      "brand": "Clarks",
+      "product_type": "Moccasin",
+      "analysis": {
+        "summary": "Customers generally express high satisfaction with the Clarks Wallabee, highlighting comfort, leather quality, polished look, accurate sizing, and reliability, while one reviewer noted a narrow forefoot fit.",
+        "pros": [
+          "Comfortable for a full workday",
+          "Leather feels nice for the price",
+          "Polished appearance without stiffness",
+          "Sizing matches expectations",
+          "Reliable for regular use"
+        ],
+        "cons": [
+          "Fit feels narrow across the forefoot"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.6,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 4
+        },
+        "sources": [
+          "brand_site",
+          "nordstrom",
+          "zappos"
+        ],
+        "review_fingerprint": "6e3a46613fa97604bb1f48bf929f8b895bc59ec90db13938ef2bdde05dce0ce9",
+        "generated_at": "2026-11-08T07:47:29.286280+00:00"
+      }
+    },
+    {
+      "name": "Cole Haan OriginalGrand Wingtip",
+      "brand": "Cole Haan",
+      "product_type": "Dress Shoe",
+      "analysis": {
+        "summary": "Customers rate the shoes positively, highlighting comfort, cushioning, and a polished, flexible appearance, while noting a narrow fit in the forefoot for some.",
+        "pros": [
+          "Comfortable cushioning",
+          "Suitable for everyday wear",
+          "Polished appearance",
+          "Flexible, not overly stiff",
+          "Overall solid quality"
+        ],
+        "cons": [
+          "Forefoot can feel narrow"
+        ],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 1
+        },
+        "sources": [
+          "dsw",
+          "nordstrom"
+        ],
+        "review_fingerprint": "8fb97eaead6c03e9a4eca69e3f8b434799e1e0b02fa30c690da76f06469e632d",
+        "generated_at": "2026-11-08T07:47:16.886682+00:00"
+      }
+    },
+    {
+      "name": "Common Projects Original Achilles",
+      "brand": "Common Projects",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally appreciate the Common Projects Original Achilles for its solid material quality, easy styling, and satisfactory sizing, though some note the tongue can shift while walking and suggest trying the size before purchase.",
+        "pros": [
+          "Solid material feel",
+          "Easy to style with various outfits",
+          "Sizing aligns with expectations",
+          "Overall satisfaction and repeat purchase intent"
+        ],
+        "cons": [
+          "Tongue may shift while walking",
+          "Sizing may require trying on before purchase"
+        ],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 1
+        },
+        "sources": [
+          "amazon",
+          "zappos"
+        ],
+        "review_fingerprint": "82de026fe82cbb0b0be05be55a9ad8235306d0f47d546759e5411d2cc2b0a132",
+        "generated_at": "2026-11-08T07:48:25.547803+00:00"
+      }
+    },
+    {
+      "name": "Converse Chuck Taylor All Star",
+      "brand": "Converse",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally find the Converse Chuck Taylor All Star comfortable, well-shaped, and solid in material, but some note quick creasing and occasional tongue movement.",
+        "pros": [
+          "Shape looks great in person",
+          "Comfortable for everyday wear",
+          "Materials feel solid and reliable",
+          "Good cushioning for walking",
+          "Sizing matches expectations"
+        ],
+        "cons": [
+          "Creases quickly",
+          "Tongue can shift while walking",
+          "Fit may be an issue for some"
+        ],
+        "review_count": 9,
+        "total_review_count": 9,
+        "average_rating": 4.56,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 2,
+          "5": 6
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "foot_locker",
+          "zappos"
+        ],
+        "review_fingerprint": "36728692950c377454777f638eb03b70543383690298204e95f0e37d05dbf2ca",
+        "generated_at": "2026-11-08T07:43:32.220244+00:00"
+      }
+    },
+    {
+      "name": "Crocs Classic Clogs",
+      "brand": "Crocs",
+      "product_type": "Clog",
+      "analysis": {
+        "summary": "Customers consistently praise the shoes for comfort, lightweight feel, roomy fit, breathable footbed, and versatility for outdoor activities, while noting that the appearance is considered unattractive by some.",
+        "pros": [
+          "Very comfortable to wear",
+          "Extremely lightweight",
+          "Wide and spacious enough for socks",
+          "Breathable footbed keeps feet dry",
+          "Versatile for fishing, camping, and everyday use"
+        ],
+        "cons": [
+          "Many reviewers find the design unattractive"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.8,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 4
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "6a2b347c10e342d70a9c34aee10b48d656e38f75c0a23dc5f189337ba19b7740",
+        "generated_at": "2026-11-07T13:17:29.953413+00:00"
+      }
+    },
+    {
+      "name": "Dr. Martens 1460 Smooth Leather Boots",
+      "brand": "Dr. Martens",
+      "product_type": "Boot",
+      "analysis": {
+        "summary": "Customers are generally satisfied with the Dr. Martens 1460 Smooth Leather Boots, praising comfort after a brief break‑in, accurate sizing, solid ankle support, and good performance in wet weather, though several note the break‑in can be rough and the leather may crease quickly.",
+        "pros": [
+          "Becomes very comfortable after a short break‑in",
+          "Sizing matches expectations",
+          "Solid ankle support",
+          "Handles wet weather well",
+          "Reliably durable for regular use"
+        ],
+        "cons": [
+          "Break‑in period can be rougher than expected",
+          "Leather may crease quickly",
+          "Fit may not suit all preferences",
+          "Initial stiffness during break‑in"
+        ],
+        "review_count": 9,
+        "total_review_count": 9,
+        "average_rating": 4.56,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 2,
+          "5": 6
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "nordstrom",
+          "zappos"
+        ],
+        "review_fingerprint": "78dedee9444c6a64ceed97118b17ad163d794b2ac05eb474780a20ba856e1610",
+        "generated_at": "2026-11-08T07:43:22.195039+00:00"
+      }
+    },
+    {
+      "name": "Fila Disruptor 2",
+      "brand": "Fila",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally find the shoes comfortable and well‑built, but note that the fit can be narrow and the tongue may shift while walking.",
+        "pros": [
+          "Comfortable for everyday wear",
+          "Solid construction/materials",
+          "Overall good performance"
+        ],
+        "cons": [
+          "Fit runs narrow",
+          "Tongue can shift while walking"
+        ],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 4.0,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 0
+        },
+        "sources": [
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "5ed4174b0c96520371f33bc7f8dcd2c5401d93ba457d56d0b6d6fb26f1b8bb6c",
+        "generated_at": "2026-11-08T07:49:22.443091+00:00"
+      }
+    },
+    {
+      "name": "Hoka Clifton 9",
+      "brand": "Hoka",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers report the Hoka Clifton 9 as comfortable and reliable with a secure heel fit, good grip, and sizing that matches expectations, though some note the fit can run slightly small.",
+        "pros": [
+          "Secure heel fit",
+          "Dependable grip on wet pavement",
+          "Reliable for regular use",
+          "Comfortable and breathable upper",
+          "Sizing close to expectations"
+        ],
+        "cons": [
+          "Fit may run slightly small for some users"
+        ],
+        "review_count": 8,
+        "total_review_count": 8,
+        "average_rating": 4.75,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 7
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "ce7ce36e9eedfaac78d2e44c6e4ef8c5e13ac1fac65499ea5fc5e79d1e0ad22a",
+        "generated_at": "2026-11-08T07:44:27.523593+00:00"
+      }
+    },
+    {
+      "name": "Hunter Original Tall Rain Boots",
+      "brand": "Hunter",
+      "product_type": "Rain Boot",
+      "analysis": {
+        "summary": "Customers rate the boots positively, highlighting strong traction, reliable performance, and good handling of wet weather, while noting occasional fit issues and leather creasing.",
+        "pros": [
+          "Good sole traction",
+          "Handles wet weather well",
+          "Reliable for regular use",
+          "Sizing generally accurate",
+          "Comfort improves after break-in"
+        ],
+        "cons": [
+          "Fit can run large",
+          "Leather creases quickly",
+          "Sizing may require trying first"
+        ],
+        "review_count": 4,
+        "total_review_count": 4,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 2
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "c6196058facb643d80d86bfe200055966ff8f3a3b34524a0df7585095f54c017",
+        "generated_at": "2026-11-08T07:46:50.060880+00:00"
+      }
+    },
+    {
+      "name": "Jordan 1 Retro High OG",
+      "brand": "Jordan",
+      "product_type": "Basketball Shoe",
+      "analysis": {
+        "summary": "Customers praise the Jordan 1 Retro High OG for its comfort, cushioning, reliability for daily wear, and easy styling, while a few note minor fit issues such as the tongue shifting.",
+        "pros": [
+          "Good cushioning for all‑day walking",
+          "Comfortable for everyday wear",
+          "Reliable for regular use",
+          "Easy to style with different outfits",
+          "Solid material feel"
+        ],
+        "cons": [
+          "Tongue can shift while walking",
+          "Fit may feel mixed for some users"
+        ],
+        "review_count": 9,
+        "total_review_count": 9,
+        "average_rating": 4.78,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 8
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "foot_locker",
+          "zappos"
+        ],
+        "review_fingerprint": "56286f2b926678fe920ba16642461810f7c3e0f2f106e46c7579e72b49d4a0dc",
+        "generated_at": "2026-11-08T07:45:01.819108+00:00"
+      }
+    },
+    {
+      "name": "Keen Targhee III Waterproof",
+      "brand": "Keen",
+      "product_type": "Hiking Shoe",
+      "analysis": {
+        "summary": "Customers generally find the Keen Targhee III Waterproof comfortable, reliable for everyday use, and offering good grip and a smooth ride, though some note the shoe is heavier and the toe box feels narrow.",
+        "pros": [
+          "Reliable for regular use",
+          "Smooth ride for daily miles",
+          "Good grip on wet pavement",
+          "Secure heel fit",
+          "Comfortable"
+        ],
+        "cons": [
+          "Heavier than expected",
+          "Narrow toe box",
+          "Fit may require trying the size first"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.4,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 3
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "fd9537782e3ad49d7096a04611b64c412cdee951baaabc5772b3b5ccd386a5ff",
+        "generated_at": "2026-11-08T07:48:56.724384+00:00"
+      }
+    },
+    {
+      "name": "La Sportiva Tarantulace",
+      "brand": "La Sportiva",
+      "product_type": "Climbing Shoe",
+      "analysis": {
+        "summary": "Customers find the Tarantulace comfortable and appreciate its grippy rubber on indoor holds, but some note reduced stickiness on tiny edges and a cramped toe box.",
+        "pros": [
+          "Grippy rubber on indoor holds",
+          "Comfortable for longer gym sessions",
+          "Overall solid performance"
+        ],
+        "cons": [
+          "Rubber less sticky on small edges",
+          "Toe box feels cramped"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 4.33,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 1
+        },
+        "sources": [
+          "brand_site",
+          "rei"
+        ],
+        "review_fingerprint": "7b4c0319e416da700d8d34ddf33c271c9ff487eb9bb7db3b640780544322ebfc",
+        "generated_at": "2026-11-08T07:49:06.043612+00:00"
+      }
+    },
+    {
+      "name": "Merrell Moab 3 Hiking Shoes",
+      "brand": "Merrell",
+      "product_type": "Hiking Shoe",
+      "analysis": {
+        "summary": "Customers generally find the Merrell Moab 3 Hiking Shoes reliable and comfortable for everyday use, praising a secure heel fit and smooth ride, while a few note firmer cushioning and a tendency to run slightly small.",
+        "pros": [
+          "Secure heel fit",
+          "Reliable for daily wear",
+          "Smooth ride for daily miles",
+          "Dependable grip on wet pavement"
+        ],
+        "cons": [
+          "Cushioning can feel firmer than expected",
+          "May run slightly small for some wearers"
+        ],
+        "review_count": 8,
+        "total_review_count": 8,
+        "average_rating": 4.63,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 6
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "7d450044c9727618904fe41046cd7eb548bdc5c79e455eac755b7d5667907b44",
+        "generated_at": "2026-11-08T07:48:41.571737+00:00"
+      }
+    },
+    {
+      "name": "Mizuno Wave Rider 27",
+      "brand": "Mizuno",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers find the Mizuno Wave Rider 27 to be a reliable, comfortable shoe with good fit, smooth ride, and dependable grip, though some note it feels heavier than expected.",
+        "pros": [
+          "Secure heel fit",
+          "Smooth ride for daily miles",
+          "Dependable grip on wet pavement",
+          "Overall reliability for regular use",
+          "Comfortable after break‑in"
+        ],
+        "cons": [
+          "Heavier weight than expected"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 4.67,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 2
+        },
+        "sources": [
+          "amazon",
+          "zappos"
+        ],
+        "review_fingerprint": "49d2e5050cb4f525b66edce8d0bac88b1b4cefaa254f430ef3e8fdac4ad8f404",
+        "generated_at": "2026-11-08T07:49:17.936993+00:00"
+      }
+    },
+    {
+      "name": "Moccasin House Driving Moc",
+      "brand": "Moccasin House",
+      "product_type": "Moccasin",
+      "analysis": {
+        "summary": "Customers generally find the Moccasin House Driving Moc comfortable, well-made, and good value, though some note a narrow forefoot and a need for break‑in.",
+        "pros": [
+          "Polished appearance without feeling stiff",
+          "Nice leather feel for the price",
+          "Comfortable for full workdays",
+          "Sizing matches expectations",
+          "Overall solid and satisfactory performance"
+        ],
+        "cons": [
+          "Forefoot can feel narrow",
+          "Requires more break‑in than expected",
+          "Minor drawback mentioned without detail"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 4.33,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 1
+        },
+        "sources": [
+          "nordstrom",
+          "zappos"
+        ],
+        "review_fingerprint": "2c50dc4e8025a47245ac2d01d54a71947316973cc19b852acb2418c4200266d2",
+        "generated_at": "2026-11-08T07:47:49.670851+00:00"
+      }
+    },
+    {
+      "name": "New Balance 574 Core",
+      "brand": "New Balance",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally like the New Balance 574 Core's attractive shape, comfortable cushioning for all‑day walking, and reliable everyday wear, though several note that the tongue can shift while walking.",
+        "pros": [
+          "Shape looks great in person",
+          "Cushioning is good for walking all day",
+          "Reliable for regular use",
+          "Sizing matches expectations",
+          "Overall solid and comfortable"
+        ],
+        "cons": [
+          "Tongue shifts around while walking"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.4,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 3
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "dae40ab33efa2b85cc516d72940e1188b35e453440683f2683be218b96a1578d",
+        "generated_at": "2026-11-08T07:43:38.794071+00:00"
+      }
+    },
+    {
+      "name": "Nike Air Force 1 Low",
+      "brand": "Nike",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers gave the product high ratings and described it positively, though one reviewer noted it runs small and feels tight around the foot bridge.",
+        "pros": [
+          "High overall satisfaction with 5‑star ratings",
+          "Described as great and perfect",
+          "Positive impression expressed with a thumbs up"
+        ],
+        "cons": [
+          "Runs small and feels tight around the foot bridge"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 5.0,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 3
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "8c08b456b56bb164f6eaa5734355af209b37744f3eaddbbf374e9e0517bc8909",
+        "generated_at": "2026-11-07T13:17:24.768175+00:00"
+      }
+    },
+    {
+      "name": "Nike Air Max 90",
+      "brand": "Nike",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally rate the shoes highly, highlighting good fit, attractive looks, comfort and fast delivery, while noting that the shoes often run narrow or small and some experience occasional quality or comfort issues.",
+        "pros": [
+          "Fit is generally good and true to size for many wearers",
+          "Comfortable with supportive arch and cushioning",
+          "Attractive appearance and stylish design",
+          "Fast, on‑time shipping and reliable delivery",
+          "Perceived good overall quality and lightweight construction"
+        ],
+        "cons": [
+          "Shoes tend to run narrow or small, requiring a larger size for wide feet",
+          "Occasional quality issues such as ink marks, dirty soles, or squeaking sounds",
+          "Some reviewers find the leather or overall comfort less soft than expected",
+          "Padding or fit can feel excessive, leading to blisters for some users",
+          "Aesthetic style perceived as too girly or resembling nursing shoes by a few buyers"
+        ],
+        "review_count": 36,
+        "total_review_count": 36,
+        "average_rating": 4.22,
+        "rating_distribution": {
+          "1": 4,
+          "2": 1,
+          "3": 2,
+          "4": 5,
+          "5": 24
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "a6f6b429f3abfd6682c8585231ada0041fb1700033af4a7bebeb9e84ad8f3dd5",
+        "generated_at": "2026-11-07T13:18:06.043233+00:00"
+      }
+    },
+    {
+      "name": "Nike Dunk Low",
+      "brand": "Nike",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers note that the shoes have an appealing style and are available in several colors, and some appreciate a roomy fit, but several reviewers report that the U.S. sizing runs small and narrow, leading to inconsistency in fit.",
+        "pros": [
+          "Appealing style/design",
+          "Multiple color options",
+          "Roomy fit for those who need larger sizing"
+        ],
+        "cons": [
+          "U.S. sizing runs small and narrow",
+          "Inconsistent sizing between reviewers"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 3.67,
+        "rating_distribution": {
+          "1": 1,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 2
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "18a0e68a3b38e5ac62b11cfbbab088f6b734a6dae26950874b8130b7f03a5312",
+        "generated_at": "2026-11-07T13:17:49.751268+00:00"
+      }
+    },
+    {
+      "name": "Nike Pegasus 40",
+      "brand": "Nike",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers largely appreciate the shoes for their comfort, good fit, cushioning and neutral support, though a few note issues with fit for wider feet, the high 10mm drop, and limited durability.",
+        "pros": [
+          "Very comfortable for all‑day wear",
+          "Accurate fit and sizing consistency",
+          "Effective cushioning in heel and forefoot",
+          "Neutral design that suits supination and heel‑strike runners",
+          "Color and appearance match product images"
+        ],
+        "cons": [
+          "Design may not accommodate wider Asian foot shapes",
+          "10mm heel drop can be unsuitable for some runners",
+          "Some users experienced short‑term durability or performance issues",
+          "Perceived as entry‑level with limited technical features",
+          "Fit described as slightly looser than previous models"
+        ],
+        "review_count": 11,
+        "total_review_count": 11,
+        "average_rating": 4.45,
+        "rating_distribution": {
+          "1": 0,
+          "2": 1,
+          "3": 1,
+          "4": 1,
+          "5": 8
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "6b6dcc2c47f7bbe0a6f117a9387e9b0786be2025520d80ed19d240c3d11cd370",
+        "generated_at": "2026-11-07T13:18:17.098198+00:00"
+      }
+    },
+    {
+      "name": "On Cloud 5",
+      "brand": "On",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers generally describe the shoes as comfortable, smooth, and reliable for everyday wear, highlighting a breathable upper, while a few note that the fit runs slightly small.",
+        "pros": [
+          "Comfortable feel",
+          "Smooth ride for daily miles",
+          "Reliable for everyday use",
+          "Breathable upper",
+          "Good cushioning on longer runs"
+        ],
+        "cons": [
+          "Fit tends to run slightly small for some users"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.4,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 3
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "1b641d92319cd8cf443bcb8641a2abf7ec27c7bc96b740e04335327c5a0f76c5",
+        "generated_at": "2026-11-08T07:44:48.093685+00:00"
+      }
+    },
+    {
+      "name": "Puma Suede Classic XXI",
+      "brand": "Puma",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers generally find the shoes comfortable, well‑shaped, and nicely cushioned with accurate sizing, but some note a break‑in period and that they crease easily.",
+        "pros": [
+          "Good cushioning for all‑day walking",
+          "Shape looks great in person",
+          "Sizing matches expectations",
+          "Comfortable overall",
+          "Materials feel solid"
+        ],
+        "cons": [
+          "Creases quickly with wear",
+          "Requires break‑in to soften"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.4,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 3
+        },
+        "sources": [
+          "brand_site",
+          "foot_locker",
+          "zappos"
+        ],
+        "review_fingerprint": "c1b89421b46f9e69c92e38f908b0f5fed8d6c933567f1de3c1ef5498337b6e7b",
+        "generated_at": "2026-11-08T07:43:50.241451+00:00"
+      }
+    },
+    {
+      "name": "Rainbow Premier Leather Sandals",
+      "brand": "Rainbow",
+      "product_type": "Sandal",
+      "analysis": {
+        "summary": "Customers are generally satisfied, praising the secure straps, supportive sole, quick drying, and overall reliability, while noting the footbed can feel stiff at first.",
+        "pros": [
+          "Straps stay secure without rubbing",
+          "Sole provides better support than most sandals",
+          "Dries quickly after getting wet",
+          "Reliable for regular use",
+          "Overall solid construction"
+        ],
+        "cons": [
+          "Footbed feels stiff initially"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 4.67,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 2
+        },
+        "sources": [
+          "brand_site",
+          "rei"
+        ],
+        "review_fingerprint": "d83d0a163841fcea5fda970f22657d7e7f2181967673ea0793a7555453ad9255",
+        "generated_at": "2026-11-08T07:49:39.426274+00:00"
+      }
+    },
+    {
+      "name": "Red Wing Classic Moc Toe",
+      "brand": "Red Wing",
+      "product_type": "Boot",
+      "analysis": {
+        "summary": "Customers rate the Red Wing Classic Moc Toe highly, highlighting comfort, solid ankle support, good traction, sturdy leather, and accurate sizing, while a few note that the fit can run large and may need a short break-in.",
+        "pros": [
+          "Solid ankle support",
+          "Good traction on the sole",
+          "Sturdy, well-finished leather",
+          "Comfortable after a short break-in",
+          "Sizing matches expectations"
+        ],
+        "cons": [
+          "Fit may run larger than expected",
+          "May require a short break-in period"
+        ],
+        "review_count": 8,
+        "total_review_count": 8,
+        "average_rating": 4.75,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 7
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "nordstrom",
+          "zappos"
+        ],
+        "review_fingerprint": "93b9dc73a408b6eaa97cba9c2264acda58e6e052dcdeaf0549952a2daa183c83",
+        "generated_at": "2026-11-08T07:46:19.746625+00:00"
+      }
+    },
+    {
+      "name": "Reebok Club C 85",
+      "brand": "Reebok",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers are generally satisfied with the shoes, noting good cushioning and sizing, but some mention quick creasing and a slightly narrow fit.",
+        "pros": [
+          "Comfortable cushioning for all‑day walking",
+          "Sizing matches expectations",
+          "Attractive shape and everyday style",
+          "Overall solid performance",
+          "Willingness to repurchase"
+        ],
+        "cons": [
+          "Upper material creases quickly",
+          "Fit can feel a bit narrow",
+          "Potential minor durability concerns"
+        ],
+        "review_count": 4,
+        "total_review_count": 4,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 2
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "c9f7190892c67ae7532c91ebb21384b320374331cb0fb42830bbb2104d6e3cf8",
+        "generated_at": "2026-11-08T07:43:55.161428+00:00"
+      }
+    },
+    {
+      "name": "Reef Santa Ana Flip Flops",
+      "brand": "Reef",
+      "product_type": "Flip-Flop",
+      "analysis": {
+        "summary": "Customers generally find the flip flops comfortable and practical for daily wear, noting easy all‑day wear, comfortable footbeds, quick drying, and reliable regular use, with minor issues reported.",
+        "pros": [
+          "Easy to wear all day",
+          "Comfortable footbed for long walks",
+          "Quick‑drying after getting wet",
+          "Reliable for regular use"
+        ],
+        "cons": [
+          "Footbed felt stiff initially",
+          "Fit runs slightly short"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 4.33,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 1
+        },
+        "sources": [
+          "amazon",
+          "zappos"
+        ],
+        "review_fingerprint": "9ba2dc51f1ce2b7098301b36d96547b4998f1212ded4fd4e29b5c8c22aa44676",
+        "generated_at": "2026-11-08T07:49:28.052729+00:00"
+      }
+    },
+    {
+      "name": "Salomon XT-6",
+      "brand": "Salomon",
+      "product_type": "Trail Shoe",
+      "analysis": {
+        "summary": "Customers generally find the Salomon XT-6 comfortable, reliable, and suitable for everyday use, highlighting smooth rides and good grip, though some note the toe box is narrower than expected.",
+        "pros": [
+          "Smooth ride for daily mileage",
+          "Comfortable and breathable upper",
+          "Reliable for regular use",
+          "Dependable grip on wet surfaces",
+          "Often chosen as a go‑to pair"
+        ],
+        "cons": [
+          "Toe box feels narrower than expected"
+        ],
+        "review_count": 7,
+        "total_review_count": 7,
+        "average_rating": 4.71,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 6
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "b0708b978b8612b5eafc53f2ba6851e35b9c096fb39eae4ce2e6a4f3acf0c276",
+        "generated_at": "2026-11-08T07:48:32.365873+00:00"
+      }
+    },
+    {
+      "name": "Sam Edelman Loraine Loafers",
+      "brand": "Sam Edelman",
+      "product_type": "Loafer",
+      "analysis": {
+        "summary": "Customers are generally satisfied with the loafers, praising their polished look, comfortable cushioning, reliable wear, and office-appropriate fit, while noting the forefoot may feel narrow for some.",
+        "pros": [
+          "Polished appearance without stiffness",
+          "Accurate sizing",
+          "Comfortable cushioning",
+          "Reliable for regular use",
+          "Fit suitable for office wear"
+        ],
+        "cons": [
+          "Forefoot can feel narrow"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 4.67,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 2
+        },
+        "sources": [
+          "brand_site",
+          "nordstrom"
+        ],
+        "review_fingerprint": "64f5235f6dd524568cdcd1222b46ad904a0d9805ced9b122feb7a71033e71dca",
+        "generated_at": "2026-11-08T07:49:52.649745+00:00"
+      }
+    },
+    {
+      "name": "Saucony Ride 16",
+      "brand": "Saucony",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers generally praise the Saucony Ride 16 for its comfortable, supportive cushioning on longer runs and reliable everyday performance, with satisfactory fit and sizing, though one reviewer found the cushioning a bit firmer than desired.",
+        "pros": [
+          "Cushioning feels good on longer runs",
+          "Reliable for regular use",
+          "Comfortable and breathable upper",
+          "Accurate sizing",
+          "Secure heel fit"
+        ],
+        "cons": [
+          "Cushioning may feel firmer than expected for some users"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.6,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 4
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "ce05719f0a023940f8f2df788bbe56e6522c669e404a187c353332e9af9e5b06",
+        "generated_at": "2026-11-08T07:44:39.731231+00:00"
+      }
+    },
+    {
+      "name": "Sorel Caribou Waterproof Boots",
+      "brand": "Sorel",
+      "product_type": "Boot",
+      "analysis": {
+        "summary": "Customers generally find the boots comfortable, reliable, and well suited for wet weather, with sturdy leather and good traction, though some note a tough break‑in period and a slightly large fit.",
+        "pros": [
+          "Good traction",
+          "Handles wet weather well",
+          "Comfortable for regular use",
+          "Sturdy, well‑finished leather",
+          "Reliable overall"
+        ],
+        "cons": [
+          "Break‑in period can be rough",
+          "Fit tends to run large"
+        ],
+        "review_count": 4,
+        "total_review_count": 4,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 2
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "89c57a983909b5c04a2f5a2259d2f6287ae5046c360d587fb681516c43450942",
+        "generated_at": "2026-11-08T07:46:38.190192+00:00"
+      }
+    },
+    {
+      "name": "Sperry Authentic Original 2-Eye",
+      "brand": "Sperry",
+      "product_type": "Boat Shoe",
+      "analysis": {
+        "summary": "Customers find the shoes comfortable and reliable for everyday wear, though some note inconsistent sizing.",
+        "pros": [
+          "Comfortable cushioning",
+          "Stays comfortable through a full workday",
+          "Reliable for regular use"
+        ],
+        "cons": [
+          "Inconsistent sizing"
+        ],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 1
+        },
+        "sources": [
+          "brand_site",
+          "nordstrom"
+        ],
+        "review_fingerprint": "6cfa01e206eede36c1e3d04de6e01860eaa9847412ab7aee26538373821e3fa3",
+        "generated_at": "2026-11-08T07:47:43.105425+00:00"
+      }
+    },
+    {
+      "name": "Steve Madden Lando Loafers",
+      "brand": "Steve Madden",
+      "product_type": "Loafer",
+      "analysis": {
+        "summary": "Customers find the loafers comfortable and well-sized, but note the soles may be slippery on smooth surfaces.",
+        "pros": [
+          "Comfortable cushioning",
+          "Good sizing",
+          "Comfort lasts through a full workday",
+          "Overall solid build quality",
+          "Willingness to repurchase"
+        ],
+        "cons": [
+          "Sole can be slick on smooth floors"
+        ],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 1
+        },
+        "sources": [
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "b81ff0b136f91f237c297a07b49f9d35db1920fedb81f091d0ba9bb4f75311f2",
+        "generated_at": "2026-11-08T07:47:08.801371+00:00"
+      }
+    },
+    {
+      "name": "Teva Original Universal Sandals",
+      "brand": "Teva",
+      "product_type": "Sandal",
+      "analysis": {
+        "summary": "Customers generally find the sandals comfortable, supportive, true‑to‑size, and easy to wear, though some note that the straps may loosen over time.",
+        "pros": [
+          "Easy to wear all day",
+          "Straps stay secure without rubbing",
+          "Sizing matches expectations",
+          "Comfortable footbed for long walks",
+          "Supportive sole"
+        ],
+        "cons": [
+          "Straps may loosen with use"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.6,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 0,
+          "5": 4
+        },
+        "sources": [
+          "brand_site",
+          "rei",
+          "zappos"
+        ],
+        "review_fingerprint": "e4e42ef391af44fe1ed4c8bc86155c1300969de77174cb547cd25c93ed39f443",
+        "generated_at": "2026-11-08T07:45:36.842121+00:00"
+      }
+    },
+    {
+      "name": "Timberland 6\" Premium Waterproof Boots",
+      "brand": "Timberland",
+      "product_type": "Boot",
+      "analysis": {
+        "summary": "Customers consistently praise the boots for their authenticity, quick shipping, comfortable fit, solid construction, and flattering appearance.",
+        "pros": [
+          "Authentic boots",
+          "Fast shipping",
+          "Comfortable, well‑fitting",
+          "Well‑made construction",
+          "Flattering look, especially the peach color"
+        ],
+        "cons": [],
+        "review_count": 4,
+        "total_review_count": 4,
+        "average_rating": 5.0,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 4
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "18fbf40f31a27a47067341e41a20ce945689a955ffbfc44a95ce770cc82dfef0",
+        "generated_at": "2026-11-07T13:17:18.451638+00:00"
+      }
+    },
+    {
+      "name": "Toms Alpargata Classic",
+      "brand": "Toms",
+      "product_type": "Slip-On",
+      "analysis": {
+        "summary": "Customers generally find the shoes comfortable with good cushioning and a suitable fit for everyday and office wear, but note that the sole can be slick on smooth floors.",
+        "pros": [
+          "Cushioning better than expected",
+          "Comfortable for regular wear",
+          "Fit works well for office wear",
+          "Reliable for everyday use",
+          "Solid overall construction"
+        ],
+        "cons": [
+          "Sole can be slick on smooth floors"
+        ],
+        "review_count": 3,
+        "total_review_count": 3,
+        "average_rating": 4.33,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 1
+        },
+        "sources": [
+          "brand_site",
+          "dsw"
+        ],
+        "review_fingerprint": "3436a406e7c8bc992303a2fb9472fa0ae1ca75aa0cc132679d5d76651e32ff55",
+        "generated_at": "2026-11-08T07:47:38.800551+00:00"
+      }
+    },
+    {
+      "name": "UGG Classic Mini II Boots",
+      "brand": "UGG",
+      "product_type": "Boot",
+      "analysis": {
+        "summary": "Customers generally find the UGG Classic Mini II Boots comfortable, reliable for daily wear, and praised for good sole traction, though some note the fit can run slightly large.",
+        "pros": [
+          "Good sole traction",
+          "Comfortable after a short break-in",
+          "Reliable for regular use",
+          "Sizing close to expectations",
+          "Overall comfort"
+        ],
+        "cons": [
+          "Fit may run a little large"
+        ],
+        "review_count": 4,
+        "total_review_count": 4,
+        "average_rating": 4.75,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 3
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "7010af61cddd256d3d5eedfb9b22cefaa1f4b9e09045c46a076082186f5e2b5e",
+        "generated_at": "2026-11-08T07:47:00.705528+00:00"
+      }
+    },
+    {
+      "name": "Under Armour Charged Assert 10",
+      "brand": "Under Armour",
+      "product_type": "Running Shoe",
+      "analysis": {
+        "summary": "Customers report the product becomes comfortable after a break-in period, offers dependable grip on wet pavement, provides a smooth daily ride, and generally fits as expected, though some note the toe box is narrower than anticipated.",
+        "pros": [
+          "Comfort improves after break-in",
+          "Grip felt dependable on wet pavement",
+          "Smooth ride for daily miles",
+          "Sizing close to expectations",
+          "Overall good performance"
+        ],
+        "cons": [
+          "Toe box felt narrower than expected"
+        ],
+        "review_count": 2,
+        "total_review_count": 2,
+        "average_rating": 4.5,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 1,
+          "5": 1
+        },
+        "sources": [
+          "amazon",
+          "brand_site"
+        ],
+        "review_fingerprint": "95515b2463a28f31621c33a0737d27e9707b3a2d8fa2abff222911ce100292dd",
+        "generated_at": "2026-11-08T07:49:11.504374+00:00"
+      }
+    },
+    {
+      "name": "Vans Old Skool",
+      "brand": "Vans",
+      "product_type": "Skate Shoe",
+      "analysis": {
+        "summary": "Customers praise the shoes for being attractive, comfortable, well-fitting, and featuring a pleasing glow-in-the-dark element, with fast delivery and high appeal to children.",
+        "pros": [
+          "Comfortable to wear",
+          "Attractive design",
+          "Fits well for kids",
+          "Glow-in-the-dark feature",
+          "Fast delivery"
+        ],
+        "cons": [],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 5.0,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 5
+        },
+        "sources": [
+          "amazon"
+        ],
+        "review_fingerprint": "67e7055b47d67009dfada535e6886e936d8f46a64704ba81b7da7d955dae051c",
+        "generated_at": "2026-11-07T13:17:44.121323+00:00"
+      }
+    },
+    {
+      "name": "Veja Campo Leather",
+      "brand": "Veja",
+      "product_type": "Sneaker",
+      "analysis": {
+        "summary": "Customers view the Veja Campo Leather shoes as solid, comfortable, and versatile for everyday wear, though a few note minor fit issues.",
+        "pros": [
+          "Solid, durable materials",
+          "Comfortable for everyday wear",
+          "Good cushioning for walking",
+          "Easy to style with outfits",
+          "Sizing matches expectations"
+        ],
+        "cons": [
+          "Tongue can shift while walking",
+          "Fit may feel narrow for some users"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.4,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 3
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "zappos"
+        ],
+        "review_fingerprint": "ea257e9fa3dd2de19e0e695d1e11606f99291ec334a02044c3b262d3aeaf7da6",
+        "generated_at": "2026-11-08T07:48:15.662495+00:00"
+      }
+    },
+    {
+      "name": "Vionic Tide II Sandals",
+      "brand": "Vionic",
+      "product_type": "Sandal",
+      "analysis": {
+        "summary": "Customers generally find the Vionic Tide II Sandals comfortable and suitable for all‑day wear, noting quick drying and secure fit, though some mention initial stiffness of the footbed and a short fit.",
+        "pros": [
+          "Comfortable footbed for long walks",
+          "Straps stay secure without rubbing",
+          "Quick‑drying after getting wet",
+          "Easy to wear all day",
+          "Reliable for regular use"
+        ],
+        "cons": [
+          "Footbed felt stiff initially",
+          "Fit runs slightly short"
+        ],
+        "review_count": 5,
+        "total_review_count": 5,
+        "average_rating": 4.4,
+        "rating_distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 1,
+          "4": 1,
+          "5": 3
+        },
+        "sources": [
+          "amazon",
+          "brand_site",
+          "rei"
+        ],
+        "review_fingerprint": "e1d3267153825d29ee262df8013f3cc9f891dd3a403fad6769daba1be9faf77b",
+        "generated_at": "2026-11-08T07:45:57.420304+00:00"
+      }
+    }
+  ]
+}

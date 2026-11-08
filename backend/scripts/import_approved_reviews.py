@@ -44,8 +44,8 @@ def load_snapshot():
             raise ValueError("Product name and type are required")
 
         sources = product["sources"]
-        if not isinstance(sources, list) or not sources:
-            raise ValueError(f"No approved sources for {key}")
+        if not isinstance(sources, list):
+            raise ValueError(f"Invalid approved sources for {key}")
 
         seen_asins = set()
 
@@ -229,6 +229,28 @@ def restore_product(conn, product_id, product):
         )
         removed_reviews += deleted.rowcount
 
+    # Remove any previously imported Amazon listings that are
+    # no longer approved, including when the source list is empty.
+    approved_asins = [
+        source["source_product_id"]
+        for source in product["sources"]
+    ]
+    
+    removed_sources = conn.execute(
+        """
+        DELETE FROM product_review_sources
+        WHERE product_id = %s
+            AND source = 'amazon'
+            AND source_product_id IS NOT NULL
+            AND NOT (source_product_id = ANY(%s::text[]))
+        """,
+        (product_id, approved_asins),
+    )
+    
+    print(
+        f"  Removed {removed_sources.rowcount} outdated Amazon source(s)"
+    )
+    
     # Remove synthetic reviews ONLY after real reviews are present.
     real_count = conn.execute(
         """
