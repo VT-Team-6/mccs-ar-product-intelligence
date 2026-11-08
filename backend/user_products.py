@@ -272,33 +272,68 @@ def list_product_history(
     cursor: str | None,
     store_id: int | None = None,
 ) -> tuple[list[dict], str | None]:
-    """One page of this user's events, newest first.
+    """Show the latest viewing per product, store, and day.
 
-    A product may appear many times: history is a list of events, not a set of
-    products. The flat store fields use a screenshot of the store at the time of the event.
+    Full interaction history remains stored in PostgreSQL.
+    Likes and unlikes are excluded only from this response.
     """
     filter_sql, filter_params = _text_filter(query)
     sql_text = sql.SQL("""
-        SELECT h.history_id, h.interaction::text AS interaction, h.occurred_at,
-               h.store_id, st.name AS store_name, h.price_at_interaction,
-               {columns}, lit.user_id IS NOT NULL AS is_liked
-        FROM user_product_history h
-        JOIN products p ON p.product_id = h.product_id
+        WITH ranked_history AS (
+            SELECT
+                h.history_id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY
+                        h.product_id,
+                        h.store_id,
+                        (h.occurred_at AT TIME ZONE 'UTC')::date
+                    ORDER BY
+                        h.occurred_at DESC,
+                        h.history_id DESC
+                ) AS row_num
+            FROM user_product_history h
+            WHERE h.user_id = %s
+              AND h.interaction::text IN (
+                  'scanned',
+                  'viewed',
+                  'viewed-from-search',
+                  'viewed-from-recommendation'
+              )
+        )
+        SELECT
+            h.history_id,
+            h.interaction::text AS interaction,
+            h.occurred_at,
+            h.store_id,
+            st.name AS store_name,
+            h.price_at_interaction,
+            {columns},
+            lit.user_id IS NOT NULL AS is_liked
+        FROM ranked_history rh
+        JOIN user_product_history h
+            ON h.history_id = rh.history_id
+        JOIN products p
+            ON p.product_id = h.product_id
         LEFT JOIN product_review_stats s
             ON s.product_id = p.product_id
-        LEFT JOIN stores st ON st.store_id = h.store_id
+        LEFT JOIN stores st
+            ON st.store_id = h.store_id
         LEFT JOIN user_product_likes lit
-               ON lit.product_id = p.product_id AND lit.user_id = %s
+            ON lit.product_id = p.product_id
+           AND lit.user_id = %s
         {inventory_join}
-        WHERE h.user_id = %s AND p.deleted_at IS NULL{filter_sql}
+        WHERE rh.row_num = 1
+          AND h.user_id = %s
+          AND p.deleted_at IS NULL
+          {filter_sql}
     """).format(
         columns=_product_columns(store_id),
         inventory_join=_store_inventory_join(store_id),
         filter_sql=sql.SQL(filter_sql),
     )
-    params: tuple = (user_id, user_id, *filter_params)
+    params: tuple = (user_id, user_id, user_id, *filter_params)
 
-    # Add a WHERE clause to resume after the last row of the previous page, if any.
+    # Apply pagination after repeated views have been grouped.
     if cursor:
         try:
             values = decode_cursor(cursor, ("at", "id"))

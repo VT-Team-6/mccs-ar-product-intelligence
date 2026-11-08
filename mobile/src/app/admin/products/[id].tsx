@@ -17,6 +17,7 @@ import {
   type Product,
 } from "@/api/products";
 import {
+  generateProductAnalysis,
   getReviewSources,
   importProductReviews,
   type SavedReviewSource,
@@ -44,6 +45,7 @@ export default function ProductScreen() {
   const [reviewMessage, setReviewMessage] = useState<string | null>(null);
   const [sourceSelectorVisible, setSourceSelectorVisible] = useState(false);
   const [refreshingReviews, setRefreshingReviews] = useState(false);
+  const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
 
   // Loads this product from the backend every time the page comes into view,
   // so it shows the new values after an edit
@@ -115,6 +117,38 @@ export default function ProductScreen() {
       );
     } finally {
       setRefreshingReviews(false);
+    }
+  }
+
+  async function handleGenerateAnalysis() {
+    if (!product || generatingAnalysis || refreshingReviews) return;
+
+    const confirmed = await confirmAction(
+      "Generate AI Analysis?",
+      "This will use VT ARC to regenerate the product's AI summary, pros, and cons from its current reviews.",
+      "Generate",
+    );
+
+    if (!confirmed) return;
+
+    setGeneratingAnalysis(true);
+    setReviewError(null);
+    setReviewMessage(null);
+
+    try {
+      await generateProductAnalysis(product.product_id);
+
+      setReviewMessage(
+        "AI Product Analysis generated and saved successfully.",
+      );
+    } catch (problem) {
+      setReviewError(
+        problem instanceof Error
+          ? problem.message
+          : "Could not generate AI Analysis.",
+      );
+    } finally {
+      setGeneratingAnalysis(false);
     }
   }
 
@@ -231,6 +265,7 @@ export default function ProductScreen() {
                     setReviewMessage(null);
                     setSourceSelectorVisible(true);
                   }}
+                  disabled={generatingAnalysis || refreshingReviews}
                 />
                 {!!reviewSources?.length && (
                   <ActionButton
@@ -238,10 +273,26 @@ export default function ProductScreen() {
                       refreshingReviews ? "Refreshing…" : "Refresh reviews"
                     }
                     onPress={refreshReviews}
-                    disabled={refreshingReviews}
+                    disabled={refreshingReviews || generatingAnalysis}
                   />
                 )}
               </ThemedView>
+
+              <ThemedView style={styles.reviewActions}>
+                <ActionButton
+                  label={
+                    generatingAnalysis
+                      ? "Generating…"
+                      : "Generate AI Analysis"
+                  }
+                  onPress={handleGenerateAnalysis}
+                  disabled={generatingAnalysis || refreshingReviews}
+                />
+              </ThemedView>
+
+              {generatingAnalysis && (
+                <ActivityIndicator />
+              )}
             </ThemedView>
 
             <ThemedView style={styles.actions}>

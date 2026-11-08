@@ -96,3 +96,12 @@ export async function importProductReviews(
     { method: "POST" },
   );
 }
+
+export async function generateProductAnalysis(
+  productId: number,
+): Promise<unknown> {
+  return reviewRequest<unknown>(
+    `/api/admin/products/${productId}/generate-analysis`,
+    { method: "POST" },
+  );
+}

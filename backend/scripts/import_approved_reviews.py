@@ -338,6 +338,23 @@ def main():
     print(f"Inserted/updated reviews: {total_changed}")
     print(f"Removed stale/synthetic reviews: {total_removed}")
 
+    # Recalculate recommendation scores using the updated
+    # reviews in PostgreSQL.
+    from product_features import refresh_product_scores
+
+    print("\nRefreshing recommendation scores...")
+
+    try:
+        scored_count = refresh_product_scores()
+    except Exception as error:
+        raise RuntimeError(
+            "Reviews were imported successfully, but recommendation "
+            "scores could not be refreshed. Fix the error and rerun "
+            "the import, or restart the backend."
+        ) from error
+
+    print(f"Recommendation scores refreshed for {scored_count} products.")
+    print("Restart the FastAPI backend to rebuild its recommendation engine.")
 
 if __name__ == "__main__":
     main()
