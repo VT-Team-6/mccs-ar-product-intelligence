@@ -24,6 +24,14 @@ export const Colors = {
   },
 } as const;
 
+// MCCS brand colors. Navy is the theme color of usmc-mccs.org, red is from
+// the Marine Corps style guide. These stay the same in light and dark mode.
+export const Brand = {
+  navy: '#0C2340',
+  navyLight: '#16325A',
+  red: '#940000',
+} as const;
+
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
