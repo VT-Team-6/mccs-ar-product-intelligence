@@ -132,7 +132,7 @@ def list_store_stock(
         params = (*params, values["id"])
 
     rows = conn.execute(
-        "SELECT i.product_id, p.name AS product_name, p.brand, i.store_id,"
+        "SELECT i.product_id, p.name AS product_name, p.brand, p.image_url, i.store_id,"
         " i.quantity, i.price, i.status, i.updated_at,"
         " (i.quantity > 0 AND i.status = 'active') AS in_stock"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"

@@ -4,6 +4,8 @@ from database import get_connection
 from schemas import Product, ProductCreate, ProductUpdate
 from product_features import refresh_recommendation_data
 from auth import require_permission
+from product_access import can_manage_store, require_product_owner
+import stock
 
 router = APIRouter(prefix="/api/admin/products", tags=["admin-products"])
 
@@ -33,6 +35,7 @@ _PRODUCT_SELECT = """
         p.image_url,
         p.created_at,
         p.updated_at,
+        p.created_by_store_id,
         {store_inventory}
     FROM products p
     LEFT JOIN product_review_stats s
@@ -89,17 +92,40 @@ def read_product(product_id: int) -> dict:
     with get_connection() as conn:
         return _fetch_product(conn, product_id)
     
-@router.post("", response_model=Product, 
-    status_code=status.HTTP_201_CREATED, 
-    dependencies=[Depends(require_permission("manage_products"))]
+@router.post("", response_model=Product,
+    status_code=status.HTTP_201_CREATED,
 )
-def create_product(product: ProductCreate, background_tasks: BackgroundTasks) -> dict:
+def create_product(
+    product: ProductCreate,
+    background_tasks: BackgroundTasks,
+    user=Depends(require_permission("create_products")),
+) -> dict:
+    """Add a product. A store's product is owned by it and starts pending there."""
+    owner = product.store_id
+    if owner is None and "manage_products" not in user["permissions"]:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Choose the store this product is for",
+        )
+    if owner is not None and not can_manage_store(user, owner):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only add products for your own store",
+        )
+
     with get_connection() as conn:
+        if owner is not None and conn.execute(
+            "SELECT 1 FROM stores WHERE store_id = %s", (owner,)
+        ).fetchone() is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Store {owner} not found",
+            )
         row = conn.execute(
             """
             INSERT INTO products
-                (name, brand, product_type, description, image_url)
-            VALUES (%s, %s, %s, %s, %s)
+                (name, brand, product_type, description, image_url, created_by_store_id)
+            VALUES (%s, %s, %s, %s, %s, %s)
             RETURNING product_id
             """,
             (
@@ -108,17 +134,24 @@ def create_product(product: ProductCreate, background_tasks: BackgroundTasks) ->
                 product.product_type,
                 product.description,
                 product.image_url,
+                owner,
             ),
         ).fetchone()
+        if owner is not None:
+            # Same transaction, so the product never exists without its store entry.
+            stock.push_to_stores(conn, [row["product_id"]], [owner])
         background_tasks.add_task(refresh_recommendation_data)
         return _fetch_product(conn, row["product_id"])
 
 
-@router.put("/{product_id}", 
-    response_model=Product, 
-    dependencies=[Depends(require_permission("manage_products"))]
-)
-def update_product(product_id: int, product: ProductUpdate, background_tasks: BackgroundTasks) -> dict:
+@router.put("/{product_id}", response_model=Product)
+def update_product(
+    product_id: int,
+    product: ProductUpdate,
+    background_tasks: BackgroundTasks,
+    user=Depends(require_permission("create_products")),
+) -> dict:
+    """Edit a product: the app admin edits any, a store admin only their store's."""
     updates = product.model_dump(exclude_unset=True)
 
     for column in _NON_NULLABLE:
@@ -129,7 +162,7 @@ def update_product(product_id: int, product: ProductUpdate, background_tasks: Ba
             )
 
     with get_connection() as conn:
-        _fetch_product(conn, product_id)
+        require_product_owner(conn, user, product_id)
 
         if updates:
             assignments = ", ".join(f"{column} = %s" for column in updates)
@@ -147,6 +180,8 @@ def update_product(product_id: int, product: ProductUpdate, background_tasks: Ba
         return row
 
 
+# Deleting removes the product from every store, so only the app admin can.
+# Store admins use "Remove from my store" (DELETE /api/admin/inventory/...).
 @router.delete("/{product_id}", dependencies=[Depends(require_permission("manage_products"))])
 def delete_product(product_id: int, background_tasks: BackgroundTasks) -> dict:
     with get_connection() as conn:

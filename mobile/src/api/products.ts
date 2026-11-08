@@ -1,5 +1,6 @@
 import { authenticatedFetch, publicFetch } from "./client";
 import { API_URL } from "./config";
+import type { User } from "./general";
 
 // Lifecycle of a product at one store. Only 'active' is ever shown as sellable;
 // 'discontinued' drives the discontinued screen; 'pending' is staff-only and
@@ -10,7 +11,7 @@ export type InventoryStatus = "pending" | "active" | "discontinued";
 // different from "no store selected", which the client distinguishes from its own state.
 export type StoreInventory = {
   store_id: number;
-  price?: number | null;
+  price: number | null;
   quantity: number;
   in_stock: boolean;
   status: InventoryStatus;
@@ -27,6 +28,8 @@ export type Product = {
   image_url: string | null;
   created_at: string;
   updated_at: string;
+  // The store that added it, or null for an MCCS catalog product
+  created_by_store_id?: number | null;
   // Resolved by the backend for the shopper's active store; null when no store
   // was resolved or the store doesn't carry (or hasn't approved) the product.
   store_inventory?: StoreInventory | null;
@@ -40,7 +43,20 @@ export type ProductInput = {
   brand: string | null;
   product_type: string;
   description: string | null;
+  // Only when adding: the store the product is for. It owns the product and the
+  // product starts pending there. The app admin can leave it out.
+  store_id?: number | null;
 };
+
+// The app admin can change any product; a store admin only their store's.
+export function canEditProduct(profile: User | null, product: Product): boolean {
+  if (!profile) return false;
+  if (profile.permissions.includes("manage_products")) return true;
+  return (
+    product.created_by_store_id != null &&
+    profile.store_ids.includes(product.created_by_store_id)
+  );
+}
 
 export async function listProducts(): Promise<Product[]> {
   const response = await publicFetch("/api/admin/products");
@@ -78,13 +94,13 @@ export async function createProduct(input: ProductInput): Promise<Product> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
   });
-  if (response.status === 422) {
-    throw new Error(
-      "The backend did not accept those values. Check the fields and try again.",
-    );
-  }
   if (!response.ok) {
-    throw new Error(`Could not add the product (error ${response.status})`);
+    throw await problem(
+      response,
+      response.status === 422
+        ? "The backend did not accept those values. Check the fields and try again."
+        : `Could not add the product (error ${response.status})`,
+    );
   }
   return response.json();
 }
@@ -93,11 +109,14 @@ export async function updateProduct(
   productId: number,
   input: ProductInput,
 ): Promise<Product> {
-  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
+  const response = await authenticatedFetch(
+    `/api/admin/products/${productId}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
   if (response.status === 404) {
     throw new Error("Product not found");
   }
@@ -113,17 +132,31 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(productId: number): Promise<void> {
-  const response = await authenticatedFetch(`/api/admin/products/${productId}`, {
-    method: "DELETE",
-  });
+  const response = await authenticatedFetch(
+    `/api/admin/products/${productId}`,
+    {
+      method: "DELETE",
+    },
+  );
   if (!response.ok) {
     throw new Error(`Could not delete the product (error ${response.status})`);
   }
 }
 
+// Uses the backend's message ("You can only add products for your own store")
+// when it sends one
+async function problem(response: Response, fallback: string): Promise<Error> {
+  try {
+    const body = await response.json();
+    if (typeof body?.detail === "string") return new Error(body.detail);
+  } catch {
+    // Not JSON: use the general message
+  }
+  return new Error(fallback);
+}
+
 // Shopper-facing lookup: same product, but from the public endpoint
 export async function getShopperProduct(productId: number): Promise<Product> {
-  // Signed in, so the product is priced at the shopper's chosen store
   const response = await authenticatedFetch(`/api/products/${productId}`);
   if (response.status === 404) {
     throw new Error("Product not found");
@@ -136,7 +169,8 @@ export async function getShopperProduct(productId: number): Promise<Product> {
 
 // Turns a product's image_url into a full link the app can load.
 // Paths like "/static/..." are files on our backend, so the backend address goes in front.
-export function productImageUrl(product: Product): string | null {
+// Works for anything with an image_url: a product, or a store's inventory row
+export function productImageUrl(product: { image_url?: string | null }): string | null {
   if (!product.image_url) return null;
   return product.image_url.startsWith("http")
     ? product.image_url
@@ -218,5 +252,7 @@ export function storeStock(product: Product): string {
   const inventory = product.store_inventory;
   if (!inventory) return "Unavailable at this location.";
   if (inventory.status === "discontinued") return "Discontinued";
-  return inventory.in_stock ? `In stock (${inventory.quantity})` : "Out of stock";
+  return inventory.in_stock
+    ? `In stock (${inventory.quantity})`
+    : "Out of stock";
 }

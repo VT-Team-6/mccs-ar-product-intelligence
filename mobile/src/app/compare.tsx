@@ -1,8 +1,15 @@
-import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from "expo-image";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getComparison, type CompareItem, type ComparisonData } from '@/api/compare';
 import { productImageUrl, storePriceLine, storePriceValue } from '@/api/products';
@@ -13,7 +20,7 @@ import { compareHref, readSelection, selectionProblem } from '@/compare/selectio
 import { useStore } from '@/store/StoreContext';
 
 // The blue used for links elsewhere in the app
-const ACCENT = '#3c87f7';
+const ACCENT = "#3c87f7";
 // Each product gets a column this wide. More than fit on screen scroll sideways.
 const COLUMN_WIDTH = 168;
 
@@ -45,8 +52,8 @@ export default function CompareScreen() {
           setData(null);
           setError(
             problem instanceof TypeError
-              ? 'Could not reach the backend. Is it running?'
-              : 'Could not load the comparison. Try again.',
+              ? "Could not reach the backend. Is it running?"
+              : "Could not load the comparison. Try again.",
           );
         }
       })
@@ -58,15 +65,19 @@ export default function CompareScreen() {
     };
   }, [selection, attempt, store?.store_id]);
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace('/' as Href));
+  const goBack = () =>
+    router.canGoBack() ? router.back() : router.replace("/" as Href);
 
   // Some products may have been deleted. Check the size again with what's left.
   const items = data?.items ?? [];
-  const problem = selection.problem ?? (data ? selectionProblem(items.length) : null);
+  const problem =
+    selection.problem ?? (data ? selectionProblem(items.length) : null);
 
   const openProduct = (item: CompareItem) => {
     const here = compareHref(selection.ids);
-    router.push(`/product/${item.product.product_id}?from=${encodeURIComponent(here)}` as Href);
+    router.push(
+      `/product/${item.product.product_id}?from=${encodeURIComponent(here)}` as Href,
+    );
   };
 
   return (
@@ -74,7 +85,11 @@ export default function CompareScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.headerRow}>
-            <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
+            <Pressable
+              onPress={goBack}
+              hitSlop={12}
+              style={({ pressed }) => pressed && styles.pressed}
+            >
               <ThemedText type="linkPrimary">‹ Back</ThemedText>
             </Pressable>
           </View>
@@ -88,18 +103,24 @@ export default function CompareScreen() {
               <ThemedText themeColor="textSecondary">{error}</ThemedText>
               <Pressable
                 onPress={() => setAttempt((count) => count + 1)}
-                style={({ pressed }) => pressed && styles.pressed}>
+                style={({ pressed }) => pressed && styles.pressed}
+              >
                 <ThemedText type="linkPrimary">Try again</ThemedText>
               </Pressable>
             </View>
           ) : problem ? (
             <View style={styles.message}>
               <ThemedText>{problem}</ThemedText>
-              {data && data.missing.length > 0 && <MissingNote count={data.missing.length} />}
+              {data && data.missing.length > 0 && (
+                <MissingNote count={data.missing.length} />
+              )}
               <ThemedText type="small" themeColor="textSecondary">
                 Select products from your History to compare them.
               </ThemedText>
-              <Pressable onPress={goBack} style={({ pressed }) => pressed && styles.pressed}>
+              <Pressable
+                onPress={goBack}
+                style={({ pressed }) => pressed && styles.pressed}
+              >
                 <ThemedText type="linkPrimary">Go back</ThemedText>
               </Pressable>
             </View>
@@ -128,7 +149,7 @@ function MissingNote({ count }: { count: number }) {
   return (
     <ThemedText type="small" themeColor="textSecondary">
       {count === 1
-        ? '1 product is no longer available and was left out.'
+        ? "1 product is no longer available and was left out."
         : `${count} products are no longer available and were left out.`}
     </ThemedText>
   );
@@ -146,12 +167,16 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
   const ratings = items.map(({ product }) =>
     product.rating === null ? null : Math.round(product.rating * 10) / 10,
   );
-  
-  const lowestPrice = bestIndexes(prices, 'lowest');
-  const highestRating = bestIndexes(ratings, 'highest');
+
+  const lowestPrice = bestIndexes(prices, "lowest");
+  const highestRating = bestIndexes(ratings, "highest");
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={styles.table}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator
+      contentContainerStyle={styles.table}
+    >
       <View style={styles.tableBody}>
         <Row>
           {items.map((item) => {
@@ -161,9 +186,17 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
                 key={item.product.product_id}
                 onPress={() => onOpen(item)}
                 accessibilityRole="button"
-                style={({ pressed }) => [styles.cell, pressed && styles.pressed]}>
+                style={({ pressed }) => [
+                  styles.cell,
+                  pressed && styles.pressed,
+                ]}
+              >
                 {imageUrl ? (
-                  <Image source={{ uri: imageUrl }} style={styles.image} contentFit="contain" />
+                  <Image
+                    source={{ uri: imageUrl }}
+                    style={styles.image}
+                    contentFit="contain"
+                  />
                 ) : (
                   <ThemedView type="backgroundSelected" style={styles.image} />
                 )}
@@ -196,8 +229,12 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
           {items.map((item, index) => (
             <Cell
               key={item.product.product_id}
-              value={item.product.rating === null ? 'No rating' : `${item.product.rating.toFixed(1)} / 5`}
-              badge={highestRating.has(index) ? 'Highest rated' : null}
+              value={
+                item.product.rating === null
+                  ? "No rating"
+                  : `${item.product.rating.toFixed(1)} / 5`
+              }
+              badge={highestRating.has(index) ? "Highest rated" : null}
             />
           ))}
         </Row>
@@ -206,20 +243,30 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
           {items.map((item) => (
             <Cell
               key={item.product.product_id}
-              value={item.review_count === null ? 'Not available' : String(item.review_count)}
+              value={
+                item.review_count === null
+                  ? "Not available"
+                  : String(item.review_count)
+              }
             />
           ))}
         </Row>
 
         <Row label="Brand">
           {items.map((item) => (
-            <Cell key={item.product.product_id} value={item.product.brand ?? 'Unknown'} />
+            <Cell
+              key={item.product.product_id}
+              value={item.product.brand ?? "Unknown"}
+            />
           ))}
         </Row>
 
         <Row label="Type">
           {items.map((item) => (
-            <Cell key={item.product.product_id} value={item.product.product_type} />
+            <Cell
+              key={item.product.product_id}
+              value={item.product.product_type}
+            />
           ))}
         </Row>
 
@@ -227,7 +274,7 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
           {items.map((item) => (
             <Cell
               key={item.product.product_id}
-              value={item.product.description ?? 'No description'}
+              value={item.product.description ?? "No description"}
               small
               lines={6}
             />
@@ -282,7 +329,8 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
             <Pressable
               key={item.product.product_id}
               onPress={() => onOpen(item)}
-              style={({ pressed }) => [styles.cell, pressed && styles.pressed]}>
+              style={({ pressed }) => [styles.cell, pressed && styles.pressed]}
+            >
               <ThemedText type="linkPrimary">View product ›</ThemedText>
             </Pressable>
           ))}
@@ -317,8 +365,11 @@ function Cell({
   lines?: number;
 }) {
   return (
-    <ThemedView type="backgroundElement" style={[styles.cell, styles.valueCell]}>
-      <ThemedText type={small ? 'small' : 'default'} numberOfLines={lines}>
+    <ThemedView
+      type="backgroundElement"
+      style={[styles.cell, styles.valueCell]}
+    >
+      <ThemedText type={small ? "small" : "default"} numberOfLines={lines}>
         {value}
       </ThemedText>
       {badge && (
@@ -346,14 +397,15 @@ function bestIndexes(values: (number | null)[], want: 'lowest' | 'highest'): Set
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    justifyContent: "center",
+    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
     // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop:
+      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
     maxWidth: MaxContentWidth,
   },
   content: {
@@ -361,7 +413,7 @@ const styles = StyleSheet.create({
     paddingBottom: BottomTabInset + Spacing.four,
   },
   headerRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   message: {
     gap: Spacing.two,
@@ -376,7 +428,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.two,
   },
   cell: {
@@ -392,7 +444,7 @@ const styles = StyleSheet.create({
     width: COLUMN_WIDTH,
     height: 110,
     borderRadius: Spacing.two,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   badge: {
     color: ACCENT,

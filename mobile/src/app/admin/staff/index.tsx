@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { SymbolView } from "expo-symbols";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -19,14 +20,21 @@ const roleLabel = (role: StaffRole) => role === "store_admin" ? "Store admin" : 
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "Please try again.";
 type Editor = { person: StaffPerson; store: StaffStore; currentRole: StaffRole | null };
 
-function Action({ label, onPress, disabled = false, selected = false }: {
+function Action({ label, onPress, disabled = false, selected = false, variant = "secondary" }: {
   label: string; onPress: () => void; disabled?: boolean; selected?: boolean;
+  variant?: "primary" | "secondary" | "ghost" | "danger";
 }) {
+  const theme = useTheme();
   return (
     <Pressable accessibilityRole="button" accessibilityState={{ disabled, selected }}
       disabled={disabled} onPress={onPress}
-      style={({ pressed }) => [styles.action, (disabled || pressed) && styles.dim]}>
-      <ThemedText type="smallBold">{label}</ThemedText>
+      style={({ pressed }) => [styles.action, {
+        backgroundColor: variant === "primary" ? theme.text
+          : variant === "ghost" ? "transparent" : theme.backgroundElement,
+      }, (disabled || pressed) && styles.dim]}>
+      <ThemedText type="smallBold" style={{
+        color: variant === "primary" ? theme.background : variant === "danger" ? "#D93443" : theme.text,
+      }}>{label}</ThemedText>
     </Pressable>
   );
 }
@@ -144,14 +152,29 @@ export default function StaffManagement() {
     setRevision((value) => value + 1);
   };
   const closeEditor = () => { if (!mutationPending.current) setEditor(null); };
+  const refresh = () => {
+    setOptionsVersion((value) => value + 1);
+    setRevision((value) => value + 1);
+  };
 
   return (
     <ThemedView style={styles.root}>
       <SafeAreaView style={styles.safe}>
+        <View style={[styles.topBar, { borderBottomColor: theme.backgroundSelected }]}>
+          <Action label="‹ Account" variant="ghost" onPress={() => router.canGoBack() ? router.back() : router.replace("/account")} />
+          <Pressable accessibilityRole="button" accessibilityLabel="Refresh stores and staff"
+            accessibilityState={{ disabled: optionsLoading || listLoading, busy: optionsLoading || listLoading }}
+            disabled={optionsLoading || listLoading} onPress={refresh} hitSlop={4}
+            style={({ pressed }) => [styles.iconButton, { backgroundColor: theme.backgroundElement }, pressed && styles.dim]}>
+            {optionsLoading || listLoading ? <ActivityIndicator size="small" color={theme.text} /> :
+              <SymbolView name={{ ios: "arrow.clockwise", android: "refresh", web: "refresh" }} size={21} tintColor={theme.text} />}
+          </Pressable>
+        </View>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Action label="‹ Account" onPress={() => router.canGoBack() ? router.back() : router.replace("/account")} />
-          <ThemedText type="subtitle">Manage staff</ThemedText>
-          <ThemedText themeColor="textSecondary">Manage store assignments. Each person has one role across all assigned stores.</ThemedText>
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={styles.title}>Manage staff</ThemedText>
+            <ThemedText themeColor="textSecondary" type="small">Choose a store to view staff or give someone access.</ThemedText>
+          </View>
           {optionsLoading ? <ActivityIndicator /> : optionsError ? (
             <View style={styles.section}>
               <ThemedText accessibilityRole="alert">{optionsError}</ThemedText>
@@ -159,26 +182,27 @@ export default function StaffManagement() {
             </View>
           ) : !store ? <ThemedText>No stores are available for you to manage.</ThemedText> : (
             <>
-              <ThemedView type="backgroundElement" style={styles.card}>
-                <ThemedText type="small" themeColor="textSecondary">Selected store</ThemedText>
-                <ThemedText type="smallBold">{store.name}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">{store.address}</ThemedText>
-                {stores.length > 1 && <Action label={choosingStore ? "Close store list" : "Change store"}
-                  onPress={() => setChoosingStore(!choosingStore)} />}
-                {choosingStore && stores.map((item) => (
-                  <Action key={item.store_id} label={`${item.store_id === storeId ? "✓ " : ""}${item.name}`}
-                    selected={item.store_id === storeId} onPress={() => {
-                      setStoreId(item.store_id); setOffset(0); setChoosingStore(false); setFeedback(null);
-                    }} />
+              <Pressable accessibilityRole="button" accessibilityLabel={`Managing ${store.name}. Choose a store`}
+                accessibilityState={{ expanded: choosingStore }} onPress={() => setChoosingStore(true)}
+                style={({ pressed }) => [styles.storeBar, { backgroundColor: theme.backgroundElement }, pressed && styles.dim]}>
+                <ThemedText type="small" themeColor="textSecondary">Managing</ThemedText>
+                <ThemedText type="smallBold" style={styles.grow} numberOfLines={1}>{store.name}</ThemedText>
+                <ThemedText themeColor="textSecondary">▾</ThemedText>
+              </Pressable>
+              <View style={[styles.tabs, { backgroundColor: theme.backgroundElement }]}>
+                {(["staff", "add"] as const).map((tab) => (
+                  <Pressable key={tab} accessibilityRole="tab" accessibilityState={{ selected: mode === tab }}
+                    onPress={() => changeMode(tab)} style={({ pressed }) => [styles.tab,
+                      { backgroundColor: mode === tab ? theme.background : "transparent" }, pressed && styles.dim]}>
+                    <ThemedText type="smallBold" themeColor={mode === tab ? "text" : "textSecondary"}>
+                      {tab === "staff" ? "Current staff" : "+ Add staff"}
+                    </ThemedText>
+                  </Pressable>
                 ))}
-              </ThemedView>
-              <View style={styles.toolbar}>
-                <Action label={mode === "staff" ? "✓ Current staff" : "Current staff"}
-                  selected={mode === "staff"} onPress={() => changeMode("staff")} />
-                <Action label={mode === "add" ? "✓ Add staff" : "+ Add staff"}
-                  selected={mode === "add"} onPress={() => changeMode("add")} />
               </View>
-              {feedback && <ThemedText accessibilityLiveRegion="polite">{feedback}</ThemedText>}
+              {feedback && <ThemedView type="backgroundElement" style={styles.notice}>
+                <ThemedText type="small" accessibilityLiveRegion="polite">✓ {feedback}</ThemedText>
+              </ThemedView>}
               {mode === "add" && (
                 <View style={styles.section}>
                   <ThemedText type="smallBold">Find an existing user</ThemedText>
@@ -188,7 +212,7 @@ export default function StaffManagement() {
                     keyboardType="email-address" returnKeyType="search"
                     onSubmitEditing={() => { if (query.trim().length >= 2) search(); }}
                     style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]} />
-                  <Action label="Search" onPress={search} disabled={query.trim().length < 2 || listLoading} />
+                  <Action label="Search users" variant="primary" onPress={search} disabled={query.trim().length < 2 || listLoading} />
                   <ThemedText type="small" themeColor="textSecondary">
                     Users must have signed in at least once. People already assigned here appear under Current staff.
                   </ThemedText>
@@ -200,17 +224,31 @@ export default function StaffManagement() {
                   <Action label="Try again" onPress={() => setRevision((value) => value + 1)} />
                 </View>
               ) : rows.length === 0 ? (
-                <ThemedText themeColor="textSecondary">
-                  {mode === "add" && !submittedQuery ? "Enter at least two characters and tap Search."
-                    : mode === "add" ? "No eligible users found. Try another email."
-                    : "No staff you can manage at this store."}
-                </ThemedText>
-              ) : rows.map((person) => (
-                <ThemedView key={person.user_id} type="backgroundElement" style={styles.card}>
-                  <ThemedText type="smallBold">{person.email}</ThemedText>
-                  {"store_id" in person && <ThemedText themeColor="textSecondary" type="small">{roleLabel(person.role)}</ThemedText>}
-                  <Action label={mode === "add" ? "Choose user" : "Manage access"} onPress={() => openEditor(person)} />
+                <ThemedView type="backgroundElement" style={styles.empty}>
+                  <ThemedText type="smallBold">{mode === "add" ? submittedQuery ? "No users found" : "Find someone to add" : "No staff to manage yet"}</ThemedText>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
+                    {mode === "add" && !submittedQuery ? "Enter at least two characters and search by email."
+                      : mode === "add" ? "Try a different email address."
+                      : "Use Add staff to assign a user to this store."}
+                  </ThemedText>
                 </ThemedView>
+              ) : rows.map((person) => (
+                <Pressable key={person.user_id} accessibilityRole="button"
+                  accessibilityLabel={`${mode === "add" ? "Assign" : "Manage"} ${person.email}`}
+                  onPress={() => openEditor(person)} style={({ pressed }) => pressed && styles.dim}>
+                  <ThemedView type="backgroundElement" style={styles.personRow}>
+                    <ThemedView type="backgroundSelected" style={styles.avatar}>
+                      <ThemedText type="smallBold">{person.email.charAt(0).toUpperCase()}</ThemedText>
+                    </ThemedView>
+                    <View style={[styles.grow, styles.section]}>
+                      <ThemedText type="smallBold">{person.email}</ThemedText>
+                      <ThemedText themeColor="textSecondary" type="small">
+                        {person.role === "store_buyer" || person.role === "store_admin" ? roleLabel(person.role) : "Shopper"}
+                      </ThemedText>
+                    </View>
+                    <SymbolView name={{ ios: "chevron.right", android: "chevron_right", web: "chevron_right" }} size={18} tintColor={theme.textSecondary} />
+                  </ThemedView>
+                </Pressable>
               ))}
               {(offset > 0 || hasNext) && <View style={styles.toolbar}>
                 <Action label="Previous" disabled={offset === 0 || listLoading}
@@ -218,18 +256,52 @@ export default function StaffManagement() {
                 <ThemedText type="small">Page {offset / PAGE_SIZE + 1}</ThemedText>
                 <Action label="Next" disabled={!hasNext || listLoading} onPress={() => setOffset((value) => value + PAGE_SIZE)} />
               </View>}
-              <Action label="Refresh stores and staff" onPress={() => {
-                setOptionsVersion((value) => value + 1); setRevision((value) => value + 1);
-              }} disabled={listLoading} />
             </>
           )}
         </ScrollView>
       </SafeAreaView>
+      <Modal visible={choosingStore} transparent animationType="fade" onRequestClose={() => setChoosingStore(false)}>
+        <View style={styles.backdrop}>
+          <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close store selection" onPress={() => setChoosingStore(false)} />
+          <ThemedView style={styles.sheet} accessibilityViewIsModal>
+            <View style={styles.sheetHeader}>
+              <ThemedText type="subtitle" style={styles.sheetTitle}>Choose a store</ThemedText>
+              <Pressable accessibilityRole="button" accessibilityLabel="Close store selection" onPress={() => setChoosingStore(false)} style={styles.iconButton}>
+                <SymbolView name={{ ios: "xmark", android: "close", web: "close" }} size={19} tintColor={theme.textSecondary} />
+              </Pressable>
+            </View>
+            <ThemedText type="small" themeColor="textSecondary">Staff access is managed for the selected store.</ThemedText>
+            <ScrollView keyboardShouldPersistTaps="handled" style={styles.storeList}>
+              {stores.map((item) => (
+                <Pressable key={item.store_id} accessibilityRole="radio" accessibilityState={{ checked: item.store_id === storeId }}
+                  onPress={() => {
+                    if (item.store_id !== storeId) {
+                      setRows([]);
+                      setStoreId(item.store_id);
+                      setOffset(0);
+                      setFeedback(null);
+                    }
+                    setChoosingStore(false);
+                  }}
+                  style={({ pressed }) => [styles.storeOption, {
+                    backgroundColor: item.store_id === storeId ? theme.backgroundElement : "transparent",
+                  }, pressed && styles.dim]}>
+                  <View style={[styles.grow, styles.section]}>
+                    <ThemedText type="smallBold">{item.name}</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">{item.address}</ThemedText>
+                  </View>
+                  {item.store_id === storeId && <SymbolView name={{ ios: "checkmark", android: "check", web: "check" }} size={20} tintColor={theme.text} />}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </ThemedView>
+        </View>
+      </Modal>
       <Modal visible={editor !== null} animationType="slide" onRequestClose={closeEditor}>
         <ThemedView style={styles.root}>
           <SafeAreaView style={styles.safe}>
             <ScrollView contentContainerStyle={styles.content}>
-              <Action label="Cancel" onPress={closeEditor} disabled={saving} />
+              <Action label="‹ Cancel" variant="ghost" onPress={closeEditor} disabled={saving} />
               <ThemedText type="subtitle">{editor?.currentRole ? "Edit staff access" : "Add staff"}</ThemedText>
               <ThemedText>{editor?.person.email}</ThemedText>
               <ThemedText themeColor="textSecondary">{editor?.store.name}</ThemedText>
@@ -248,9 +320,9 @@ export default function StaffManagement() {
               <ThemedText type="small" themeColor="textSecondary">Only this store assignment changes. Changing the role affects every store assigned to this person.</ThemedText>
               {saveError && <ThemedText accessibilityRole="alert">{saveError}</ThemedText>}
               {saving && <ActivityIndicator />}
-              <Action label={saving ? "Please wait…" : "Save access"} onPress={() => save()}
+              <Action label={saving ? "Please wait…" : "Save access"} variant="primary" onPress={() => save()}
                 disabled={saving || role === editor?.currentRole} />
-              {editor?.currentRole && <Action label="Remove staff access at this store"
+              {editor?.currentRole && <Action label="Remove staff access at this store" variant="danger"
                 onPress={() => save(true)} disabled={saving} />}
             </ScrollView>
           </SafeAreaView>
@@ -263,11 +335,29 @@ export default function StaffManagement() {
 const styles = StyleSheet.create({
   root: { flex: 1, alignItems: "center" },
   safe: { flex: 1, width: "100%", maxWidth: MaxContentWidth },
-  content: { padding: Spacing.three, paddingBottom: Spacing.five, gap: Spacing.three },
+  topBar: { minHeight: 64, paddingHorizontal: Spacing.three, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: StyleSheet.hairlineWidth },
+  title: { fontSize: 28, lineHeight: 34 },
+  content: { padding: Spacing.four, paddingBottom: Spacing.five, gap: Spacing.three },
   section: { gap: Spacing.two },
   toolbar: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: Spacing.three },
   card: { padding: Spacing.three, borderRadius: 12, gap: Spacing.two },
-  action: { minHeight: 44, justifyContent: "center", paddingVertical: Spacing.two, paddingHorizontal: Spacing.two },
+  action: { minHeight: 46, alignItems: "center", justifyContent: "center", borderRadius: 10, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
   dim: { opacity: 0.45 },
   input: { borderRadius: 10, padding: Spacing.three, fontSize: 16 },
+  grow: { flex: 1, minWidth: 0 },
+  iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 12 },
+  storeBar: { minHeight: 52, flexDirection: "row", alignItems: "center", gap: Spacing.two, borderRadius: Spacing.three, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
+  tabs: { flexDirection: "row", padding: 4, borderRadius: 12, gap: 4 },
+  tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: 9, paddingHorizontal: Spacing.two },
+  notice: { borderRadius: 10, padding: Spacing.three },
+  empty: { borderRadius: 12, padding: Spacing.four, alignItems: "center", gap: Spacing.two },
+  centerText: { textAlign: "center" },
+  personRow: { flexDirection: "row", alignItems: "center", gap: Spacing.three, padding: Spacing.three, borderRadius: 12 },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  backdrop: { flex: 1, justifyContent: "center", alignItems: "center", padding: Spacing.four, backgroundColor: "rgba(0, 0, 0, 0.45)" },
+  sheet: { width: "100%", maxWidth: 480, maxHeight: "80%", borderRadius: Spacing.four, padding: Spacing.four, gap: Spacing.two },
+  sheetHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: Spacing.two },
+  sheetTitle: { fontSize: 20, flex: 1 },
+  storeList: { flexGrow: 0, marginTop: Spacing.two },
+  storeOption: { minHeight: 64, flexDirection: "row", alignItems: "center", gap: Spacing.two, padding: Spacing.three, borderRadius: 12, marginBottom: Spacing.one },
 });

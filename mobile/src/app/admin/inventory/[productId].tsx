@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Image } from "expo-image";
 
 import { approveEntry, removeEntry, updateStock, type InventoryStatus } from "@/api/inventory";
 import { ThemedText } from "@/components/themed-text";
@@ -30,6 +31,7 @@ export default function EditStockScreen() {
     storeId: string;
     storeName?: string;
     name?: string;
+    image?: string;
     price?: string;
     quantity?: string;
     status?: InventoryStatus;
@@ -106,16 +108,20 @@ export default function EditStockScreen() {
           <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
             <ThemedText type="linkPrimary">‹ Cancel</ThemedText>
           </Pressable>
+          <ThemedText type="subtitle">{params.name || `Product ${productId}`}</ThemedText>
 
-          <View style={styles.section}>
-            <ThemedText type="subtitle">{params.name || `Product ${productId}`}</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              {pending
-                ? `Waiting for approval at ${params.storeName || "this store"}. Set the price and stock to start selling it.`
-                : `At ${params.storeName || "this store"}`}
-            </ThemedText>
-          </View>
+          {params.image ? (
+            <Image source={{ uri: params.image }} style={styles.image} contentFit="contain" />
+          ) : (
+            <ThemedView type="backgroundSelected" style={styles.image} />
+          )}
 
+          <ThemedText themeColor="textSecondary">
+            {pending
+              ? `Waiting for approval at ${params.storeName || "this store"}. Set the price and stock to start selling it.`
+              : `At ${params.storeName || "this store"}`}
+          </ThemedText>
+        
           <View style={styles.field}>
             <ThemedText type="smallBold">Price ($)</ThemedText>
             <TextInput
@@ -155,7 +161,7 @@ export default function EditStockScreen() {
                       style={styles.choice}
                     >
                       <ThemedText type={choice === status ? "smallBold" : "small"}>
-                        {choice === "active" ? "For sale" : "Discontinued"}
+                        {choice === "active" ? "Selling" : "Discontinued"}
                       </ThemedText>
                     </ThemedView>
                   </Pressable>
@@ -247,5 +253,12 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.6,
+  },
+  // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
+  image: {
+    width: "100%",
+    height: 180,
+    borderRadius: Spacing.three,
+    backgroundColor: "#ffffff",
   },
 });

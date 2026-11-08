@@ -10,7 +10,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAuth } from "@/auth/AuthContext";
 import {
+  canEditProduct,
   deleteProduct,
   getProduct,
   productImageUrl,
@@ -24,6 +26,7 @@ import {
 } from "@/api/reviews";
 import { ReviewSourceSelector } from "@/components/review-source-selector";
 import { QrCodeModal } from "@/components/qr-code-modal";
+import { SendToStoresModal } from "@/components/send-to-stores-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
@@ -33,9 +36,11 @@ export default function ProductScreen() {
   // The [id] in this file's name: /admin/2 gives id = "2"
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { profile, hasPermission } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [qrVisible, setQrVisible] = useState(false);
+  const [sendVisible, setSendVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [reviewSources, setReviewSources] = useState<
@@ -66,9 +71,15 @@ export default function ProductScreen() {
     }, [id]),
   );
 
+  // The app admin can change any product; a store admin only their store's.
+  // Deleting removes it from every store, so only the app admin can.
+  const canEdit = product !== null && canEditProduct(profile, product);
+  const canDelete = hasPermission("manage_products");
+
   // Load selected review listings when this product page comes into view.
   useFocusEffect(
     useCallback(() => {
+      if (!canEdit) return;
       let cancelled = false;
       setReviewError(null);
       getReviewSources(Number(id))
@@ -81,7 +92,7 @@ export default function ProductScreen() {
       return () => {
         cancelled = true;
       };
-    }, [id]),
+    }, [id, canEdit]),
   );
 
   async function reloadReviewSources() {
@@ -235,6 +246,7 @@ export default function ProductScreen() {
               <ThemedText>{product.description}</ThemedText>
             )}
 
+            {canEdit && (
             <ThemedView type="backgroundElement" style={styles.reviewSection}>
               <ThemedText type="smallBold">Review sources</ThemedText>
               {reviewSources === null && !reviewError ? (
@@ -294,28 +306,36 @@ export default function ProductScreen() {
                 <ActivityIndicator />
               )}
             </ThemedView>
+            )}
 
             <ThemedView style={styles.actions}>
-              {/* Edit is switched on in a later step */}
-              <ActionButton
-                label="Edit"
-                onPress={() =>
-                  router.push({
-                    pathname: "/admin/products/edit/[id]",
-                    params: { id: String(product.product_id) },
-                  })
-                }
-              />
+              {canEdit && (
+                <ActionButton
+                  label="Edit"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/admin/products/edit/[id]",
+                      params: { id: String(product.product_id) },
+                    })
+                  }
+                />
+              )}
               <ActionButton
                 label="QR code"
                 onPress={() => setQrVisible(true)}
               />
               <ActionButton
-                label={deleting ? "Deleting…" : "Delete"}
-                onPress={handleDelete}
-                disabled={deleting}
-                destructive
+                label="Send to stores"
+                onPress={() => setSendVisible(true)}
               />
+              {canDelete && (
+                <ActionButton
+                  label={deleting ? "Deleting…" : "Delete"}
+                  onPress={handleDelete}
+                  disabled={deleting}
+                  destructive
+                />
+              )}
             </ThemedView>
           </ScrollView>
         )}
@@ -326,6 +346,13 @@ export default function ProductScreen() {
           product={product}
           visible={qrVisible}
           onClose={() => setQrVisible(false)}
+        />
+      )}
+      {product && (
+        <SendToStoresModal
+          product={product}
+          visible={sendVisible}
+          onClose={() => setSendVisible(false)}
         />
       )}
       {product && (
@@ -419,12 +446,15 @@ const styles = StyleSheet.create({
     color: "#E5484D",
   },
   // The row of buttons under the description. It scrolls with the rest of the page.
+  // Wraps to two rows when there are more buttons than fit
   actions: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.two,
   },
   action: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: "40%",
   },
   actionView: {
     alignItems: "center",

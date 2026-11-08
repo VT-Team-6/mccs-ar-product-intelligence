@@ -1,4 +1,5 @@
 import { authenticatedFetch, publicFetch } from "./client";
+import type { User } from "./general";
 
 // Where a product is in a store's lifecycle: pushed and waiting for approval,
 // on sale, or no longer sold there
@@ -20,6 +21,7 @@ export type StoreStockEntry = {
   store_id: number;
   product_name: string;
   brand: string | null;
+  image_url: string | null;
   quantity: number;
   price: number | null;
   in_stock: boolean;
@@ -135,6 +137,35 @@ export async function approveEntry(
     { method: "POST", body: JSON.stringify(values) },
   );
   if (!response.ok) throw await problem(response, "Could not approve the product");
+  return response.json();
+}
+
+// The stores this user manages: every store for the app admin, otherwise the
+// ones they're assigned to
+export function manageableStores(stores: Store[], profile: User | null): Store[] {
+  if (!profile) return [];
+  if (profile.permissions.includes("manage_all_stores")) return stores;
+  return stores.filter((store) => profile.store_ids.includes(store.store_id));
+}
+
+export type PushedEntry = {
+  product_id: number;
+  store_id: number;
+  status: InventoryStatus;
+  // True when the store already had it, so nothing changed there
+  already_present: boolean;
+};
+
+// Sends products to stores. Each one lands in that store's Pending tab.
+export async function pushToStores(
+  productIds: number[],
+  storeIds: number[],
+): Promise<PushedEntry[]> {
+  const response = await authenticatedFetch("/api/admin/inventory/push", {
+    method: "POST",
+    body: JSON.stringify({ product_ids: productIds, store_ids: storeIds }),
+  });
+  if (!response.ok) throw await problem(response, "Could not send the product");
   return response.json();
 }
 

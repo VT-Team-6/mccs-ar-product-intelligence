@@ -75,7 +75,9 @@ export default function AdvancedResultsScreen() {
 
   // Opens product details. "from" brings Back to these results.
   const openProduct = (product: Product) => {
-    router.push(`/product/${product.product_id}?from=${encodeURIComponent(thisPage)}` as Href);
+    router.push(
+      `/product/${product.product_id}?from=${encodeURIComponent(thisPage)}&via=recommendation` as Href,
+    );
   };
 
   // Back to the form with the same words and ranking filled in. The form is
@@ -165,7 +167,7 @@ export default function AdvancedResultsScreen() {
                   <ThemedText type="small" themeColor="textSecondary">
                     Also based on your saved preferences and likes
                   </ThemedText>
-                  <ResultCard item={result.for_you} onOpen={openProduct} highlight />
+                  <ResultCard item={result.for_you} onOpen={openProduct} />
                 </View>
               )}
             </>

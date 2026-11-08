@@ -244,12 +244,12 @@ def test_recommendation_prices_follow_the_store_parameter(client, db):
     at_one = _recommend(client, text="warm boots for snow", store_id=1).json()
     at_two = _recommend(client, text="warm boots for snow", store_id=2).json()
 
-    for card_one, card_two in zip(at_one["best_matches"], at_two["best_matches"]):
-        assert card_one["product"]["product_id"] == card_two["product"]["product_id"]
-        inv_one = card_one["product"]["store_inventory"]
-        inv_two = card_two["product"]["store_inventory"]
-        assert inv_one["store_id"] == 1
-        assert inv_two["store_id"] == 2
+    # Since #39 each store recommends only what it sells, so the cards can
+    # differ; every card must still be priced at the store that was asked for
+    for store_id, body in ((1, at_one), (2, at_two)):
+        assert body["best_matches"]
+        for card in body["best_matches"]:
+            assert card["product"]["store_inventory"]["store_id"] == store_id
 
 
 def test_recommendation_ordering_does_not_change_with_store(client, db):
@@ -371,3 +371,45 @@ def test_product_only_request_has_nothing_to_read(client, db):
 
     assert response.status_code == 200
     assert response.json()["understood"] is None
+
+
+# --- learning to rank (task 9) ----------------------------------------------
+
+
+def test_shown_cards_are_logged_and_an_open_counts_as_a_click(client, db):
+    from for_you_model import load_training_data
+
+    user_id = _sign_in_as(client, "rec-ltr")
+    client.put("/api/me/preferences", json={**NOTHING_RANKED, "comfort": 1})
+
+    body = _recommend(client, text="warm boots for snow").json()
+    pick = body["for_you"]["product"]["product_id"]
+
+    logged = db.execute(
+        "SELECT product_id, slot FROM recommendation_impressions WHERE user_id = %s",
+        (user_id,),
+    ).fetchall()
+    assert {"product_id": pick, "slot": "for_you"} in logged
+    assert {row["product_id"] for row in logged if row["slot"] == "best"} <= set(_ids(body["best_matches"]))
+
+    # Opening the pick from its card labels that card as clicked
+    db.execute("DELETE FROM recommendation_impressions WHERE user_id <> %s", (user_id,))
+    response = client.post(
+        "/api/me/product-interactions",
+        json={"product_id": pick, "interaction": "viewed-from-recommendation"},
+    )
+    assert response.status_code == 201
+
+    features, clicked = load_training_data(db)
+    assert len(features) == len(logged)
+    assert sum(clicked) >= 1
+
+
+def test_no_cards_are_logged_without_a_saved_ranking_or_likes(client, db):
+    user_id = _sign_in_as(client, "rec-ltr-new")
+
+    _recommend(client, text="warm boots for snow")
+
+    assert db.execute(
+        "SELECT count(*) AS n FROM recommendation_impressions WHERE user_id = %s", (user_id,)
+    ).fetchone()["n"] == 0

@@ -102,7 +102,7 @@ export function RecommendationPanel({ productId, textRequired = false, onOpenPro
             <ThemedText type="small" themeColor="textSecondary">
               Also based on your saved preferences and likes
             </ThemedText>
-            <ResultCard item={result.for_you} onOpen={onOpenProduct} highlight />
+            <ResultCard item={result.for_you} onOpen={onOpenProduct} />
           </View>
         )}
       </View>
