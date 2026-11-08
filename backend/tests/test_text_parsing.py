@@ -33,3 +33,15 @@ def test_mentions_is_whole_word():
     assert mentions("Waterproof rubber rain boot", ["rain"])
     assert not mentions("Smooth daily trainer", ["rain"])
     assert not mentions("Rainbow Premier Leather Sandals", ["rain"])
+
+def test_everyday_words_for_product_attributes():
+    assert parse_request("strong bold coffee", []).requirements == {"dark roast"}
+    assert parse_request("shampoo for oily hair", []).requirements == {"oil control"}
+    assert parse_request("shampoo to make thin hair look fuller", []).requirements == {"volume"}
+
+
+def test_a_two_letter_brand_needs_its_capitals():
+    brands = ["On", "Nike"]
+    assert parse_request("headphones to block out noise on a flight", brands).brands == set()
+    assert parse_request("On running shoes", brands).brands == {"On"}
+    assert parse_request("nike running shoes", brands).brands == {"Nike"}

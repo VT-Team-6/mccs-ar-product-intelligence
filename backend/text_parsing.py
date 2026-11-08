@@ -22,6 +22,19 @@ REQUIREMENTS = {
         ["warm", "insulated", "winter", "cold", "freezing", "snow"],
         ["insulated", "winter", "warm", "fleece", "shearling", "lined"],
     ),
+    # Words people use for what a product description calls something else
+    "dark roast": (
+        ["strong", "bold", "dark roast", "dark"],
+        ["dark roast", "dark-roast", "espresso"],
+    ),
+    "oil control": (
+        ["oily", "greasy"],
+        ["oil control", "oil-control", "clarifying", "purifying"],
+    ),
+    "volume": (
+        ["thin hair", "fine hair", "flat hair", "fuller", "thicker", "volume", "volumizing"],
+        ["volumizing", "thickening", "thick & full", "volume"],
+    ),
     "lightweight": (
         ["light", "lightweight", "light weight"],
         ["lightweight", "light"],
@@ -54,6 +67,14 @@ def mentions(text: str, phrases: list[str]) -> bool:
     return any(f" {_normalize(p)} " in normalized for p in phrases)
 
 
+def _names_brand(text: str, brand: str) -> bool:
+    """Whether the text names a brand. A brand of 2 letters or fewer, like "On",
+    only counts with its capitals, so "headphones on a flight" isn't a brand."""
+    if len(brand.strip()) <= 2:
+        return re.search(rf"\b{re.escape(brand.strip())}\b", text or "") is not None
+    return mentions(text, [brand])
+
+
 def parse_request(text: str, brands: list[str]) -> ParsedRequest:
     parsed = ParsedRequest()
     remaining = text or ""
@@ -70,7 +91,7 @@ def parse_request(text: str, brands: list[str]) -> ParsedRequest:
         parsed.min_price = float(match.group(1))
         remaining = remaining.replace(match.group(0), " ")
 
-    parsed.brands = {b for b in brands if mentions(remaining, [b])}
+    parsed.brands = {b for b in brands if _names_brand(remaining, b)}
     parsed.requirements = {name for name, (asks, _) in REQUIREMENTS.items() if mentions(remaining, asks)}
     parsed.remaining_text = " ".join(remaining.split())
     return parsed

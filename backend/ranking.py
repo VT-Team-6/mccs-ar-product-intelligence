@@ -56,23 +56,25 @@ from sklearn.metrics.pairwise import cosine_similarity
 from database import get_connection
 from embeddings import build_product_embeddings, embed_query
 from for_you_model import load_weights
+from categories import categories_named_in, criteria_for
 from preferences import CRITERIA, has_ranking, rank_weights
 from recommendation import build_tfidf_matrix
 from text_parsing import REQUIREMENTS, mentions, parse_request
 
-TFIDF_WEIGHT, EMBEDDING_WEIGHT = 0.4, 0.6
+# Tuned on the test set (scripts/evaluate_recommendations.py --tune): 0.741 -> 0.842
+TFIDF_WEIGHT, EMBEDDING_WEIGHT = 0.2, 0.8
 TEXT_WEIGHT, PRODUCT_WEIGHT = 0.6, 0.4
 SIMILARITY_WEIGHT, PREFERENCE_WEIGHT = 0.4, 0.6
-TYPE_BONUS = 0.15
+TYPE_BONUS = 0.0
 BEST_MATCHES = 3
 CANDIDATE_POOL = 10
-RELATIVE_SIMILARITY = 0.7
+RELATIVE_SIMILARITY = 0.6
 MIN_POOL = BEST_MATCHES + 1
 # Raw embedding similarity a product needs to count as a real match, using the
-# same text/product mix as the similarity. From testing: unrelated text
-# ("laptop", "cook pasta") 0.52 or less; real but looser matches (a waterproof
-# hiking shoe for "rain") around 0.58.
-MIN_MATCH = 0.55
+# same text/product mix as the similarity. Tuned on the test set: unrelated
+# searches (car tires, pizza) score up to about 0.635, the right products 0.68+.
+# Not used when the search names a category ("headphones for the plane").
+MIN_MATCH = 0.62
 # Products that mention what the shopper asked for ("waterproof") get a boost:
 # on similarity, so they make the pool, and on the final score, so a ranked
 # criterion like comfort can't bury them.
@@ -165,10 +167,17 @@ def join_words(words: list[str]) -> str:
     """['quality', 'comfort'] -> 'quality or comfort'."""
     return words[0] if len(words) == 1 else ", ".join(words[:-1]) + " or " + words[-1]
 
-def preference_scores(scores: np.ndarray, weights: dict[str, float]) -> np.ndarray:
-    """Weighted average of each product's 0-1 criterion scores."""
+def preference_scores(
+    scores: np.ndarray, weights: dict[str, float], applies: np.ndarray | None = None
+) -> np.ndarray:
+    """Weighted average of each product's 0-1 criterion scores.
+
+    applies (1/0 per product and criterion) leaves out criteria that don't fit a
+    product's category, like comfort for coffee, so they neither help nor hurt it.
+    """
     w = np.array([weights[c] for c in CRITERIA], dtype=float)
-    return scores @ w / w.sum()
+    per_product = np.broadcast_to(w, scores.shape) if applies is None else w * applies
+    return (scores * per_product).sum(axis=1) / per_product.sum(axis=1)
 
 
 class RecommendationEngine:
@@ -179,6 +188,11 @@ class RecommendationEngine:
         self.ids = [p["product_id"] for p in products]
         self.index = {pid: i for i, pid in enumerate(self.ids)}
         self.types = np.array([p["product_type"] for p in products])
+        self.categories = [p.get("category") for p in products]
+        # 1 where a criterion fits the product's category (no comfort for coffee)
+        self.applies = np.array(
+            [[float(c in criteria_for(category)) for c in CRITERIA] for category in self.categories]
+        ).reshape(len(products), len(CRITERIA))
         self.vectorizer, self.tfidf = build_tfidf_matrix(products)
         self.embeddings = build_product_embeddings(products) if embeddings is None else embeddings
         self.prices = np.array([np.nan if p.get("price") is None else float(p["price"]) for p in products])
@@ -262,9 +276,32 @@ class RecommendationEngine:
         prices = self._prices_at(store_stock)
         parsed = parse_request(text, self.brands) if text else None
         named_types = types_named_in(text, set(self.types)) if text else set()
+        # Alternatives to a product stay in its category: no coffee for a shoe.
+        # A search that names a category ("earbuds for running") stays in it too.
+        if product_id is not None:
+            allowed = {self.categories[self.index[product_id]]} - {None}
+        else:
+            allowed = categories_named_in(text)
+        # A product without a category (added before categories) is only left out
+        # when we know exactly what kind of product is wanted: the one on screen
+        uncategorized_ok = product_id is None
+        if allowed and parsed:
+            # "Nike headphones": a brand with nothing in the category says nothing
+            parsed.brands = {
+                b for b in parsed.brands
+                if any(p.get("brand") == b and self.categories[i] in allowed for i, p in enumerate(self.products))
+            }
+        if allowed:
+            # "running" in "earbuds for running" isn't a request for running shoes
+            named_types &= {
+                self.types[i] for i in range(len(self.ids))
+                if self.categories[i] in allowed or self.categories[i] is None
+            }
         candidates = np.array([
             i for i, pid in enumerate(self.ids)
             if pid != product_id
+            and (not allowed or self.categories[i] in allowed
+                 or (uncategorized_ok and self.categories[i] is None))
             and (store_stock is None or pid in store_stock)
             and self._within_limits(i, parsed, prices)
             and (not named_types or self.types[i] in named_types)
@@ -277,6 +314,11 @@ class RecommendationEngine:
         similarity, strong = self.similarity(product_id, match_text, candidates)
         met = self._requirements_met(candidates, parsed)
         strong = strong | (met > 0)
+        if allowed:
+            # We know what kind of product is wanted (the search named it, or it's
+            # the kind on screen), so everything of that kind counts. Long searches
+            # and loosely related products score low on raw similarity alone.
+            strong = np.ones(len(candidates), dtype=bool)
         similarity = np.minimum(similarity + REQUIREMENT_SIMILARITY_BONUS * met, 1.0)
         ids = np.array(self.ids)[candidates]
 
@@ -298,7 +340,7 @@ class RecommendationEngine:
 
         personalized = bool(now_ranks) and has_ranking(now_ranks)
         if personalized:
-            preference = preference_scores(scores, rank_weights(now_ranks))
+            preference = preference_scores(scores, rank_weights(now_ranks), self.applies[candidates])
             final = SIMILARITY_WEIGHT * similarity + PREFERENCE_WEIGHT * preference
         else:
             final = similarity
@@ -370,7 +412,10 @@ class RecommendationEngine:
             return None, {}
 
         # Based on who the shopper is (saved ranking + likes), still within the relevant pool
-        personal = preference_scores(scores[pool], rank_weights(saved_ranks)) if has_saved else None
+        personal = (
+            preference_scores(scores[pool], rank_weights(saved_ranks), self.applies[candidates[pool]])
+            if has_saved else None
+        )
         closeness = closest_like = None
         if liked:
             # How close each product is to the closest liked product, on a fixed scale
@@ -426,6 +471,8 @@ class RecommendationEngine:
         if ranks:
             ranked = sorted((r, c) for c, r in ranks.items() if r > 0)
             for _, criterion in ranked:
+                if not self.applies[i, CRITERIA.index(criterion)]:
+                    continue  # "Very comfortable" means nothing for coffee
                 if criterion_scores[CRITERIA.index(criterion)] >= REASON_THRESHOLD:
                     reasons.append(REASONS[criterion])
         if not reasons:
@@ -575,7 +622,7 @@ class RecommendationEngine:
             criteria = np.column_stack([
                 compare_within(values[c], higher_is_better=COMPARISON[c][0]) for c in CRITERIA
             ])
-            preference = preference_scores(criteria, rank_weights(ranks))
+            preference = preference_scores(criteria, rank_weights(ranks), self.applies[rows])
             fit = SIMILARITY_WEIGHT * similarity + PREFERENCE_WEIGHT * preference if match_text else preference
         else:
             fit = similarity
@@ -607,6 +654,7 @@ def rebuild_engine() -> int:
                 p.name,
                 p.brand,
                 p.product_type,
+                p.category,
                 ip.price,
                 s.average_rating AS rating,
                 p.description

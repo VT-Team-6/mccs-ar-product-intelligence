@@ -13,6 +13,16 @@ export const CRITERIA: { key: CriterionKey; label: string; hint: string }[] = [
   { key: 'comfort', label: 'Comfort', hint: 'How it feels to wear or use' },
 ];
 
+// Durability and comfort only make sense for things you wear or carry, so
+// shampoo and coffee skip them. Must match backend/categories.py.
+const CONSUMABLE_CATEGORIES = ['shampoo', 'coffee'];
+
+// The criteria to offer for a product's category (all of them when unknown)
+export function criteriaFor(category?: string | null): typeof CRITERIA {
+  if (!category || !CONSUMABLE_CATEGORIES.includes(category)) return CRITERIA;
+  return CRITERIA.filter(({ key }) => key !== 'durability' && key !== 'comfort');
+}
+
 // Each criterion's rank (0 = not ranked)
 export type Preferences = Record<CriterionKey, number>;
 

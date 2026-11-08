@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { DEFAULT_PREFERENCES, rankedCount, type Preferences } from '@/preferences/criteria';
+import { criteriaFor, DEFAULT_PREFERENCES, rankedCount, type Preferences } from '@/preferences/criteria';
 import { useStore } from '@/store/StoreContext';
 
 // The blue used for links elsewhere in the app
@@ -18,6 +18,8 @@ const ACCENT = '#3c87f7';
 type Props = {
   // The product on screen. Leave out for Advanced Search.
   productId?: number;
+  // The product's category, which decides the criteria offered (no comfort for coffee)
+  category?: string | null;
   // Advanced Search has no product, so the text is what it searches for
   textRequired?: boolean;
   onOpenProduct: (product: Product) => void;
@@ -27,7 +29,7 @@ type Props = {
 
 // Asks the two questions, then shows Best Matches and Recommended for You.
 // Used at the bottom of product details, and on its own for Advanced Search.
-export function RecommendationPanel({ productId, textRequired = false, onOpenProduct, onStepChange }: Props) {
+export function RecommendationPanel({ productId, category, textRequired = false, onOpenProduct, onStepChange }: Props) {
   const theme = useTheme();
   const { store } = useStore();
   const [ranking, setRanking] = useState<Preferences>(DEFAULT_PREFERENCES);
@@ -118,7 +120,7 @@ export function RecommendationPanel({ productId, textRequired = false, onOpenPro
           Tap in order. Pick at least one; the rest count equally.
         </ThemedText>
       </ThemedView>
-      <RankPicker value={ranking} onChange={setRanking} compact />
+      <RankPicker value={ranking} onChange={setRanking} compact criteria={criteriaFor(category)} />
 
       <ThemedView style={styles.question}>
         <ThemedText style={styles.questionTitle}>What are you looking for?</ThemedText>

@@ -7,26 +7,39 @@ products change.
 """
 
 from database import get_connection
-from review_aspects import ASPECTS, aspect_ratings
+from review_aspects import ASPECTS, aspect_ratings, review_topics, topics_version
 
 NEUTRAL = 0.5
+# Products are compared with others of their type ("Running Shoe") when the type
+# has at least this many with a value; otherwise with their whole category
+# ("shoes"), so a type of one (the only clog) isn't stuck at neutral.
+MIN_GROUP = 3
+# Reviews whose topics are worked out and saved together, so stopping a long
+# first refresh keeps the progress so far
+TOPICS_BATCH = 500
 CRITERIA = ("price", "rating", "brand", "quality", "durability", "comfort")
 
 
 def scale_within_type(products: list[dict], field: str, higher_is_better: bool) -> dict[int, float]:
-    """Score one numeric field from 0 to 1, comparing only products of the same type.
+    """Score one numeric field from 0 to 1, comparing products of the same type.
 
-    The best value in a type gets 1 and the worst gets 0. A product gets 0.5 when
-    its value is missing or there is nothing to compare it with.
+    The best value in the group gets 1 and the worst gets 0. The group is the
+    product's type, or its category when the type has fewer than MIN_GROUP
+    values. A product gets 0.5 when its value is missing or there is nothing
+    to compare it with.
     """
-    values_by_type: dict[str, list[float]] = {}
+    by_type: dict[str, list[float]] = {}
+    by_category: dict[str, list[float]] = {}
     for p in products:
         if p.get(field) is not None:
-            values_by_type.setdefault(p["product_type"], []).append(float(p[field]))
+            by_type.setdefault(p["product_type"], []).append(float(p[field]))
+            by_category.setdefault(p.get("category") or p["product_type"], []).append(float(p[field]))
 
     scores = {}
     for p in products:
-        values = values_by_type.get(p["product_type"], [])
+        values = by_type.get(p["product_type"], [])
+        if len(values) < MIN_GROUP:
+            values = by_category.get(p.get("category") or p["product_type"], [])
         if p.get(field) is None or len(values) < 2 or max(values) == min(values):
             scores[p["product_id"]] = NEUTRAL
             continue
@@ -129,6 +142,7 @@ def refresh_product_scores() -> int:
             SELECT
                 p.product_id,
                 p.product_type,
+                p.category,
                 p.brand,
                 ip.price,
                 s.average_rating AS rating
@@ -143,11 +157,10 @@ def refresh_product_scores() -> int:
             WHERE p.deleted_at IS NULL
             """
         ).fetchall()
-        reviews = conn.execute(
-            "SELECT r.product_id, r.rating, r.title, r.body, p.name "
-            "FROM reviews r JOIN products p USING (product_id)"
-        ).fetchall()
-        scores = compute_scores(products, aspect_ratings(reviews))
+    reviews = _reviews_with_topics()
+
+    with get_connection() as conn:
+        scores = compute_scores(products, aspect_ratings(reviews, [r["topics"] for r in reviews]))
 
         # One transaction: if anything fails, the old scores stay
         conn.execute("DELETE FROM product_scores")
@@ -163,6 +176,40 @@ def refresh_product_scores() -> int:
                 ],
             )
     return len(scores)
+
+
+def _reviews_with_topics() -> list[dict]:
+    """Every review with what it talks about, working out and saving only what's missing."""
+    with get_connection() as conn:
+        reviews = conn.execute(
+            """
+            SELECT r.review_id, r.product_id, r.rating, r.title, r.body,
+                   p.name, p.category, t.topics, t.topics_version
+            FROM reviews r
+            JOIN products p USING (product_id)
+            LEFT JOIN review_topics t USING (review_id)
+            ORDER BY r.review_id
+            """
+        ).fetchall()
+
+    missing = [r for r in reviews if r["topics_version"] != topics_version(r["category"])]
+    if missing:
+        print(f"Finding review topics for {len(missing)} reviews (saved for next time)...")
+    for start in range(0, len(missing), TOPICS_BATCH):
+        batch = missing[start:start + TOPICS_BATCH]
+        for review, topics in zip(batch, review_topics(batch)):
+            review["topics"] = topics
+        with get_connection() as conn, conn.cursor() as cur:
+            cur.executemany(
+                """
+                INSERT INTO review_topics (review_id, topics, topics_version)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (review_id) DO UPDATE
+                SET topics = EXCLUDED.topics, topics_version = EXCLUDED.topics_version
+                """,
+                [(r["review_id"], r["topics"], topics_version(r["category"])) for r in batch],
+            )
+    return reviews
 
 
 def load_product_scores() -> dict[int, dict[str, float]]:

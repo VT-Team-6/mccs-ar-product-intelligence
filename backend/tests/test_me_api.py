@@ -235,16 +235,11 @@ def test_service_lists_history_newest_first_with_current_like_state(db):
 
     items, _ = user_products.list_product_history(db, user_id, None, 20, None)
 
-    assert [item["interaction"] for item in items] == [
-        "unliked",
-        "liked",
-        "viewed",
-        "scanned",
-    ]
-    # The product appears repeatedly, and state is the *current* one (unliked),
-    # not the state at the time of each event.
-    assert all(item["product"]["product_id"] == product_id for item in items)
-    assert all(item["product"]["is_liked"] is False for item in items)
+    # One row for the product (its latest view; likes aren't shown), and the
+    # like state is the *current* one (unliked), not the one at the time.
+    assert [item["interaction"] for item in items] == ["viewed"]
+    assert items[0]["product"]["product_id"] == product_id
+    assert items[0]["product"]["is_liked"] is False
 
 
 def test_service_rejects_forged_like_interaction(db):
@@ -351,8 +346,8 @@ def test_unlike_removes_from_likes_but_not_history(client, db, cognito):
     assert client.get("/api/me/liked-products").json()["items"] == []
     # Unliking adds an 'unliked' event but never deletes the earlier 'liked' one.
     assert _history(db, user_id) == ["liked", "unliked"]
-    events = client.get("/api/me/product-history").json()["items"]
-    assert [event["interaction"] for event in events] == ["unliked", "liked"]
+    # Likes and unlikes are stored but not shown in History.
+    assert client.get("/api/me/product-history").json()["items"] == []
 
 
 def test_users_cannot_see_each_others_data(client, db, cognito):
@@ -548,12 +543,10 @@ def test_history_records_client_interactions(client, db, cognito):
         assert response.status_code == 201
         assert response.json()["interaction"] == interaction
 
+    # History shows one row per product, store and day: the latest view.
+    # Every event is still stored.
     body = client.get("/api/me/product-history").json()
-    assert [item["interaction"] for item in body["items"]] == [
-        "viewed-from-search",
-        "viewed",
-        "scanned",
-    ]
+    assert [item["interaction"] for item in body["items"]] == ["viewed-from-search"]
     assert _history(db, user_id) == ["scanned", "viewed", "viewed-from-search"]
 
 
@@ -577,15 +570,16 @@ def test_history_search_and_paging(client, db, cognito):
             "/api/me/product-interactions",
             json={"product_id": shoe, "interaction": "scanned"},
         )
-    other = _new_product(db, name="Rain Jacket", brand="Other")
-    client.post(
-        "/api/me/product-interactions",
-        json={"product_id": other, "interaction": "viewed"},
-    )
+    for name in ("Rain Jacket", "Sun Hat", "Wool Socks"):
+        other = _new_product(db, name=name, brand="Other")
+        client.post(
+            "/api/me/product-interactions",
+            json={"product_id": other, "interaction": "viewed"},
+        )
 
     filtered = client.get("/api/me/product-history", params={"q": "shoe"}).json()
-    # Repeats are expected: history is a list of events, not products.
-    assert [item["interaction"] for item in filtered["items"]] == ["scanned"] * 3
+    # Scanned 3 times today, shown once
+    assert [item["interaction"] for item in filtered["items"]] == ["scanned"]
 
     first = client.get("/api/me/product-history", params={"limit": 2}).json()
     assert len(first["items"]) == 2

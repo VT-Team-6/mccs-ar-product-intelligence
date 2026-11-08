@@ -7,7 +7,12 @@ import {
   type TextInputProps,
 } from "react-native";
 
-import { type Product, type ProductInput } from "@/api/products";
+import {
+  PRODUCT_CATEGORIES,
+  type Product,
+  type ProductCategory,
+  type ProductInput,
+} from "@/api/products";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ProductImagePicker } from "@/components/product-image-picker";
@@ -29,6 +34,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
   const [name, setName] = useState(initial?.name ?? "");
   const [brand, setBrand] = useState(initial?.brand ?? "");
   const [productType, setProductType] = useState(initial?.product_type ?? "");
+  const [category, setCategory] = useState<ProductCategory | null>(initial?.category ?? null);
   const [description, setDescription] = useState(initial?.description ?? "");
   const [imageUrl, setImageUrl] = useState(initial?.image_url ?? "");
   const [verifiedImageUrl, setVerifiedImageUrl] = useState(initial?.image_url ?? "");
@@ -41,6 +47,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
 
     if (!name.trim()) found.push("Name is required.");
     if (!productType.trim()) found.push("Type is required.");
+    if (!category) found.push("Choose a category.");
     const imageProblem = imageUrlProblem(imageUrl);
     if (imageProblem) found.push(imageProblem);
     else if (imageUrl.trim() && imageUrl.trim() !== verifiedImageUrl) {
@@ -48,7 +55,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
     }
 
     setProblems(found);
-    if (found.length > 0) return;
+    if (found.length > 0 || !category) return;
 
     setSaving(true);
     try {
@@ -56,6 +63,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         name: name.trim(),
         brand: brand.trim() || null,
         product_type: productType.trim(),
+        category,
         description: description.trim() || null,
         image_url: imageUrl.trim() || null,
       });
@@ -87,6 +95,28 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         value={productType}
         onChangeText={setProductType}
       />
+      {/* The category decides which ranking criteria shoppers see for it */}
+      <ThemedView style={styles.field}>
+        <ThemedText type="small" themeColor="textSecondary">
+          Category *
+        </ThemedText>
+        <ThemedView style={styles.choices}>
+          {PRODUCT_CATEGORIES.map((choice) => (
+            <Pressable
+              key={choice.value}
+              onPress={() => setCategory(choice.value)}
+              style={({ pressed }) => pressed && styles.pressed}
+            >
+              <ThemedView
+                type={choice.value === category ? "backgroundSelected" : "backgroundElement"}
+                style={styles.choice}
+              >
+                <ThemedText type="smallBold">{choice.label}</ThemedText>
+              </ThemedView>
+            </Pressable>
+          ))}
+        </ThemedView>
+      </ThemedView>
       {/* Price is not a product field: each store sets its own, in Manage
           Inventory/Stock. */}
       <ThemedText type="small" themeColor="textSecondary">
@@ -172,6 +202,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: Spacing.two + Spacing.half,
     paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  choices: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.two,
+  },
+  choice: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
     borderRadius: Spacing.three,
   },
   multiline: {
