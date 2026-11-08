@@ -7,6 +7,7 @@ export type ReviewCandidate = {
   description: string | null;
   url: string | null;
   review_count: number | null;
+  image_url?: string | null;
 };
 
 export type SavedReviewSource = {
@@ -58,6 +59,14 @@ export async function searchReviewCandidates(
   if (query?.trim()) params.push(`query=${encodeURIComponent(query.trim())}`);
   const result = await reviewRequest<{ candidates: ReviewCandidate[] }>(
     `/api/admin/products/${productId}/review-candidates?${params.join("&")}`,
+  );
+  return result.candidates;
+}
+
+// Does not require a product ID, so image selection also works on Add Product.
+export async function searchListingImages(query: string): Promise<ReviewCandidate[]> {
+  const result = await reviewRequest<{ candidates: ReviewCandidate[] }>(
+    `/api/admin/review-images/candidates?query=${encodeURIComponent(query.trim())}`,
   );
   return result.candidates;
 }

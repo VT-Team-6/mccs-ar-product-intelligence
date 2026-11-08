@@ -1,17 +1,22 @@
 """Return the configured provider instance for each review source."""
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 from .amazon_dataset import AmazonDatasetProvider
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(BACKEND_DIR / ".env")
 
-providers = {
-    "amazon": AmazonDatasetProvider(
-        BACKEND_DIR / "data/reviews/amazon_catalog.json",
-        BACKEND_DIR / "data/reviews/amazon_reviews.jsonl",
-    ),
-}
+# Relative paths are resolved from backend/, independent of the launch folder.
+archive_path = Path(os.getenv("AMAZON_REVIEW_DB", "data/reviews/amazon_dataset.sqlite")).expanduser()
+if not archive_path.is_absolute():
+    archive_path = BACKEND_DIR / archive_path
+
+providers = {"amazon": AmazonDatasetProvider(archive_path)}
+
 
 def get_provider(source: str):
     try:

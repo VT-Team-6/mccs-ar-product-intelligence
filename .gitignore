@@ -58,3 +58,9 @@ mobile/ios/
 *.self.md
 # Learned "Recommended for You" weights: trained locally (scripts/train_for_you.py)
 backend/models/
+
+# amazon datasets
+backend/data/reviews/*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm

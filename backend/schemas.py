@@ -1,8 +1,27 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+def validate_product_image_url(value: str | None) -> str | None:
+    if value is None or not value.strip():
+        return None
+    value = value.strip()
+    if any(char.isspace() for char in value):
+        raise ValueError("Image URL cannot contain spaces")
+    if value.startswith("/static/"):
+        return value
+    try:
+        parsed = urlsplit(value)
+        valid = parsed.scheme.lower() in {"http", "https"} and bool(parsed.hostname)
+    except ValueError:
+        valid = False
+    if not valid:
+        raise ValueError("Use a direct HTTP or HTTPS image URL")
+    return value
 
 
 class ProductCreate(BaseModel):
@@ -16,6 +35,8 @@ class ProductCreate(BaseModel):
     # an MCCS catalog product with no owner.
     store_id: int | None = Field(default=None, gt=0)
 
+    _validate_image_url = field_validator("image_url")(validate_product_image_url)
+
 
 class ProductUpdate(BaseModel):
     """Partial update: omitted fields keep their current value."""
@@ -25,6 +46,8 @@ class ProductUpdate(BaseModel):
     brand: str | None = Field(default=None, max_length=100)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
+
+    _validate_image_url = field_validator("image_url")(validate_product_image_url)
 
 
 # Lifecycle of a product at one store. Only 'active' is visible to shoppers.

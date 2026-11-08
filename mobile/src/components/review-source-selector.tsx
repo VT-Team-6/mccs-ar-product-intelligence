@@ -321,6 +321,22 @@ function ListingRow({
   onToggle: () => void;
   onOpen: () => void;
 }) {
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  // The archive has no curated short name. Use the first title section for a
+  // compact heading and always show the untouched Amazon title underneath.
+  const compactTitle = item.title.replace(/\s+/g, ' ').trim();
+  const titleSection = compactTitle.split(/,\s+|\s+[|\u2013\u2014]\s+|\s+-\s+/)[0];
+  const shortTitle = titleSection.length > 80
+    ? `${titleSection.slice(0, 80).replace(/\s+\S*$/, '')}\u2026`
+    : titleSection;
+  const description = item.description?.trim() ?? '';
+  const compactDescription = description.replace(/\s+/g, ' ');
+  const hasDescription = compactDescription.length > 0 && compactDescription !== item.title.trim();
+  const isLongDescription = compactDescription.length > 220;
+  const descriptionPreview = isLongDescription
+    ? `${compactDescription.slice(0, 220).replace(/\s+\S*$/, '')}\u2026`
+    : compactDescription;
+
   return (
     <ThemedView type="backgroundElement" style={styles.listing}>
       <Pressable onPress={onToggle} style={styles.listingMain} accessibilityRole="checkbox" accessibilityState={{ checked: selected }}>
@@ -328,19 +344,39 @@ function ListingRow({
           {selected && <ThemedText type="smallBold" style={styles.checkmark}>✓</ThemedText>}
         </View>
         <View style={styles.listingText}>
-          <ThemedText type="smallBold">{item.title}</ThemedText>
-          {item.description && item.description !== item.title && (
-            <ThemedText type="small" themeColor="textSecondary">{item.description}</ThemedText>
-          )}
+          <ThemedText type="smallBold">{shortTitle}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="smallBold" themeColor="textSecondary">Amazon title: </ThemedText>
+            {item.title}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="smallBold" themeColor="textSecondary">Description: </ThemedText>
+            {hasDescription ? (descriptionExpanded ? description : descriptionPreview) : 'Not available'}
+          </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {item.review_count === null ? 'Review count unavailable' : `${item.review_count} archived reviews`} · {item.source_product_id}
           </ThemedText>
         </View>
       </Pressable>
-      {item.url && (
-        <Pressable onPress={onOpen} accessibilityRole="link" hitSlop={8} style={styles.listingLink}>
-          <ThemedText type="linkPrimary">View listing ↗</ThemedText>
-        </Pressable>
+      {(hasDescription && isLongDescription || item.url) && (
+        <View style={styles.listingActions}>
+          {hasDescription && isLongDescription && (
+            <Pressable
+              onPress={() => setDescriptionExpanded((expanded) => !expanded)}
+              accessibilityRole="button"
+              accessibilityLabel={`${descriptionExpanded ? 'Collapse' : 'Expand'} description for ${item.title}`}
+              accessibilityState={{ expanded: descriptionExpanded }}
+              hitSlop={6}
+              style={styles.listingLink}>
+              <ThemedText type="linkPrimary">{descriptionExpanded ? 'Show less' : 'Show more'}</ThemedText>
+            </Pressable>
+          )}
+          {item.url && (
+            <Pressable onPress={onOpen} accessibilityRole="link" hitSlop={6} style={styles.listingLink}>
+              <ThemedText type="linkPrimary">View listing ↗</ThemedText>
+            </Pressable>
+          )}
+        </View>
       )}
     </ThemedView>
   );
@@ -402,6 +438,7 @@ const styles = StyleSheet.create({
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: '#8B939C', alignItems: 'center', justifyContent: 'center' },
   checked: { backgroundColor: '#198754', borderColor: '#198754' },
   checkmark: { color: '#ffffff' },
+  listingActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.three },
   listingLink: { alignSelf: 'flex-start', paddingVertical: Spacing.half },
   footer: { flexDirection: 'row', alignItems: 'stretch', gap: Spacing.two },
   buttonPress: { flexShrink: 1 },

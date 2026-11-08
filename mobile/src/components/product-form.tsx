@@ -10,8 +10,10 @@ import {
 import { type Product, type ProductInput } from "@/api/products";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ProductImagePicker } from "@/components/product-image-picker";
 import { BottomTabInset, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { imageUrlProblem } from "@/utils/product-images";
 
 type Props = {
   // When editing, the product whose values fill in the form. Left out when adding.
@@ -28,6 +30,8 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
   const [brand, setBrand] = useState(initial?.brand ?? "");
   const [productType, setProductType] = useState(initial?.product_type ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [imageUrl, setImageUrl] = useState(initial?.image_url ?? "");
+  const [verifiedImageUrl, setVerifiedImageUrl] = useState(initial?.image_url ?? "");
 
   const [problems, setProblems] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -37,6 +41,11 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
 
     if (!name.trim()) found.push("Name is required.");
     if (!productType.trim()) found.push("Type is required.");
+    const imageProblem = imageUrlProblem(imageUrl);
+    if (imageProblem) found.push(imageProblem);
+    else if (imageUrl.trim() && imageUrl.trim() !== verifiedImageUrl) {
+      found.push("Preview the image link and wait for it to load before saving, or remove the image.");
+    }
 
     setProblems(found);
     if (found.length > 0) return;
@@ -48,6 +57,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         brand: brand.trim() || null,
         product_type: productType.trim(),
         description: description.trim() || null,
+        image_url: imageUrl.trim() || null,
       });
     } catch (problem) {
       setProblems([
@@ -89,6 +99,14 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         onChangeText={setDescription}
         multiline
         style={styles.multiline}
+      />
+
+      <ProductImagePicker
+        productName={name}
+        value={imageUrl}
+        onChange={setImageUrl}
+        onVerified={setVerifiedImageUrl}
+        disabled={saving}
       />
 
       {problems.map((problem) => (
