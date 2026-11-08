@@ -30,6 +30,7 @@ _PRODUCT_SELECT = """
         p.name,
         p.brand,
         p.product_type,
+        p.category,
         s.average_rating AS rating,
         p.description,
         p.image_url,
@@ -42,7 +43,7 @@ _PRODUCT_SELECT = """
         ON p.product_id = s.product_id
     {inventory_join}
 """
-_NON_NULLABLE = ("name", "product_type")
+_NON_NULLABLE = ("name", "product_type", "category")
 
 
 def _store_inventory_join(store_id: int | None) -> sql.Composed:
@@ -124,14 +125,15 @@ def create_product(
         row = conn.execute(
             """
             INSERT INTO products
-                (name, brand, product_type, description, image_url, created_by_store_id)
-            VALUES (%s, %s, %s, %s, %s, %s)
+                (name, brand, product_type, category, description, image_url, created_by_store_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING product_id
             """,
             (
                 product.name,
                 product.brand,
                 product.product_type,
+                product.category,
                 product.description,
                 product.image_url,
                 owner,

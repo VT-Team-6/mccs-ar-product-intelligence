@@ -15,16 +15,18 @@ type Props = {
   value: Preferences;
   onChange: (next: Preferences) => void;
   compact?: boolean;
+  // Which criteria to offer; all of them by default (see criteriaFor)
+  criteria?: typeof CRITERIA;
 };
 
 // Tap the criteria in order of what matters most. Tapping a ranked one removes it.
 // Used on the Preferences screen and when asking for a recommendation.
-export function RankPicker({ value, onChange, compact = false }: Props) {
+export function RankPicker({ value, onChange, compact = false, criteria = CRITERIA }: Props) {
   const theme = useTheme();
 
   return (
     <View style={styles.list}>
-      {CRITERIA.map(({ key, label, hint }) => {
+      {criteria.map(({ key, label, hint }) => {
         const rank = value[key];
         const ranked = rank > 0;
         return (

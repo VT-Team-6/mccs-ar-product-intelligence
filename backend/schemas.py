@@ -24,12 +24,18 @@ def validate_product_image_url(value: str | None) -> str | None:
     return value
 
 
+# Must match CATEGORIES in categories.py and the CHECK in migration 013
+ProductCategory = Literal["shoes", "backpacks", "headphones", "shampoo", "coffee"]
+
+
 class ProductCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     product_type: str = Field(min_length=1, max_length=100)
     brand: str | None = Field(default=None, max_length=100)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
+    # Decides which shopping criteria apply (categories.py)
+    category: ProductCategory | None = None
     # The store adding the product: it owns it, and the product starts pending
     # there. Required for store admins; the app admin can leave it out to add
     # an MCCS catalog product with no owner.
@@ -46,6 +52,7 @@ class ProductUpdate(BaseModel):
     brand: str | None = Field(default=None, max_length=100)
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
+    category: ProductCategory | None = None
 
     _validate_image_url = field_validator("image_url")(validate_product_image_url)
 
@@ -73,6 +80,7 @@ class Product(BaseModel):
     name: str
     brand: str | None
     product_type: str
+    category: str | None = None
     rating: float | None
     description: str | None
     image_url: str | None

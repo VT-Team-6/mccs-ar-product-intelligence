@@ -45,7 +45,7 @@ def test_empty_text_has_no_phrases():
 def fake_topics(monkeypatch, topic_by_word):
     """Pretend a phrase is about a topic if it contains that topic's word."""
 
-    def topics(phrases):
+    def topics(phrases, category=None):
         return [
             next((topic for word, topic in topic_by_word.items() if word in p), "overall")
             for p in phrases
@@ -96,13 +96,56 @@ def test_products_are_kept_separate(monkeypatch):
 
 def test_product_name_does_not_count_as_review_text(monkeypatch):
     seen = []
-    monkeypatch.setattr(review_aspects, "phrase_topics", lambda phrases: seen.extend(phrases) or ["overall"] * len(phrases))
+    monkeypatch.setattr(review_aspects, "phrase_topics", lambda phrases, category=None: seen.extend(phrases) or ["overall"] * len(phrases))
     aspect_ratings([{**review(1, 5, "The Comfort Max Runner looks great"), "name": "Comfort Max Runner"}])
     assert seen == ["The these looks great"]
 
 
 def test_no_reviews():
     assert aspect_ratings([]) == {}
+
+
+def test_shampoo_and_coffee_only_get_quality(monkeypatch):
+    fake_topics(monkeypatch, {"soft": "comfort", "tasty": "quality", "broke": "durability"})
+    reviews = [
+        {**review(1, 5, "It feels so soft. Really tasty coffee here"), "category": "coffee"},
+        {**review(1, 3, "The bag broke open. Quite tasty for me"), "category": "coffee"},
+    ]
+    assert aspect_ratings(reviews) == {1: {"quality": 4.0}}
+
+
+def test_each_category_uses_its_own_examples(monkeypatch):
+    used = []
+    monkeypatch.setattr(
+        review_aspects, "phrase_topics",
+        lambda phrases, category=None: used.append(category) or ["overall"] * len(phrases),
+    )
+    review_aspects.review_topics([
+        {**review(1, 5, "Great sound and very comfy"), "category": "headphones"},
+        {**review(2, 5, "Rich flavor every single morning"), "category": "coffee"},
+    ])
+    assert sorted(used) == ["coffee", "headphones"]
+
+
+def test_saved_topics_skip_the_model(monkeypatch):
+    monkeypatch.setattr(review_aspects, "phrase_topics", lambda *a, **k: 1 / 0)
+    reviews = [review(1, 5, "anything"), review(1, 3, "anything")]
+    assert aspect_ratings(reviews, topics=[["comfort"], ["comfort"]]) == {1: {"comfort": 4.0}}
+
+
+def test_changing_examples_changes_the_version(monkeypatch):
+    before = review_aspects.topics_version("coffee")
+    assert review_aspects.topics_version("shampoo") != before
+    monkeypatch.setitem(review_aspects.TOPICS, "coffee", {"quality": ["new example"]})
+    assert review_aspects.topics_version("coffee") != before
+
+
+def test_every_category_has_examples_for_its_aspects():
+    from categories import CATEGORIES
+
+    for category in CATEGORIES:
+        for aspect in review_aspects.aspects_for(category):
+            assert review_aspects.TOPICS[category][aspect], (category, aspect)
 
 
 # --- real model -------------------------------------------------------------
@@ -118,6 +161,20 @@ def test_model_puts_clear_phrases_under_the_right_topic():
     comfort, durability, quality, sizing = phrase_topics(phrases)
     assert (comfort, durability, quality) == ("comfort", "durability", "quality")
     assert sizing not in review_aspects.ASPECTS  # fit or overall, either way it's ignored
+
+
+def test_model_sorts_headphone_and_coffee_phrases():
+    sound, comfort, broke = phrase_topics([
+        "the bass sounds amazing and clear",
+        "they hurt my ears after an hour of wearing",
+        "the left earbud stopped working after two months",
+    ], "headphones")
+    assert (comfort, broke) == ("comfort", "durability")
+    assert sound not in review_aspects.ASPECTS  # sound quality isn't build quality
+
+    taste, smell = phrase_topics(["it tastes burnt and really bitter", "smells wonderful while brewing"], "coffee")
+    assert taste == "quality"
+    assert smell not in review_aspects.ASPECTS
 
 
 def test_keeps_dr_martens_and_decimal_sizes_together():

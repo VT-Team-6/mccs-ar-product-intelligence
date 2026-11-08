@@ -265,6 +265,7 @@ export default function ShopperProductScreen() {
                     
                     <RecommendationPanel
                       productId={product.product_id}
+                      category={product.category}
                       onOpenProduct={openProduct}
                       onStepChange={scrollToPanel}
                     />

@@ -23,6 +23,8 @@ export type Product = {
   name: string;
   brand: string | null;
   product_type: string;
+  // Decides which ranking criteria apply; null for older products
+  category?: ProductCategory | null;
   rating: number | null;
   description: string | null;
   image_url: string | null;
@@ -38,10 +40,21 @@ export type Product = {
 // What the admin fills in when adding or editing a product.
 // The ID and the dates are set by the backend, so they aren't here.
 // No price: each store sets its own on its inventory row.
+// Must match CATEGORIES in backend/categories.py
+export const PRODUCT_CATEGORIES = [
+  { value: "shoes", label: "Shoes" },
+  { value: "backpacks", label: "Backpacks" },
+  { value: "headphones", label: "Headphones" },
+  { value: "shampoo", label: "Shampoo" },
+  { value: "coffee", label: "Coffee" },
+] as const;
+export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number]["value"];
+
 export type ProductInput = {
   name: string;
   brand: string | null;
   product_type: string;
+  category: ProductCategory;
   description: string | null;
   image_url?: string | null;
   // Only when adding: the store the product is for. It owns the product and the

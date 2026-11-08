@@ -230,11 +230,11 @@ def test_for_you_follows_the_saved_ranking_not_the_right_now_one(engine):
 def test_a_small_category_is_not_filled_with_unrelated_products(engine):
     candy = [
         {"product_id": 101, "name": "Sour Gummy Worms", "brand": "Trolli", "product_type": "Candy",
-         "price": 3.0, "rating": 4.5, "description": "Chewy sour gummy candy worms."},
+         "price": 3.0, "rating": 4.5, "description": "Chewy sour gummy candy worms.", "category": "candy"},
         {"product_id": 102, "name": "Milk Chocolate Bar", "brand": "Hershey's", "product_type": "Candy",
-         "price": 2.0, "rating": 4.7, "description": "Classic creamy milk chocolate candy bar."},
+         "price": 2.0, "rating": 4.7, "description": "Classic creamy milk chocolate candy bar.", "category": "candy"},
         {"product_id": 103, "name": "Peanut Butter Cups", "brand": "Reese's", "product_type": "Candy",
-         "price": 2.5, "rating": 4.8, "description": "Chocolate cups filled with peanut butter."},
+         "price": 2.5, "rating": 4.8, "description": "Chocolate cups filled with peanut butter.", "category": "candy"},
     ]
     mixed = RecommendationEngine(engine.products + candy, {})
     result = mixed.recommend(product_id=101, now_ranks={**NOTHING_RANKED, "comfort": 1})
