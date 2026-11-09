@@ -1,0 +1,39 @@
+Build status: complete
+Database: C:\Users\artiz\Documents\classes\IPD\mccs_project\backend\data\reviews\amazon_expanded.sqlite
+Size: 2.432 GB (decimal)
+
+All 'available' review statistics cover scanned records only. They are partial unless review_scan_complete=1.
+Samples are equal-probability hash samples of nonblank reviews; no artificial positive/negative balancing.
+Statistics count source records; duplicate saved review identities are suppressed.
+
+shoes: 30,000 products; 29,996 with reviews; 1,005,742 saved reviews
+backpacks: 30,000 products; 29,993 with reviews; 542,136 saved reviews
+headphones: 30,000 products; 29,999 with reviews; 1,145,946 saved reviews
+shampoo: 12,168 products; 12,164 with reviews; 168,669 saved reviews
+ground_coffee: 3,256 products; 3,255 with reviews; 49,143 saved reviews
+
+Full-mode size-cap impact:
+Cap reached: False; pressure events: 0
+Products removed: 0; sampled reviews removed: 0
+Removed products by type: {}
+Review text removed: 0 bytes
+Pages made reusable: 0 bytes (cumulative)
+Later records skipped for removed products: 0
+Individually oversized reviews skipped: 0
+Active database pages: 2,431,885,312 bytes; file: 2,431,885,312 bytes
+Per-product audit: size_cap_evictions.jsonl
+Review source scans continue after pruning; completion flags refer to retained products.
+
+Sources:
+metadata/Amazon_Fashion: complete; rows=826,108; error=None
+metadata/Beauty_and_Personal_Care: complete; rows=1,028,914; error=None
+metadata/Clothing_Shoes_and_Jewelry: complete; rows=7,218,481; error=None
+metadata/Electronics: complete; rows=1,610,012; error=None
+metadata/Grocery_and_Gourmet_Food: complete; rows=603,274; error=None
+metadata/Sports_and_Outdoors: complete; rows=1,587,421; error=None
+reviews/Amazon_Fashion: complete; rows=2,500,939; error=None
+reviews/Beauty_and_Personal_Care: complete; rows=23,911,390; error=None
+reviews/Clothing_Shoes_and_Jewelry: complete; rows=66,033,346; error=None
+reviews/Electronics: complete; rows=43,886,944; error=None
+reviews/Grocery_and_Gourmet_Food: complete; rows=14,318,520; error=None
+reviews/Sports_and_Outdoors: complete; rows=19,595,170; error=None

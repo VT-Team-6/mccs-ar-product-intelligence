@@ -1,0 +1,405 @@
+ground_coffee: top 50 seed candidates
+
+Popularity proxy: historical metadata rating count, NOT sales.
+Candidates with archived text reviews rank ahead of metadata-only entries.
+A partial build ranks only the portion scanned; verify variant/package/image before seeding.
+
+1. AmazonFresh Direct Trade Rwanda Ground Coffee, Light Roast, 12 Ounce
+   ASIN: B0BM4JM2XZ | brand: Amazon Fresh
+   Historical rating count: 45705 | rating: 4.3
+   Scanned reviews: 2774 | saved: 100 | review scan complete: True
+   Historical price: 7.83 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BM4JM2XZ
+   Image: https://m.media-amazon.com/images/I/71y+m3bkvqL._SL1500_.jpg
+
+2. AmazonFresh Donut Cafe Ground Coffee, Medium Roast, 12 Ounce (Pack of 1)
+   ASIN: B07Q4TPPNC | brand: Amazon Fresh
+   Historical rating count: 45685 | rating: 4.3
+   Scanned reviews: 2777 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B07Q4TPPNC
+   Image: https://m.media-amazon.com/images/I/81SCmqsXHBL._SL1500_.jpg
+
+3. Black Rifle Coffee Company Pirates Blend, Dark Roast Ground Coffee, Brazilian Arabica Brew with Dark Roasted Flavors, Helps Support Veterans and First Responders, 12 Ounce Bag
+   ASIN: B08DF2V939 | brand: Black Rifle Coffee Company
+   Historical rating count: 24421 | rating: 4.7
+   Scanned reviews: 2987 | saved: 100 | review scan complete: True
+   Historical price: 17.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08DF2V939
+   Image: https://m.media-amazon.com/images/I/41a47-pejtL.jpg
+
+4. Eight O'Clock Coffee 100% Brazilian Breakfast, 11 Ounce (Pack of 1), Medium Roast Ground Coffee, Smooth & Soft Bodied
+   ASIN: B08YZB1155 | brand: Eight O'Clock Coffee
+   Historical rating count: 20224 | rating: 4.6
+   Scanned reviews: 3154 | saved: 100 | review scan complete: True
+   Historical price: 9.69 (not a current store price)
+   Product: https://www.amazon.com/dp/B08YZB1155
+   Image: https://m.media-amazon.com/images/I/71xhSPb6HzL._SL1500_.jpg
+
+5. McCafe Medium Roast Ground Coffee, Premium Roast Decaf, 12 Oz
+   ASIN: B091ZCDJ63 | brand: McCafé
+   Historical rating count: 19864 | rating: 4.7
+   Scanned reviews: 3109 | saved: 100 | review scan complete: True
+   Historical price: 6.84 (not a current store price)
+   Product: https://www.amazon.com/dp/B091ZCDJ63
+   Image: https://m.media-amazon.com/images/I/71Ymt8aZxRL._SL1500_.jpg
+
+6. Kauai Hawaiian Ground Coffee, Mocha Macadamia Nut Flavor - Gourmet Arabica Coffee From Hawaii's Largest Coffee Grower - Rich Flavor with Nutty Notes and Sweet Chocolate Overtones - 10 Ounce
+   ASIN: B09HCFRWNP | brand: KAUAI COFFEE
+   Historical rating count: 18868 | rating: 4.5
+   Scanned reviews: 1182 | saved: 100 | review scan complete: True
+   Historical price: 9.58 (not a current store price)
+   Product: https://www.amazon.com/dp/B09HCFRWNP
+   Image: https://m.media-amazon.com/images/I/71LQyU7BI5L._SL1500_.jpg
+
+7. illy Decaffeinated Ground Espresso Coffee, Classic Medium Roast with Notes of Toasted Bread, 100% Arabica Coffee, No Preservatives, 8.8 Ounce Can (Pack of 1)
+   ASIN: B000VOFU0K | brand: Illy
+   Historical rating count: 17472 | rating: 4.7
+   Scanned reviews: 1829 | saved: 100 | review scan complete: True
+   Historical price: 13.47 (not a current store price)
+   Product: https://www.amazon.com/dp/B000VOFU0K
+   Image: https://m.media-amazon.com/images/I/61OGxYX62yL._SL1500_.jpg
+
+8. Folgers Gourmet Supreme Medium Dark Roast Ground Coffee, 24.2 Ounces
+   ASIN: B0B9WBQ87B | brand: Folgers
+   Historical rating count: 16799 | rating: 4.7
+   Scanned reviews: 710 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0B9WBQ87B
+   Image: https://m.media-amazon.com/images/I/81yyop6yZvL._SL1500_.jpg
+
+9. Amazon Brand - Happy Belly French Vanilla Flavored Ground Coffee, Medium Roast, 12 Ounce
+   ASIN: B0B962YG68 | brand: Happy Belly
+   Historical rating count: 16543 | rating: 4.3
+   Scanned reviews: 2160 | saved: 100 | review scan complete: True
+   Historical price: 7.56 (not a current store price)
+   Product: https://www.amazon.com/dp/B0B962YG68
+   Image: https://m.media-amazon.com/images/I/719-7xLYzNL._SL1500_.jpg
+
+10. Organic Decaf Ground Coffee by Four Sigmatic | Swiss Water Decaf Coffee Ground | Decaffeinated Coffee with Chaga & Reishi Mushroom Extracts | Decaf Coffee for Immune Support & Stress Relief | 12oz Bag
+   ASIN: B077YJ8L65 | brand: Four Sigmatic
+   Historical rating count: 13686 | rating: 4.5
+   Scanned reviews: 35 | saved: 35 | review scan complete: True
+   Historical price: 21.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B077YJ8L65
+   Image: https://m.media-amazon.com/images/I/71ixVBT77lL._SL1500_.jpg
+
+11. Don Francisco's Vanilla Nut Flavored Ground Coffee (20 oz Bag)
+   ASIN: B0C21GH68S | brand: Don Francisco's
+   Historical rating count: 10734 | rating: 4.7
+   Scanned reviews: 2222 | saved: 100 | review scan complete: True
+   Historical price: 16.6 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C21GH68S
+   Image: https://m.media-amazon.com/images/I/61kSE2WaUDL._SL1500_.jpg
+
+12. Seattle's Best Coffee Toasted Hazelnut Flavored Medium Roast Ground Coffee, 12 Ounce (Pack of 1)
+   ASIN: B08FFP3T5B | brand: Seattle's Best Coffee
+   Historical rating count: 10037 | rating: 4.5
+   Scanned reviews: 1090 | saved: 100 | review scan complete: True
+   Historical price: 14.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B08FFP3T5B
+   Image: https://m.media-amazon.com/images/I/81-4AnD7kjL._SL1500_.jpg
+
+13. Kicking Horse Coffee, 454 Horse Power, Dark Roast, Ground, 10 oz - Certified Organic, Fairtrade, Kosher Coffee
+   ASIN: B0C7KY9QB4 | brand: Kicking Horse Coffee
+   Historical rating count: 9682 | rating: 4.5
+   Scanned reviews: 409 | saved: 100 | review scan complete: True
+   Historical price: 11.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C7KY9QB4
+   Image: https://m.media-amazon.com/images/I/61E0BrPnUCL._SL1500_.jpg
+
+14. Starbucks Dark Roast Ground Coffee — Espresso Roast — 100% Arabica — 1 bag (18 oz.)
+   ASIN: B0C3KK8Q3Z | brand: Starbucks
+   Historical rating count: 8801 | rating: 4.7
+   Scanned reviews: 149 | saved: 100 | review scan complete: True
+   Historical price: 13.48 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C3KK8Q3Z
+   Image: https://m.media-amazon.com/images/I/71mvqNA9SwL._SL1500_.jpg
+
+15. Baggio Café Ground Gourmet Coffee Flavored Truffled Chocolate - Medium Roast 8.8 oz
+   ASIN: B07DRMZLN7 | brand: BAGGIO CAFÉ
+   Historical rating count: 8566 | rating: 4.5
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B07DRMZLN7
+   Image: https://m.media-amazon.com/images/I/716o0pnNZjL._SL1500_.jpg
+
+16. Chock Full o’Nuts Donut Shop Roast Ground Coffee, Light Roast - Coffee Beans - Mildly Roasted, Smooth-Flavored Breakfast Blend (23 Oz. Can)
+   ASIN: B0BQ54HKML | brand: Chock Full o' Nuts
+   Historical rating count: 8058 | rating: 4.7
+   Scanned reviews: 1267 | saved: 100 | review scan complete: True
+   Historical price: 17.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BQ54HKML
+   Image: https://m.media-amazon.com/images/I/81jap2O7H8L._SL1500_.jpg
+
+17. Illy Classico Espresso Ground Coffee, Medium Roast, Classic Roast with Notes of Chocolate & Caramel, 100% Arabica Coffee, All-Natural, No Preservatives, 8.8 Ounce (Pack of 1)
+   ASIN: B09DDDGBR2 | brand: Illy
+   Historical rating count: 7868 | rating: 4.7
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: 11.64 (not a current store price)
+   Product: https://www.amazon.com/dp/B09DDDGBR2
+   Image: https://m.media-amazon.com/images/I/61CbICloZxL._SL1500_.jpg
+
+18. Gevalia Special Reserve Guatemala Single Origin Medium Roast Coarse Ground Coffee (10 oz Bag)
+   ASIN: B0B9556YD1 | brand: Gevalia
+   Historical rating count: 7691 | rating: 4.6
+   Scanned reviews: 1572 | saved: 100 | review scan complete: True
+   Historical price: 7.68 (not a current store price)
+   Product: https://www.amazon.com/dp/B0B9556YD1
+   Image: https://m.media-amazon.com/images/I/71SySyffGJL._SL1500_.jpg
+
+19. Maxwell House Ground Coffee - Master Blend - 11.5 Ounces
+   ASIN: B00UQPODHA | brand: MAXWELL HOUSE
+   Historical rating count: 7619 | rating: 4.7
+   Scanned reviews: 16 | saved: 16 | review scan complete: True
+   Historical price: 9.38 (not a current store price)
+   Product: https://www.amazon.com/dp/B00UQPODHA
+   Image: https://m.media-amazon.com/images/I/81spIp58jdL._SL1500_.jpg
+
+20. Gevalia Special Reserve Guatemala Single Origin Medium Roast Coarse Ground Coffee (10 oz Bag)
+   ASIN: B0BK4GHVL1 | brand: Gevalia
+   Historical rating count: 6606 | rating: 4.5
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: 7.68 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BK4GHVL1
+   Image: https://m.media-amazon.com/images/I/71SySyffGJL._SL1500_.jpg
+
+21. Caribou Coffee, Medium Roast Ground Coffee - Caribou Blend 20 Ounce Bag
+   ASIN: B01FTE4NEU | brand: Caribou Coffee
+   Historical rating count: 6336 | rating: 4.7
+   Scanned reviews: 753 | saved: 100 | review scan complete: True
+   Historical price: 13.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B01FTE4NEU
+   Image: https://m.media-amazon.com/images/I/61Ek-53xyFL._SL1500_.jpg
+
+22. Kicking Horse Coffee, Hola, Light Roast, Ground, 10 oz (Pack of 1)
+   ASIN: B0C7QLYP5S | brand: Kicking Horse Coffee
+   Historical rating count: 6253 | rating: 4.5
+   Scanned reviews: 166 | saved: 100 | review scan complete: True
+   Historical price: 10.54 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C7QLYP5S
+   Image: https://m.media-amazon.com/images/I/51OXHQT79sL._SL1000_.jpg
+
+23. Medaglia D'Oro Italian Roast Espresso Style Ground Coffee, 10 Ounces
+   ASIN: B004AH2IW2 | brand: MEDAGLIA D'ORO
+   Historical rating count: 5991 | rating: 4.6
+   Scanned reviews: 413 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B004AH2IW2
+   Image: https://m.media-amazon.com/images/I/8148R6tI+oL._SL1500_.jpg
+
+24. Medaglia D'Oro Italian Roast Espresso Style Ground Coffee, 10 Ounces
+   ASIN: B00R92URI2 | brand: MEDAGLIA D'ORO
+   Historical rating count: 5991 | rating: 4.6
+   Scanned reviews: 3 | saved: 3 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B00R92URI2
+   Image: https://m.media-amazon.com/images/I/8148R6tI+oL._SL1500_.jpg
+
+25. Maxwell House Original Blend Decaf Ground Coffee, Medium Roast, 11 Ounce Canister
+   ASIN: B0BK4HGYHR | brand: MAXWELL HOUSE
+   Historical rating count: 5797 | rating: 4.7
+   Scanned reviews: 465 | saved: 100 | review scan complete: True
+   Historical price: 7.29 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BK4HGYHR
+   Image: https://m.media-amazon.com/images/I/81dCEQTA7XL._SL1500_.jpg
+
+26. Folgers Classic Roast Coffee, Medium Roast Ground Coffee, 11.3 Ounces
+   ASIN: B081W6VS6V | brand: Folgers
+   Historical rating count: 5660 | rating: 4.8
+   Scanned reviews: 727 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B081W6VS6V
+   Image: https://m.media-amazon.com/images/I/81AWUiH8P0L._SL1500_.jpg
+
+27. BRU Green Label Coffee 17.6oz
+   ASIN: B087Z33774 | brand: BRU
+   Historical rating count: 5464 | rating: 4.3
+   Scanned reviews: 10 | saved: 8 | review scan complete: True
+   Historical price: 10.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B087Z33774
+   Image: https://m.media-amazon.com/images/I/61FlCfSqpzS._SL1000_.jpg
+
+28. AmazonFresh Organic Fair Trade Sumatra Ground Coffee, Dark Roast, 12 Ounce
+   ASIN: B0C6G4ZCXT | brand: Amazon Fresh
+   Historical rating count: 5252 | rating: 4.2
+   Scanned reviews: 199 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0C6G4ZCXT
+   Image: https://m.media-amazon.com/images/I/81RsIz8pS2L._SL1500_.jpg
+
+29. Peet's Coffee, Dark Roast Decaffeinated Ground Coffee - Decaf House Blend 18 Ounce Bag
+   ASIN: B0CBQRNM2L | brand: Peet's Coffee
+   Historical rating count: 4883 | rating: 4.6
+   Scanned reviews: 458 | saved: 100 | review scan complete: True
+   Historical price: 20.55 (not a current store price)
+   Product: https://www.amazon.com/dp/B0CBQRNM2L
+   Image: https://m.media-amazon.com/images/I/71B4Yhrwk8L._SL1500_.jpg
+
+30. Folgers Black Silk Decaf Dark Roast Ground Coffee, 20.6 Ounces
+   ASIN: B00R92VJSE | brand: Folgers
+   Historical rating count: 4806 | rating: 4.7
+   Scanned reviews: 652 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B00R92VJSE
+   Image: https://m.media-amazon.com/images/I/819CIaVCmoL._SL1500_.jpg
+
+31. Paramount Roasters Ground Coffee Caramel Nut Delight
+   ASIN: B0B1G3JM5M | brand: Paramount Roasters
+   Historical rating count: 4658 | rating: 4.3
+   Scanned reviews: 724 | saved: 100 | review scan complete: True
+   Historical price: 10.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0B1G3JM5M
+   Image: https://m.media-amazon.com/images/I/71F2DrCNtwL._SL1500_.jpg
+
+32. SMOOTH JO DECAF: 12 oz. Organic Dark French Roast Ground Coffee, Swiss Water Process, Rich, Creamy, Fair Trade Certified, 100% Arabica Coffee, USDA Certified Organic, NON-GMO, Gluten & Chemical Free
+   ASIN: B09QKYP2L8 | brand: Jo Coffee
+   Historical rating count: 4638 | rating: 4.4
+   Scanned reviews: 1603 | saved: 100 | review scan complete: True
+   Historical price: 13.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B09QKYP2L8
+   Image: https://m.media-amazon.com/images/I/719wMaHuCkL._SL1500_.jpg
+
+33. Maxwell House Half Caff Ground Coffee (11 oz Canister)
+   ASIN: B0BK4FPYX2 | brand: MAXWELL HOUSE
+   Historical rating count: 4559 | rating: 4.7
+   Scanned reviews: 369 | saved: 100 | review scan complete: True
+   Historical price: 10.87 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BK4FPYX2
+   Image: https://m.media-amazon.com/images/I/81SDmmhvt+L._SL1500_.jpg
+
+34. Tim Hortons Original Coffee, Fine Grind Bag, Medium Roast, 300g (Imported from Canada)
+   ASIN: B0BC93ZP27 | brand: Tim Hortons
+   Historical rating count: 4484 | rating: 4.8
+   Scanned reviews: 363 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0BC93ZP27
+   Image: https://m.media-amazon.com/images/I/71kiPD1aKPL._SL1500_.jpg
+
+35. Bialetti Coffee, 8.8 Ounce (Pack of 1), Deka
+   ASIN: B093TNKTK6 | brand: Bialetti
+   Historical rating count: 4432 | rating: 4.4
+   Scanned reviews: 18 | saved: 18 | review scan complete: True
+   Historical price: 20.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B093TNKTK6
+   Image: https://m.media-amazon.com/images/I/51IOdFHznOL._AC_SL1056_.jpg
+
+36. Gevalia Colombia Medium Roast Ground Coffee (20 oz Bag)
+   ASIN: B0BK4BKKGR | brand: Gevalia
+   Historical rating count: 4343 | rating: 4.7
+   Scanned reviews: 223 | saved: 100 | review scan complete: True
+   Historical price: 11.28 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BK4BKKGR
+   Image: https://m.media-amazon.com/images/I/71f7eEIwWVL._SL1500_.jpg
+
+37. Peet's Coffee, Medium Roast Ground Coffee - Big Bang 18 Ounce Bag
+   ASIN: B0CBQSSRN1 | brand: Peet's Coffee
+   Historical rating count: 4324 | rating: 4.6
+   Scanned reviews: 246 | saved: 100 | review scan complete: True
+   Historical price: 13.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0CBQSSRN1
+   Image: https://m.media-amazon.com/images/I/71-id2aNkKL._SL1500_.jpg
+
+38. Kurukahveci Mehmet Efendi Turkish Coffee, 17.6 Ounce (Pack of 1)
+   ASIN: B09CMSQQS9 | brand: Kurukahveci
+   Historical rating count: 4237 | rating: 4.6
+   Scanned reviews: 937 | saved: 100 | review scan complete: True
+   Historical price: 14.09 (not a current store price)
+   Product: https://www.amazon.com/dp/B09CMSQQS9
+   Image: https://m.media-amazon.com/images/I/81nRdByRYdL._SL1500_.jpg
+
+39. illy Intenso Ground Espresso Coffee, Bold Roast, Intense, Robust and Full Flavored With Notes of Deep Cocoa, 100% Arabica Coffee, No Preservatives, 8.8 Ounce (Pack of 1)
+   ASIN: B0C2D45MK3 | brand: Illy
+   Historical rating count: 4167 | rating: 4.7
+   Scanned reviews: 2 | saved: 2 | review scan complete: True
+   Historical price: 10.69 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C2D45MK3
+   Image: https://m.media-amazon.com/images/I/614WpLKkxRL._SL1500_.jpg
+
+40. Gevalia Traditional Mild Roast Ground Coffee (12 oz Bag)
+   ASIN: B00MBEJZOK | brand: Gevalia
+   Historical rating count: 4005 | rating: 4.7
+   Scanned reviews: 85 | saved: 83 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B00MBEJZOK
+   Image: https://m.media-amazon.com/images/I/71YidDQT80L._SL1500_.jpg
+
+41. Folgers Simply Gourmet Natural Caramel Flavored Ground Coffee, 10 Ounces
+   ASIN: B071P3N8MY | brand: Folgers
+   Historical rating count: 3927 | rating: 4.6
+   Scanned reviews: 472 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B071P3N8MY
+   Image: https://m.media-amazon.com/images/I/71fXY+zN80L._SL1500_.jpg
+
+42. Maxwell House Smooth Bold Dark Roast Ground Coffee (11.5 oz Canister)
+   ASIN: B0BK4B4LKB | brand: MAXWELL HOUSE
+   Historical rating count: 3857 | rating: 4.7
+   Scanned reviews: 276 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0BK4B4LKB
+   Image: https://m.media-amazon.com/images/I/81d4b8HlepL._SL1500_.jpg
+
+43. Café Bustelo® Dark Roast Espresso Coffee, 10 Oz Vacuum Pack
+   ASIN: B0C6MR7WJ1 | brand: CAFÉ BUSTELO
+   Historical rating count: 3721 | rating: 4.8
+   Scanned reviews: 259 | saved: 100 | review scan complete: True
+   Historical price: 5.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C6MR7WJ1
+   Image: https://m.media-amazon.com/images/I/712enmCcngL._SL1500_.jpg
+
+44. Cameron's Coffee Roasted Ground Coffee Bag, Flavored, Toasted Southern Pecan, 12 Ounce
+   ASIN: B07WC2TYPJ | brand: Cameron's Coffee
+   Historical rating count: 3603 | rating: 4.6
+   Scanned reviews: 2943 | saved: 100 | review scan complete: True
+   Historical price: 5.92 (not a current store price)
+   Product: https://www.amazon.com/dp/B07WC2TYPJ
+   Image: https://m.media-amazon.com/images/I/61tytmsEvRL._SL1500_.jpg
+
+45. illy Caffe Ground Coffee Medium Grind Medium Roast 8.8 Oz. for Drip Coffeemakers & French Presses
+   ASIN: B0001GDE1K | brand: Illy
+   Historical rating count: 3403 | rating: 4.6
+   Scanned reviews: 19 | saved: 19 | review scan complete: True
+   Historical price: 9.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0001GDE1K
+   Image: https://m.media-amazon.com/images/I/71klHGLMd6L._SL1500_.jpg
+
+46. Hills Bros French Roast Ground Coffee, Dark Roast, 23 Oz. Can – Full-Bodied, French Roast Dark Coffee Blend with a Rich, Bold Taste
+   ASIN: B07B2JW9KH | brand: Hills Bros
+   Historical rating count: 3378 | rating: 4.6
+   Scanned reviews: 580 | saved: 100 | review scan complete: True
+   Historical price: 13.32 (not a current store price)
+   Product: https://www.amazon.com/dp/B07B2JW9KH
+   Image: https://m.media-amazon.com/images/I/71EmMf9esDL._SL1500_.jpg
+
+47. Cafe La Llave Espresso Dark Roast Coffee, 10 Ounce
+   ASIN: B0BXWYV1GZ | brand: Cafe La Llave
+   Historical rating count: 3363 | rating: 4.8
+   Scanned reviews: 776 | saved: 100 | review scan complete: True
+   Historical price: 4.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BXWYV1GZ
+   Image: https://m.media-amazon.com/images/I/81iid8jWYNL._SL1500_.jpg
+
+48. Baggio Café Ground Gourmet Coffee Premium - Medium Roast Espresso 8.8 oz
+   ASIN: B08WJLTDPN | brand: BAGGIO CAFÉ
+   Historical rating count: 3358 | rating: 4.6
+   Scanned reviews: 2 | saved: 2 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B08WJLTDPN
+   Image: https://m.media-amazon.com/images/I/61ilFl6OXUL._SL1500_.jpg
+
+49. Stone Street Flavored Ground Coffee, Cinnamon Swirl, Freshly Roasted, 100% Colombian Arabica, Gourmet Coffee, Medium Roast, Sweet Cinnamon Roll Flavor, 1 LB
+   ASIN: B08QDVHJQX | brand: STONE STREET COFFEE COMPANY
+   Historical rating count: 3216 | rating: 4.4
+   Scanned reviews: 1206 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B08QDVHJQX
+   Image: https://m.media-amazon.com/images/I/61iJ0rAsHsL._SL1000_.jpg
+
+50. Allegro Coffee Organic Italian Roast Ground Coffee, 12 oz
+   ASIN: B0C81F1THL | brand: Allegro Coffee
+   Historical rating count: 3207 | rating: 4.5
+   Scanned reviews: 173 | saved: 100 | review scan complete: True
+   Historical price: 11.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C81F1THL
+   Image: https://m.media-amazon.com/images/I/81lxDPzxW3L._SL1500_.jpg

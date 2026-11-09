@@ -26,9 +26,13 @@ export async function getStaffStores(): Promise<StaffStore[]> {
 }
 
 export async function getStaff(storeId: number, offset: number, limit: number) {
-  return (await request<{ assignments: StaffAssignment[] }>(
+  const result = await request<{ users: (StaffPerson & { role: StaffRole })[] }>(
     `?store_id=${storeId}&offset=${offset}&limit=${limit}`,
-  )).assignments;
+  );
+  if (!Array.isArray(result.users)) {
+    throw new Error("Invalid staff response: expected a users list.");
+  }
+  return result.users.map((person) => ({ ...person, store_id: storeId }));
 }
 
 export async function findStaffCandidates(storeId: number, query: string, offset: number, limit: number): Promise<StaffPerson[]> {

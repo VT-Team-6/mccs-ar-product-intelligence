@@ -1,0 +1,405 @@
+headphones: top 50 seed candidates
+
+Popularity proxy: historical metadata rating count, NOT sales.
+Candidates with archived text reviews rank ahead of metadata-only entries.
+A partial build ranks only the portion scanned; verify variant/package/image before seeding.
+
+1. Apple AirPods (2nd Generation) Wireless Earbuds with Lightning Charging Case Included. Over 24 Hours of Battery Life, Effortless Setup. Bluetooth Headphones for iPhone
+   ASIN: B07PXGQC1Q | brand: Apple
+   Historical rating count: 585624 | rating: 4.7
+   Scanned reviews: 30538 | saved: 100 | review scan complete: True
+   Historical price: 99.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B07PXGQC1Q
+   Image: https://m.media-amazon.com/images/I/61Zh467pKjL._AC_SL1500_.jpg
+
+2. TOZO T10 Bluetooth 5.3 Wireless Earbuds with Wireless Charging Case IPX8 Waterproof Stereo Headphones in Ear Built in Mic Headset Premium Sound with Deep Bass for Sport White (2022 Upgraded)
+   ASIN: B08XPWDSWW | brand: TOZO
+   Historical rating count: 349254 | rating: 4.3
+   Scanned reviews: 72566 | saved: 100 | review scan complete: True
+   Historical price: 21.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08XPWDSWW
+   Image: https://m.media-amazon.com/images/I/61vXJCvt-1L._AC_SL1500_.jpg
+
+3. TOZO T6 True Wireless Earbuds Bluetooth 5.3 Headphones Touch Control with Wireless Charging Case IPX8 Waterproof Stereo Earphones in-Ear Built-in Mic Headset Premium Deep Bass White (2022 Upgraded)
+   ASIN: B08XNCHTCY | brand: TOZO
+   Historical rating count: 249207 | rating: 4.4
+   Scanned reviews: 43463 | saved: 100 | review scan complete: True
+   Historical price: 26.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08XNCHTCY
+   Image: https://m.media-amazon.com/images/I/616dBvcayrL._AC_SL1500_.jpg
+
+4. Apple Lightning to 3.5 mm Headphone Jack Adapter
+   ASIN: B01LXJFMGF | brand: Apple
+   Historical rating count: 223181 | rating: 4.7
+   Scanned reviews: 11233 | saved: 100 | review scan complete: True
+   Historical price: 7.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B01LXJFMGF
+   Image: https://m.media-amazon.com/images/I/31mmFtpMqOL._AC_SL1024_.jpg
+
+5. Apple Lightning to 3.5 mm Headphone Jack Adapter
+   ASIN: B0787QLV3H | brand: Apple
+   Historical rating count: 220437 | rating: 4.7
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: 7.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0787QLV3H
+   Image: https://m.media-amazon.com/images/I/31mmFtpMqOL._AC_SL1024_.jpg
+
+6. Apple EarPods Headphones with Lightning Connector. Microphone with Built-in Remote to Control Music, Phone Calls, and Volume. Wired Earbuds for iPhone
+   ASIN: B01M0GB8CC | brand: Apple
+   Historical rating count: 201075 | rating: 4.6
+   Scanned reviews: 9537 | saved: 100 | review scan complete: True
+   Historical price: 16.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B01M0GB8CC
+   Image: https://m.media-amazon.com/images/I/41-aexp44tL._AC_SL1200_.jpg
+
+7. Panasonic ErgoFit Wired Earbuds, In-Ear Headphones with Microphone and Call Controller, Ergonomic Custom-Fit Earpieces (S/M/L), 3.5mm Jack for Phones and Laptops - RP-TCM125-A (Blue)
+   ASIN: B07S764D9V | brand: Panasonic
+   Historical rating count: 136251 | rating: 4.3
+   Scanned reviews: 55743 | saved: 100 | review scan complete: True
+   Historical price: 13.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07S764D9V
+   Image: https://m.media-amazon.com/images/I/51IjAqbVBrL._AC_SL1500_.jpg
+
+8. OnePlus Bullets Wireless Z2 Bluetooth 5.0 in Ear Earphones, Bombastic Bass – 12.4 mm Drivers, 30 Hrs Battery Life (Magico Black)
+   ASIN: B09XRCVYGC | brand: ONEPLUS
+   Historical rating count: 121313 | rating: 4.2
+   Scanned reviews: 2 | saved: 2 | review scan complete: True
+   Historical price: 52.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B09XRCVYGC
+   Image: https://m.media-amazon.com/images/I/51UhwaQXCpL._AC_SL1500_.jpg
+
+9. Soundcore Anker Life P2 True Wireless Earbuds, Clear Sound, USB C, 40H Playtime, IPX7 Waterproof, Wireless Earphones for Work, Home Office
+   ASIN: B08TMJFSV3 | brand: Soundcore
+   Historical rating count: 117047 | rating: 4.2
+   Scanned reviews: 7438 | saved: 100 | review scan complete: True
+   Historical price: 39.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08TMJFSV3
+   Image: https://m.media-amazon.com/images/I/51jPG1oOQRL._AC_SL1500_.jpg
+
+10. OnePlus Bullets Wireless Z
+   ASIN: B09SQ4QG56 | brand: OnePlus
+   Historical rating count: 110345 | rating: 4.3
+   Scanned reviews: 9 | saved: 9 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B09SQ4QG56
+   Image: https://m.media-amazon.com/images/I/616bhfyXimL._AC_SL1500_.jpg
+
+11. Sony ZX Series Wired On-Ear Headphones with Mic, White MDR-ZX110AP
+   ASIN: B00PKTU83U | brand: Sony
+   Historical rating count: 104579 | rating: 4.5
+   Scanned reviews: 9418 | saved: 100 | review scan complete: True
+   Historical price: 18.25 (not a current store price)
+   Product: https://www.amazon.com/dp/B00PKTU83U
+   Image: https://m.media-amazon.com/images/I/61mH1EqCUBL._AC_SL1500_.jpg
+
+12. Syncwire 3.5mm Aux Cable Auxiliary Audio Cable Male to Male Nylon Braided Headphone Cord (1.6ft/0.5m) Hi-Fi Sound Aux Cord for Car, Headphone, Home Stereos, Speaker, iPhones, iPods, iPad, Echo& More
+   ASIN: B099W77VPG | brand: Syncwire
+   Historical rating count: 104531 | rating: 4.6
+   Scanned reviews: 2393 | saved: 100 | review scan complete: True
+   Historical price: 7.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B099W77VPG
+   Image: https://m.media-amazon.com/images/I/71y-Tu6hvML._AC_SL1500_.jpg
+
+13. Turtle Beach Recon 70 Multiplatform Gaming Headset for Xbox Series X| S, Xbox One, PS5, PS4, PlayStation, Nintendo Switch, Mobile, & PC with 3.5mm-Flip-to-Mute Mic, 40mm Speakers-Blue Camo
+   ASIN: B082R17ZJG | brand: Turtle Beach
+   Historical rating count: 87280 | rating: 4.4
+   Scanned reviews: 3186 | saved: 100 | review scan complete: True
+   Historical price: 39.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B082R17ZJG
+   Image: https://m.media-amazon.com/images/I/81ZgaqUad0L._SL1500_.jpg
+
+14. Samsung Galaxy Buds Plus, True Wireless Earbuds (Wireless Charging Case Included), White – US Version
+   ASIN: B09JF83P1H | brand: SAMSUNG
+   Historical rating count: 85945 | rating: 4.6
+   Scanned reviews: 7812 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B09JF83P1H
+   Image: https://m.media-amazon.com/images/I/41+gbZOQmwS._AC_SL1500_.jpg
+
+15. ZIHNIC Bluetooth Headphones Over-Ear, Foldable Wireless and Wired Stereo Headset Micro SD/TF, FM for Cell Phone,PC,Soft Earmuffs &Light Weight for Prolonged Wearing(Black/Green)
+   ASIN: B08K2S5B88 | brand: ZIHNIC
+   Historical rating count: 73753 | rating: 4.4
+   Scanned reviews: 8019 | saved: 100 | review scan complete: True
+   Historical price: 27.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08K2S5B88
+   Image: https://m.media-amazon.com/images/I/71aZs3vTpuL._AC_SL1500_.jpg
+
+16. Beats Powerbeats Pro Wireless Earbuds - Apple H1 Headphone Chip, Class 1 Bluetooth Headphones, 9 Hours of Listening Time, Sweat Resistant, Built-in Microphone - Ivory
+   ASIN: B0C337TNGS | brand: Beats
+   Historical rating count: 70897 | rating: 4.5
+   Scanned reviews: 8989 | saved: 100 | review scan complete: True
+   Historical price: 199.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C337TNGS
+   Image: https://m.media-amazon.com/images/I/51b2RRA1QRL._AC_SL1500_.jpg
+
+17. TOZO T12 Wireless Earbuds Bluetooth Headphones Premium Fidelity Sound Quality Wireless Charging Case Digital LED Intelligence Display IPX8 Waterproof Earphones Built-in Mic Headset for Sport Blue
+   ASIN: B0BMXP1S36 | brand: TOZO
+   Historical rating count: 70079 | rating: 4.3
+   Scanned reviews: 12800 | saved: 100 | review scan complete: True
+   Historical price: 34.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BMXP1S36
+   Image: https://m.media-amazon.com/images/I/61R+5DbUUbL._AC_SL1500_.jpg
+
+18. Beats Solo3 Wireless On-Ear Headphones - Apple W1 Headphone Chip, Class 1 Bluetooth, 40 Hours of Listening Time, Built-in Microphone - Red (Latest Model)
+   ASIN: B0C337RV7Q | brand: Beats
+   Historical rating count: 67998 | rating: 4.7
+   Scanned reviews: 4387 | saved: 100 | review scan complete: True
+   Historical price: 129.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C337RV7Q
+   Image: https://m.media-amazon.com/images/I/51-CdmhSPLL._AC_SL1000_.jpg
+
+19. Beats Studio Buds – True Wireless Noise Cancelling Earbuds – Compatible with Apple & Android, Built-in Microphone, IPX4 Rating, Sweat Resistant Earphones, Class 1 Bluetooth Headphones - Moon Gray
+   ASIN: B0C338S8M7 | brand: Beats
+   Historical rating count: 67037 | rating: 4.4
+   Scanned reviews: 6874 | saved: 100 | review scan complete: True
+   Historical price: 149.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C338S8M7
+   Image: https://m.media-amazon.com/images/I/41m81cYUgpL._AC_SL1500_.jpg
+
+20. Apple EarPods Headphones with 3.5mm Plug. Microphone with Built-in Remote to Control Music, Phone Calls, and Volume. Wired Earbuds
+   ASIN: B06X16Z7DZ | brand: Apple
+   Historical rating count: 64529 | rating: 4.6
+   Scanned reviews: 3434 | saved: 100 | review scan complete: True
+   Historical price: 16.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B06X16Z7DZ
+   Image: https://m.media-amazon.com/images/I/51Vb60gP5HL._AC_SL1500_.jpg
+
+21. kurdene Bluetooth Wireless Earbuds, S8 Deep Bass Sound 38H Playtime IPX8 Waterproof Earphones Call Clear with Microphone in-Ear Bluetooth Headphones Comfortable for iPhone, Android
+   ASIN: B0BHWYQ47Y | brand: Kurdene
+   Historical rating count: 63672 | rating: 4.3
+   Scanned reviews: 9227 | saved: 100 | review scan complete: True
+   Historical price: 20.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BHWYQ47Y
+   Image: https://m.media-amazon.com/images/I/719OOJkxmrL._AC_SL1500_.jpg
+
+22. Soundcore Anker Life Q20 Hybrid Active Noise Cancelling Headphones, Wireless Over Ear Bluetooth Headphones, 40H Playtime, Hi-Res Audio, Deep Bass, Memory Foam Ear Cups, for Travel, Home Office
+   ASIN: B08PFW1S1V | brand: Soundcore
+   Historical rating count: 63247 | rating: 4.5
+   Scanned reviews: 10955 | saved: 100 | review scan complete: True
+   Historical price: 65.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08PFW1S1V
+   Image: https://m.media-amazon.com/images/I/81f7dBNiZML._AC_SL1500_.jpg
+
+23. Sennheiser Cx 180 Street Ii in-Ear Headphone Black
+   ASIN: B00D75AB6I | brand: Sennheiser
+   Historical rating count: 62456 | rating: 4.2
+   Scanned reviews: 6 | saved: 6 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B00D75AB6I
+   Image: https://m.media-amazon.com/images/I/51j4zZ9eQSL._AC_SL1472_.jpg
+
+24. Bose QuietComfort 35 II Wireless Bluetooth Headphones, Noise-Cancelling, with Alexa Voice Control - Black
+   ASIN: B09KQC7Z4S | brand: Bose
+   Historical rating count: 62404 | rating: 4.7
+   Scanned reviews: 6851 | saved: 100 | review scan complete: True
+   Historical price: 344.78 (not a current store price)
+   Product: https://www.amazon.com/dp/B09KQC7Z4S
+   Image: https://m.media-amazon.com/images/I/81+jNVOUsJL._AC_SL1500_.jpg
+
+25. OneOdio Over Ear Headphone, Wired Bass Headsets with 50mm Driver, Foldable Lightweight Headphones with Shareport and Mic for Recording Monitoring Podcast Guitar PC TV - (Red)
+   ASIN: B091K4WYD1 | brand: OneOdio
+   Historical rating count: 60653 | rating: 4.5
+   Scanned reviews: 10548 | saved: 100 | review scan complete: True
+   Historical price: 32.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B091K4WYD1
+   Image: https://m.media-amazon.com/images/I/81OUu0swm1L._AC_SL1500_.jpg
+
+26. TOZO A1 Mini Wireless Earbuds Bluetooth 5.3 in Ear Light-Weight Headphones Built-in Microphone, IPX5 Waterproof, Immersive Premium Sound Long Distance Connection Headset with Charging Case, Black
+   ASIN: B09PRC3WC5 | brand: TOZO
+   Historical rating count: 57772 | rating: 4.3
+   Scanned reviews: 8221 | saved: 100 | review scan complete: True
+   Historical price: 15.29 (not a current store price)
+   Product: https://www.amazon.com/dp/B09PRC3WC5
+   Image: https://m.media-amazon.com/images/I/71QmCwmm3ML._AC_SL1500_.jpg
+
+27. Sony Mdr Xb-450 Extra Bass Foldable Headphones Black
+   ASIN: B078S34QZD | brand: Sony
+   Historical rating count: 54454 | rating: 4.0
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B078S34QZD
+   Image: https://m.media-amazon.com/images/I/61Wk9UGLaUL._AC_SL1186_.jpg
+
+28. Logitech H390 Wired Headset for PC/Laptop, Stereo Headphones with Noise Cancelling Microphone, USB, In-Line Controls, Works with Chromebook - Black
+   ASIN: B0BS1615YC | brand: Logitech
+   Historical rating count: 51445 | rating: 4.4
+   Scanned reviews: 8988 | saved: 100 | review scan complete: True
+   Historical price: 21.88 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BS1615YC
+   Image: https://m.media-amazon.com/images/I/61CqYq+xwNL._AC_SL1500_.jpg
+
+29. Skullcandy Sesh Evo True Wireless In-Ear Bluetooth Earbuds Compatible with iPhone and Android / Charging Case and Microphone / Great for Gym, Sports, and Gaming IP55 Water Dust Resistant - Black
+   ASIN: B0BXM18YDP | brand: Skullcandy
+   Historical rating count: 51135 | rating: 4.1
+   Scanned reviews: 5735 | saved: 100 | review scan complete: True
+   Historical price: 26.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BXM18YDP
+   Image: https://m.media-amazon.com/images/I/71e5bSW1U9L._AC_SL1500_.jpg
+
+30. Soundcore by Anker Life Q30 Hybrid Active Noise Cancelling Headphones with Multiple Modes, Hi-Res Sound, Custom EQ via App, 40H Playtime, Comfortable Fit, Bluetooth Headphones, Multipoint Connection
+   ASIN: B08VD2NX25 | brand: Soundcore
+   Historical rating count: 50896 | rating: 4.5
+   Scanned reviews: 4079 | saved: 100 | review scan complete: True
+   Historical price: 79.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08VD2NX25
+   Image: https://m.media-amazon.com/images/I/61+WYAjltpL._AC_SL1500_.jpg
+
+31. Sony WH-1000XM4 Wireless Premium Noise Canceling Overhead Headphones with Mic for Phone-Call and Alexa Voice Control, Midnight Blue WH1000XM4
+   ASIN: B08DBDSVBC | brand: Sony
+   Historical rating count: 49487 | rating: 4.7
+   Scanned reviews: 4916 | saved: 100 | review scan complete: True
+   Historical price: 348.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B08DBDSVBC
+   Image: https://m.media-amazon.com/images/I/71x8gW79x-L._AC_SL1500_.jpg
+
+32. Sony WI-XB400 Wireless In-Ear Extra Bass Headset/Headphones with mic for phone call, Black
+   ASIN: B07WXZXWDV | brand: Sony
+   Historical rating count: 48792 | rating: 4.4
+   Scanned reviews: 2303 | saved: 100 | review scan complete: True
+   Historical price: 49.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07WXZXWDV
+   Image: https://m.media-amazon.com/images/I/71JaIPh39SL._AC_SL1500_.jpg
+
+33. Skullcandy Dime True Wireless In-Ear Bluetooth Earbuds Compatible with iPhone and Android / Charging Case and Microphone / Great for Gym, Sports, and Gaming, IPX4 Water Dust Resistant - Grey/Blue
+   ASIN: B0B64W96HW | brand: Skullcandy
+   Historical rating count: 48723 | rating: 4.2
+   Scanned reviews: 3388 | saved: 100 | review scan complete: True
+   Historical price: 18.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B0B64W96HW
+   Image: https://m.media-amazon.com/images/I/71S-iyu1aOL._AC_SL1500_.jpg
+
+34. PowerLocus Bluetooth Over-Ear Headphones, Wireless Stereo Foldable Headphones Wireless and Wired Headsets with Built-in Mic, Micro SD/TF, FM for iPhone/Samsung/iPad/PC (Purple)
+   ASIN: B07CYZGQ12 | brand: PowerLocus
+   Historical rating count: 47958 | rating: 4.4
+   Scanned reviews: 2637 | saved: 100 | review scan complete: True
+   Historical price: 26.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07CYZGQ12
+   Image: https://m.media-amazon.com/images/I/611+v4ct0zL._AC_SL1000_.jpg
+
+35. occiam Wireless Earbuds Bluetooth Headphones 48H Play Back Earphones in Ear Waterproof with Microphone LED Display for Sports Running Workout Pink
+   ASIN: B0C72D4J46 | brand: occiam
+   Historical rating count: 46903 | rating: 4.3
+   Scanned reviews: 14989 | saved: 100 | review scan complete: True
+   Historical price: 25.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C72D4J46
+   Image: https://m.media-amazon.com/images/I/61y3PF0Xi-L._AC_SL1500_.jpg
+
+36. TAGRY Bluetooth Headphones True Wireless Earbuds 60H Playback LED Power Display Earphones with Wireless Charging Case IPX5 Waterproof in-Ear Earbuds with Mic for TV Smart Phone Computer Laptop Sports
+   ASIN: B0BNZ2785V | brand: TAGRY
+   Historical rating count: 44742 | rating: 4.5
+   Scanned reviews: 11790 | saved: 100 | review scan complete: True
+   Historical price: 34.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BNZ2785V
+   Image: https://m.media-amazon.com/images/I/61ZoWE7HFmL._AC_SL1500_.jpg
+
+37. Perytong Sleep Headphones, Bluetooth Sports Headband Headphones with Ultra-Thin HD Stereo Speakers Perfect for Sleeping,Workout,Jogging,Yoga,Insomnia, Air Travel, Meditation
+   ASIN: B094ZNRZMD | brand: Perytong
+   Historical rating count: 44164 | rating: 4.3
+   Scanned reviews: 1265 | saved: 100 | review scan complete: True
+   Historical price: 19.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B094ZNRZMD
+   Image: https://m.media-amazon.com/images/I/61dSl3ndH5L._AC_.jpg
+
+38. Galaxy Buds True Wireless Earbuds (Wireless Charging Case included), Silver â€“ US Version
+   ASIN: B08KRC18S8 | brand: SAMSUNG
+   Historical rating count: 43999 | rating: 4.5
+   Scanned reviews: 7380 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B08KRC18S8
+   Image: https://m.media-amazon.com/images/I/61elMMKR1tL._AC_SL1500_.jpg
+
+39. KLIM Fusion Earbuds with Microphone - New 2023 - Long-Lasting Wired Ear Buds - Innovative: in-Ear with Memory Foam - Earphones with Mic and 3.5mm Jack - Green
+   ASIN: B09D41HQVZ | brand: KLIM
+   Historical rating count: 43473 | rating: 4.2
+   Scanned reviews: 2160 | saved: 100 | review scan complete: True
+   Historical price: 19.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B09D41HQVZ
+   Image: https://m.media-amazon.com/images/I/71vAEFB8kzL._AC_SL1500_.jpg
+
+40. Aftershokz Aeropex Mini (Rebranded as Shokz OpenRun Mini) Bone Conduction Wireless Bluetooth Headphones
+   ASIN: B08BG7J2MN | brand: Aftershokz
+   Historical rating count: 43149 | rating: 4.6
+   Scanned reviews: 5085 | saved: 100 | review scan complete: True
+   Historical price: 169.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B08BG7J2MN
+   Image: https://m.media-amazon.com/images/I/51jnken0iML._AC_SL1500_.jpg
+
+41. Senso Bluetooth Headphones, Best Wireless Sports Earbuds w/Mic IPX7 Waterproof HD Stereo Sweatproof Earphones for Gym Running Workout Noise Cancelling Earphones Earbuds Noise Cancelling Headsets
+   ASIN: B01G8JO5F2 | brand: Senso
+   Historical rating count: 42824 | rating: 4.1
+   Scanned reviews: 27350 | saved: 100 | review scan complete: True
+   Historical price: 24.96 (not a current store price)
+   Product: https://www.amazon.com/dp/B01G8JO5F2
+   Image: https://m.media-amazon.com/images/I/61rlamGMpCL._AC_SL1500_.jpg
+
+42. Senso Bluetooth Headphones, Best Wireless Sports Earbuds w/Mic IPX7 Waterproof HD Stereo Sweatproof Earphones for Gym Running Workout Noise Cancelling Earphones Earbuds Noise Cancelling Headsets
+   ASIN: b01g8jo5f2 | brand: Senso
+   Historical rating count: 42789 | rating: 4.1
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: 24.96 (not a current store price)
+   Product: https://www.amazon.com/dp/b01g8jo5f2
+   Image: https://m.media-amazon.com/images/I/61rlamGMpCL._AC_SL1500_.jpg
+
+43. Skullcandy Sesh True Wireless In-Ear Earbuds - Black
+   ASIN: B09YVBSB87 | brand: Skullcandy
+   Historical rating count: 41627 | rating: 4.1
+   Scanned reviews: 2531 | saved: 100 | review scan complete: True
+   Historical price: 46.53 (not a current store price)
+   Product: https://www.amazon.com/dp/B09YVBSB87
+   Image: https://m.media-amazon.com/images/I/61JkehVr4WL._AC_SL1500_.jpg
+
+44. Bose SoundSport, Wireless Earbuds, (Sweatproof Bluetooth Headphones for Running and Sports), Black
+   ASIN: B0B62FJF1J | brand: Bose
+   Historical rating count: 39355 | rating: 4.4
+   Scanned reviews: 6825 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0B62FJF1J
+   Image: https://m.media-amazon.com/images/I/61j6ZKGcXrL._AC_SL1500_.jpg
+
+45. Bose SoundSport Free, True Wireless Earbuds, (Sweatproof Bluetooth Headphones for Workouts and Sports), Midnight Blue / Citron
+   ASIN: B074F3YW3R | brand: Bose
+   Historical rating count: 39305 | rating: 4.3
+   Scanned reviews: 5749 | saved: 100 | review scan complete: True
+   Historical price: 222.93 (not a current store price)
+   Product: https://www.amazon.com/dp/B074F3YW3R
+   Image: https://m.media-amazon.com/images/I/61Bx0jEMbnL._AC_SL1500_.jpg
+
+46. Apple AirPods (3rd Generation) Wireless Earbuds with MagSafe Charging Case. Spatial Audio, Sweat and Water Resistant, Up to 30 Hours of Battery Life. Bluetooth Headphones for iPhone
+   ASIN: B0BDMZ1DJ8 | brand: Apple
+   Historical rating count: 39126 | rating: 4.6
+   Scanned reviews: 2620 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0BDMZ1DJ8
+   Image: https://m.media-amazon.com/images/I/61ZRU9gnbxL._AC_SL1500_.jpg
+
+47. UGREEN 3.5mm to RCA Cable, 10FT RCA Male to Aux Audio Adapter HiFi Sound Headphone Jack Adapter Metal Shell RCA Y Splitter RCA Auxiliary Cord 1/8 to RCA Connector for Phone Speaker MP3 Tablet HDTV
+   ASIN: B0819W2H7V | brand: UGREEN
+   Historical rating count: 38947 | rating: 4.7
+   Scanned reviews: 1508 | saved: 100 | review scan complete: True
+   Historical price: 11.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0819W2H7V
+   Image: https://m.media-amazon.com/images/I/61SzG6hIeHL._AC_SL1500_.jpg
+
+48. LUDOS Clamor Wired Earbuds in Ear, Noise Isolating Headphones with Microphone, 3.5mm Jack Plug, Mic and Volume Control, Memory Foam, Deep Bass, Tangle-Free Cord - Purple
+   ASIN: B0BZ49NHW2 | brand: LUDOS
+   Historical rating count: 37573 | rating: 4.3
+   Scanned reviews: 3932 | saved: 100 | review scan complete: True
+   Historical price: 19.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BZ49NHW2
+   Image: https://m.media-amazon.com/images/I/61oaJM9BbuL._AC_SL1500_.jpg
+
+49. Kids Headphones - noot products K11 Foldable Stereo Tangle-Free 3.5mm Jack Wired Cord On-Ear Headset for Children/Teens/Boys/Girls/Smartphones/School/Kindle/Airplane Travel/Plane/Tablet (Navy/Teal)
+   ASIN: B0787KLT56 | brand: Noot products
+   Historical rating count: 36459 | rating: 4.7
+   Scanned reviews: 3792 | saved: 100 | review scan complete: True
+   Historical price: 16.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0787KLT56
+   Image: https://m.media-amazon.com/images/I/715Sv8XftgL._AC_SL1500_.jpg
+
+50. Sony Wireless Headphones WH-CH510: Wireless Bluetooth On-Ear Headset with Mic for phone-call, Blue
+   ASIN: B0BNC1QBH6 | brand: Sony
+   Historical rating count: 36452 | rating: 4.5
+   Scanned reviews: 2220 | saved: 100 | review scan complete: True
+   Historical price: 59.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BNC1QBH6
+   Image: https://m.media-amazon.com/images/I/81H0JaAaVNL._AC_SL1500_.jpg

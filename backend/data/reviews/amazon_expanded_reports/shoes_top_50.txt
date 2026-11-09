@@ -1,0 +1,405 @@
+shoes: top 50 seed candidates
+
+Popularity proxy: historical metadata rating count, NOT sales.
+Candidates with archived text reviews rank ahead of metadata-only entries.
+A partial build ranks only the portion scanned; verify variant/package/image before seeding.
+
+1. Crocs Unisex-Adult Classic Clog
+   ASIN: B08513YB2T | brand: Crocs
+   Historical rating count: 408371 | rating: 4.8
+   Scanned reviews: 35426 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B08513YB2T
+   Image: https://m.media-amazon.com/images/I/517mUYNWS0L._AC_UL1000_.jpg
+
+2. Crocs Men's and Women's Crocband Clog
+   ASIN: B00591TLWS | brand: Crocs
+   Historical rating count: 136360 | rating: 4.6
+   Scanned reviews: 344 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B00591TLWS
+   Image: https://m.media-amazon.com/images/I/81MROkpW7IL._AC_UL1500_.jpg
+
+3. Crocs Men's and Women's Crocband Clog
+   ASIN: B0922DBSLN | brand: Crocs
+   Historical rating count: 136296 | rating: 4.6
+   Scanned reviews: 15763 | saved: 100 | review scan complete: True
+   Historical price: 49.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0922DBSLN
+   Image: https://m.media-amazon.com/images/I/61hq-gSDqwL._AC_UL1500_.jpg
+
+4. RockDove Men's Original Two-Tone Memory Foam Slipper
+   ASIN: B09DTQXJDP | brand: RockDove
+   Historical rating count: 125407 | rating: 4.5
+   Scanned reviews: 15031 | saved: 100 | review scan complete: True
+   Historical price: 23.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B09DTQXJDP
+   Image: https://m.media-amazon.com/images/I/71gFrLtXhoL._AC_UL1500_.jpg
+
+5. Hey Dude Women's Wendy Lace-Up Loafers Comfortable & Lightweight Ladies Shoes Multiple Sizes & Colors
+   ASIN: B0956QHMH9 | brand: Hey Dude
+   Historical rating count: 120527 | rating: 4.7
+   Scanned reviews: 21 | saved: 21 | review scan complete: True
+   Historical price: 54.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0956QHMH9
+   Image: https://m.media-amazon.com/images/I/81ga1JkO88L._AC_UL1500_.jpg
+
+6. Hey Dude Women's Wendy Lace-Up Loafers Comfortable & Lightweight Ladies Shoes Multiple Sizes & Colors
+   ASIN: B07PBR5X51 | brand: Hey Dude
+   Historical rating count: 118988 | rating: 4.7
+   Scanned reviews: 5008 | saved: 100 | review scan complete: True
+   Historical price: 55.21 (not a current store price)
+   Product: https://www.amazon.com/dp/B07PBR5X51
+   Image: https://m.media-amazon.com/images/I/61gmmixB4YS._AC_UL1024_.jpg
+
+7. adidas Men's Adilette Shower Slide
+   ASIN: B07FDB7GMZ | brand: adidas
+   Historical rating count: 109066 | rating: 4.5
+   Scanned reviews: 8338 | saved: 100 | review scan complete: True
+   Historical price: 28.82 (not a current store price)
+   Product: https://www.amazon.com/dp/B07FDB7GMZ
+   Image: https://m.media-amazon.com/images/I/71Edj0+FvgL._AC_UL1500_.jpg
+
+8. Hey Dude Wally Men's & Women's Loafers | Men's Slip On Shoes | Women's Slip On Shoes | Comfortable & Light-Weight
+   ASIN: B09S75JGF2 | brand: Hey Dude
+   Historical rating count: 81099 | rating: 4.7
+   Scanned reviews: 15631 | saved: 100 | review scan complete: True
+   Historical price: 42.92 (not a current store price)
+   Product: https://www.amazon.com/dp/B09S75JGF2
+   Image: https://m.media-amazon.com/images/I/81vanN8v+bL._AC_UL1500_.jpg
+
+9. adidas Performance Women's Cloudfoam Pure Running Shoe, Carbon/Carbon, 8.5 M US
+   ASIN: B07288YT4F | brand: adidas
+   Historical rating count: 80970 | rating: 4.5
+   Scanned reviews: 22 | saved: 22 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B07288YT4F
+   Image: https://m.media-amazon.com/images/I/817uiaQFrJL._AC_UL1500_.jpg
+
+10. Crocs Unisex-Adult Classic Tie Dye Clogs
+   ASIN: B0BKL2R1WX | brand: Crocs
+   Historical rating count: 80946 | rating: 4.8
+   Scanned reviews: 7347 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0BKL2R1WX
+   Image: https://m.media-amazon.com/images/I/81x4-cj0FuL._AC_UL1500_.jpg
+
+11. adidas Women's Cloudfoam Pure 2.0 Running Shoe
+   ASIN: B0C4YJGPTQ | brand: adidas
+   Historical rating count: 80721 | rating: 4.5
+   Scanned reviews: 7698 | saved: 100 | review scan complete: True
+   Historical price: 49.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C4YJGPTQ
+   Image: https://m.media-amazon.com/images/I/71jWRPg0JEL._AC_UL1500_.jpg
+
+12. Skechers Women's Go Joy Walking Shoe Sneaker
+   ASIN: B078GSXGWZ | brand: Skechers
+   Historical rating count: 77251 | rating: 4.5
+   Scanned reviews: 10489 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B078GSXGWZ
+   Image: https://m.media-amazon.com/images/I/61xFjBcq2UL._AC_UL1200_.jpg
+
+13. UMYOGO Women's Running Shoes Non Slip Athletic Tennis Walking Blade Type Sneakers
+   ASIN: B0BYYRF8NZ | brand: UMYOGO
+   Historical rating count: 76160 | rating: 4.2
+   Scanned reviews: 9412 | saved: 100 | review scan complete: True
+   Historical price: 36.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BYYRF8NZ
+   Image: https://m.media-amazon.com/images/I/818DNXj-z1L._AC_UL1500_.jpg
+
+14. Vans Womens Range EXP Suede Canvas Low Rise Trainers
+   ASIN: B0CG2GLL75 | brand: Vans
+   Historical rating count: 72964 | rating: 4.7
+   Scanned reviews: 3 | saved: 3 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0CG2GLL75
+   Image: https://m.media-amazon.com/images/I/7109Qe2QRiL._AC_UL1500_.jpg
+
+15. Hey Dude Men's Wally Multiple Colors | Men's Loafer Shoes | Light-Weight & Comfortable
+   ASIN: B082X5VD21 | brand: Hey Dude
+   Historical rating count: 70917 | rating: 4.7
+   Scanned reviews: 2359 | saved: 100 | review scan complete: True
+   Historical price: 58.79 (not a current store price)
+   Product: https://www.amazon.com/dp/B082X5VD21
+   Image: https://m.media-amazon.com/images/I/81v0xWZbQKL._AC_UL1500_.jpg
+
+16. Hey Dude Men's Wally Multiple Colors | Men's Loafer Shoes | Light-Weight & Comfortable
+   ASIN: B0B8P5MXN6 | brand: Hey Dude
+   Historical rating count: 70917 | rating: 4.7
+   Scanned reviews: 589 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0B8P5MXN6
+   Image: https://m.media-amazon.com/images/I/51-IHlh85xL._AC_UL1024_.jpg
+
+17. Skechers Men's Afterburn Memory-Foam Lace-up Sneaker
+   ASIN: B00DJSRER2 | brand: Skechers
+   Historical rating count: 67269 | rating: 4.4
+   Scanned reviews: 16176 | saved: 100 | review scan complete: True
+   Historical price: 45.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B00DJSRER2
+   Image: https://m.media-amazon.com/images/I/81d5u6zG-EL._AC_UL1500_.jpg
+
+18. STQ Slip On Breathe Mesh Walking Shoes Women Fashion Sneakers Comfort Wedge Platform Loafers
+   ASIN: B09P65M64Z | brand: STQ
+   Historical rating count: 67115 | rating: 4.1
+   Scanned reviews: 11046 | saved: 100 | review scan complete: True
+   Historical price: 31.15 (not a current store price)
+   Product: https://www.amazon.com/dp/B09P65M64Z
+   Image: https://m.media-amazon.com/images/I/61xOletpQML._AC_UL1001_.jpg
+
+19. Converse Unisex Chuck Taylor Classic Colors Sneaker
+   ASIN: B08F7BZZJL | brand: Converse
+   Historical rating count: 66965 | rating: 4.6
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: 73.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B08F7BZZJL
+   Image: https://m.media-amazon.com/images/I/71Iye5OvWIL._AC_UL1500_.jpg
+
+20. CUSHIONAIRE Women's Luna Cork footbed Sandal with +Comfort
+   ASIN: B073XLK7FF | brand: CUSHIONAIRE
+   Historical rating count: 66589 | rating: 4.5
+   Scanned reviews: 8562 | saved: 100 | review scan complete: True
+   Historical price: 29.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B073XLK7FF
+   Image: https://m.media-amazon.com/images/I/71fJ6Hye4VL._AC_UL1500_.jpg
+
+21. New Balance Men's 608 V5 Casual Comfort Cross Trainer
+   ASIN: B093XKL7WZ | brand: New Balance
+   Historical rating count: 66365 | rating: 4.6
+   Scanned reviews: 9823 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B093XKL7WZ
+   Image: https://m.media-amazon.com/images/I/81oi78A3s+S._AC_UL1500_.jpg
+
+22. Hey Dude Women's Wendy Sox | Women’s Shoes | Women’s Lace Up Loafers | Comfortable & Light-Weight
+   ASIN: B0B7M57BYD | brand: Hey Dude
+   Historical rating count: 65417 | rating: 4.7
+   Scanned reviews: 10130 | saved: 100 | review scan complete: True
+   Historical price: 40.47 (not a current store price)
+   Product: https://www.amazon.com/dp/B0B7M57BYD
+   Image: https://m.media-amazon.com/images/I/71AeS7yldkS._AC_UL1024_.jpg
+
+23. Amazon Essentials Women's Belice Ballet Flat
+   ASIN: B093QNR84N | brand: Amazon Essentials
+   Historical rating count: 65317 | rating: 4.3
+   Scanned reviews: 6327 | saved: 100 | review scan complete: True
+   Historical price: 23.8 (not a current store price)
+   Product: https://www.amazon.com/dp/B093QNR84N
+   Image: https://m.media-amazon.com/images/I/61LXr87tpJL._AC_UL1500_.jpg
+
+24. adidas Unisex-Adult Adilette Aqua Slides Sandal, 38 EU
+   ASIN: B07K2LP5BQ | brand: adidas
+   Historical rating count: 62515 | rating: 4.5
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B07K2LP5BQ
+   Image: https://m.media-amazon.com/images/I/51fFP8o2YWL._AC_UL1500_.jpg
+
+25. Converse Women's X Keith Haring Run Star Hike High Top Sneakers
+   ASIN: B000LXNQGQ | brand: Converse
+   Historical rating count: 61905 | rating: 4.5
+   Scanned reviews: 1239 | saved: 100 | review scan complete: True
+   Historical price: 64.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B000LXNQGQ
+   Image: https://m.media-amazon.com/images/I/71ptMvS5sWL._AC_UL1500_.jpg
+
+26. Timberland Men's White Ledge Mid Waterproof Hiking Boot
+   ASIN: B0C62MD9JY | brand: Timberland
+   Historical rating count: 61812 | rating: 4.5
+   Scanned reviews: 14123 | saved: 100 | review scan complete: True
+   Historical price: 99.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C62MD9JY
+   Image: https://m.media-amazon.com/images/I/71buyf6cFTL._AC_UL1500_.jpg
+
+27. New Balance Women's Sneaker
+   ASIN: B098Y68NJV | brand: New Balance
+   Historical rating count: 59552 | rating: 4.4
+   Scanned reviews: 8744 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B098Y68NJV
+   Image: https://m.media-amazon.com/images/I/71vqPVJQFqL._AC_UL1500_.jpg
+
+28. FUNKYMONKEY Women's Comfort Slides Double Buckle Adjustable EVA Flat Sandals
+   ASIN: B089Y37G5Y | brand: FUNKYMONKEY
+   Historical rating count: 59493 | rating: 4.2
+   Scanned reviews: 9310 | saved: 100 | review scan complete: True
+   Historical price: 15.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B089Y37G5Y
+   Image: https://m.media-amazon.com/images/I/51tG1HQwxuL._AC_UL1000_.jpg
+
+29. Hudson Baby Unisex-Baby Cozy Fleece Booties
+   ASIN: B08ZVF3LJT | brand: Hudson Baby
+   Historical rating count: 59223 | rating: 4.8
+   Scanned reviews: 6025 | saved: 100 | review scan complete: True
+   Historical price: 10.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B08ZVF3LJT
+   Image: https://m.media-amazon.com/images/I/61Np9VOg7tL._AC_UL1020_.jpg
+
+30. Under Armour Men's Ignite Vi Slide Sandal
+   ASIN: B09LRW2SX1 | brand: Under Armour
+   Historical rating count: 57897 | rating: 4.6
+   Scanned reviews: 4372 | saved: 100 | review scan complete: True
+   Historical price: 22.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B09LRW2SX1
+   Image: https://m.media-amazon.com/images/I/61tkAud+xhL._AC_UL1500_.jpg
+
+31. PUMA Unisex Adults Smash V2 L Low-Top Sneakers
+   ASIN: B07H2JRJ9B | brand: PUMA
+   Historical rating count: 56661 | rating: 4.4
+   Scanned reviews: 2 | saved: 2 | review scan complete: True
+   Historical price: 69.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B07H2JRJ9B
+   Image: https://m.media-amazon.com/images/I/61hvSySiwqL._AC_UL1500_.jpg
+
+32. SoundAsleep Dream Series Luxury Air Mattress with ComfortCoil Technology & Built-in High Capacity Pump for Home & Camping- Double Height, Adjustable, Inflatable Blow Up, Portable - Twin Size
+   ASIN: B07BQRWTDJ | brand: SoundAsleep Products
+   Historical rating count: 54287 | rating: 4.4
+   Scanned reviews: 23638 | saved: 100 | review scan complete: True
+   Historical price: 114.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B07BQRWTDJ
+   Image: https://m.media-amazon.com/images/I/71uUW4NN0XL._AC_SL1500_.jpg
+
+33. CONNOISSEURS Premium Edition Jewelry Cleaner Solution Pick from Delicate, Fine or Silver Jewelry Cleaner, Value Size, 9.6 Ounce
+   ASIN: B0BYTLPZ94 | brand: CONNOISSEURS
+   Historical rating count: 54246 | rating: 4.5
+   Scanned reviews: 3227 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0BYTLPZ94
+   Image: https://m.media-amazon.com/images/I/51RZfaFFPGL._AC_UL1000_.jpg
+
+34. PUMA Men's Tazon 6 Sneaker
+   ASIN: B0BFS4M54V | brand: PUMA
+   Historical rating count: 52833 | rating: 4.5
+   Scanned reviews: 7035 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0BFS4M54V
+   Image: https://m.media-amazon.com/images/I/71SG-k3BJlL._AC_UL1500_.jpg
+
+35. CUSHIONAIRE Women's Lane Cork Footbed Sandal with +Comfort
+   ASIN: B07PMF9392 | brand: CUSHIONAIRE
+   Historical rating count: 52270 | rating: 4.5
+   Scanned reviews: 6119 | saved: 100 | review scan complete: True
+   Historical price: 29.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07PMF9392
+   Image: https://m.media-amazon.com/images/I/51maAnSoW7L._AC_UL1224_.jpg
+
+36. Skechers Women's Summits Sneaker
+   ASIN: B0BWJ8YJFF | brand: Skechers
+   Historical rating count: 51654 | rating: 4.5
+   Scanned reviews: 3639 | saved: 100 | review scan complete: True
+   Historical price: 44.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BWJ8YJFF
+   Image: https://m.media-amazon.com/images/I/71x95u+rOHL._AC_UL1500_.jpg
+
+37. Wrangler Men's Relaxed Fit Boot Cut Jean
+   ASIN: B076HBFTYR | brand: Wrangler
+   Historical rating count: 50227 | rating: 4.6
+   Scanned reviews: 4246 | saved: 100 | review scan complete: True
+   Historical price: 30.96 (not a current store price)
+   Product: https://www.amazon.com/dp/B076HBFTYR
+   Image: https://m.media-amazon.com/images/I/71qxXvfh7TL._AC_UL1500_.jpg
+
+38. Weiman Fine Jewelry Cleaner Liquid with Cleaning Brush – Restores Shine & Brilliance to Gold, Platinum, Precious Gemstones & Diamond Jewelry, 6 Oz
+   ASIN: B002YC83MO | brand: Weiman
+   Historical rating count: 49779 | rating: 4.4
+   Scanned reviews: 2434 | saved: 100 | review scan complete: True
+   Historical price: 8.07 (not a current store price)
+   Product: https://www.amazon.com/dp/B002YC83MO
+   Image: https://m.media-amazon.com/images/I/71V9LaLOzkL._SL1500_.jpg
+
+39. CONNOISSEURS Diamond Dazzle Stik - Portable Diamond Cleaner for Rings and Other Jewelry - Bring Out The Sparkle in Your Precious Stones
+   ASIN: B09ZVK34DX | brand: CONNOISSEURS
+   Historical rating count: 49572 | rating: 4.6
+   Scanned reviews: 6760 | saved: 100 | review scan complete: True
+   Historical price: 24.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B09ZVK34DX
+   Image: https://m.media-amazon.com/images/I/619wrP3GmYL._AC_UL1500_.jpg
+
+40. Under Armour Men's Charged Assert 8 Running Shoe
+   ASIN: B07WHBP9NK | brand: Under Armour
+   Historical rating count: 49236 | rating: 4.6
+   Scanned reviews: 4367 | saved: 100 | review scan complete: True
+   Historical price: 64.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07WHBP9NK
+   Image: https://m.media-amazon.com/images/I/81r03Ch-VtL._AC_UL1500_.jpg
+
+41. Skechers BOBS Women's Keepsakes - Ice Angel Slipper
+   ASIN: B093T7CCCF | brand: Skechers
+   Historical rating count: 48513 | rating: 4.6
+   Scanned reviews: 8222 | saved: 100 | review scan complete: True
+   Historical price: 49.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B093T7CCCF
+   Image: https://m.media-amazon.com/images/I/81CC6SIIKhS._AC_UL1500_.jpg
+
+42. ULTRAIDEAS Women's Fuzzy Wool-Like House Shoes with Memory Foam, Gift for Women, Ladies Slippers with Indoor &Outdoor Anti-Skid Rubber Sole
+   ASIN: B0C4LT6VYD | brand: ULTRAIDEAS
+   Historical rating count: 48149 | rating: 4.6
+   Scanned reviews: 5897 | saved: 100 | review scan complete: True
+   Historical price: 24.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C4LT6VYD
+   Image: https://m.media-amazon.com/images/I/61uLkbEsAaL._AC_UL1500_.jpg
+
+43. EnerPlex Air Mattress with Built-in Pump - Double Height Inflatable Mattress for Camping, Home & Portable Travel - Durable Blow Up Bed with Dual Pump - Easy to Inflate/Quick Set UP
+   ASIN: B09ZVKVXDT | brand: EnerPlex
+   Historical rating count: 48113 | rating: 4.5
+   Scanned reviews: 6549 | saved: 100 | review scan complete: True
+   Historical price: 48.05 (not a current store price)
+   Product: https://www.amazon.com/dp/B09ZVKVXDT
+   Image: https://m.media-amazon.com/images/I/71AYJJkbdhL._AC_SL1500_.jpg
+
+44. Crocs Men's and Women's Literide Clog
+   ASIN: B097P2S3J7 | brand: Crocs
+   Historical rating count: 47544 | rating: 4.7
+   Scanned reviews: 2348 | saved: 100 | review scan complete: True
+   Historical price: 34.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B097P2S3J7
+   Image: https://m.media-amazon.com/images/I/714rhg0jHlL._AC_UL1500_.jpg
+
+45. Havaianas Unisex Flip Flops
+   ASIN: B06XR2M6HY | brand: Havaianas
+   Historical rating count: 45861 | rating: 4.4
+   Scanned reviews: 149 | saved: 100 | review scan complete: True
+   Historical price: 30.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B06XR2M6HY
+   Image: https://m.media-amazon.com/images/I/71GruFqyu0L._AC_UL1500_.jpg
+
+46. New Balance Men's 574 V2 Evergreen Sneaker
+   ASIN: B07KYSSC9C | brand: New Balance
+   Historical rating count: 45468 | rating: 4.6
+   Scanned reviews: 1206 | saved: 100 | review scan complete: True
+   Historical price: 84.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07KYSSC9C
+   Image: https://m.media-amazon.com/images/I/71LPl8KiLWL._AC_UL1500_.jpg
+
+47. adidas Women's Adilette Aqua Slides Sandal
+   ASIN: B07ZSBGJVQ | brand: adidas
+   Historical rating count: 45326 | rating: 4.5
+   Scanned reviews: 2 | saved: 2 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B07ZSBGJVQ
+   Image: https://m.media-amazon.com/images/I/715TyZQb5EL._AC_UL1500_.jpg
+
+48. AEROTHOTIC Women's Comfortable Arch Support Summer Orthotic Thong Sandals
+   ASIN: B07W5J6XMP | brand: AEROTHOTIC
+   Historical rating count: 45223 | rating: 4.3
+   Scanned reviews: 10715 | saved: 100 | review scan complete: True
+   Historical price: 39.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07W5J6XMP
+   Image: https://m.media-amazon.com/images/I/71dWaera2gS._AC_UL1500_.jpg
+
+49. Clarks Women's Breeze Sea
+   ASIN: B0919BWYBT | brand: Clarks
+   Historical rating count: 44760 | rating: 4.7
+   Scanned reviews: 300 | saved: 100 | review scan complete: True
+   Historical price: 44.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0919BWYBT
+   Image: https://m.media-amazon.com/images/I/71WgZP4rxEL._AC_UL1500_.jpg
+
+50. ASICS Women's Gel-Venture 7 Running Shoes
+   ASIN: B08M56835J | brand: ASICS
+   Historical rating count: 44211 | rating: 4.5
+   Scanned reviews: 5544 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B08M56835J
+   Image: https://m.media-amazon.com/images/I/61-58lf4H3L._AC_UL1200_.jpg

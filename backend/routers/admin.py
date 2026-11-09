@@ -158,9 +158,12 @@ def get_staff_options(user=Depends(require_staff_manager)):
             (all_stores, store_ids),
         ).fetchall()
 
+    allowed_roles = _allowed_roles(user)
     return {
-        "allowed_roles": _allowed_roles(user),
-        "stores": stores,
+        "stores": [
+            {**store, "allowed_roles": allowed_roles}
+            for store in stores
+        ],
     }
 
 @router.get("/staff/candidates", response_model=StaffUserResults)

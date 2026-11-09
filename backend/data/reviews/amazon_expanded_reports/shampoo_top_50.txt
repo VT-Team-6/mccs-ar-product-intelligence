@@ -1,0 +1,405 @@
+shampoo: top 50 seed candidates
+
+Popularity proxy: historical metadata rating count, NOT sales.
+Candidates with archived text reviews rank ahead of metadata-only entries.
+A partial build ranks only the portion scanned; verify variant/package/image before seeding.
+
+1. Nizoral Anti-Dandruff Shampoo with 1% Ketoconazole, Fresh Scent, 7 Fl Oz
+   ASIN: B00EFM2SNG | brand: Nizoral
+   Historical rating count: 83242 | rating: 4.6
+   Scanned reviews: 35 | saved: 35 | review scan complete: True
+   Historical price: 15.88 (not a current store price)
+   Product: https://www.amazon.com/dp/B00EFM2SNG
+   Image: https://m.media-amazon.com/images/I/71+CaUj9EtL._SL1500_.jpg
+
+2. Nizoral Anti-Dandruff Shampoo with 1% Ketoconazole, Fresh Scent, 7 Fl Oz
+   ASIN: B00CAX7WII | brand: Nizoral
+   Historical rating count: 82546 | rating: 4.6
+   Scanned reviews: 5 | saved: 5 | review scan complete: True
+   Historical price: 15.54 (not a current store price)
+   Product: https://www.amazon.com/dp/B00CAX7WII
+   Image: https://m.media-amazon.com/images/I/71+CaUj9EtL._SL1500_.jpg
+
+3. Olaplex No. 4C Bond Maintenance Clarifying Shampoo, 250 milliliters
+   ASIN: B0B4BG3HPM | brand: Olaplex
+   Historical rating count: 67799 | rating: 4.7
+   Scanned reviews: 37 | saved: 36 | review scan complete: True
+   Historical price: 30.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B0B4BG3HPM
+   Image: https://m.media-amazon.com/images/I/61rBlAGTVNL._SL1500_.jpg
+
+4. Fanola No Yellow Shampoo 11.8 oz - Color Depositing Purple Shampoo for Blonde, Silver, Gray, and Highlighted Hair - Anti Brass Shampoo Toner to Remove Yellow Tones & Brassiness from Bleached Hair
+   ASIN: B00RWCDM4A | brand: Fanola
+   Historical rating count: 57614 | rating: 4.5
+   Scanned reviews: 5278 | saved: 100 | review scan complete: True
+   Historical price: 14.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B00RWCDM4A
+   Image: https://m.media-amazon.com/images/I/61T4UGoJc3L._SL1500_.jpg
+
+5. EcoTools Makeup Brush and Sponge Shampoo, Removes Makeup, Dirt, & Impurities From Makeup Brushes & Beauty Sponges, Fragrance-Free, Vegan, & Cruelty-Free, 6 fl.oz./ 177 ml, Packaging May Vary, 1 Count
+   ASIN: B0BZZWK5X6 | brand: EcoTools
+   Historical rating count: 51500 | rating: 4.6
+   Scanned reviews: 390 | saved: 100 | review scan complete: True
+   Historical price: 6.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BZZWK5X6
+   Image: https://m.media-amazon.com/images/I/614DjW+jVuL._SL1500_.jpg
+
+6. Biotin Hair Shampoo for Thinning Hair - Volumizing Biotin Shampoo for Men and Womens Dry Damaged Hair - Sulfate Free Shampoo with Biotin and Moisturizing Essential Oils over 95% Natural Derived
+   ASIN: B0C8BM1HGR | brand: Maple Holistics
+   Historical rating count: 39255 | rating: 4.3
+   Scanned reviews: 770 | saved: 100 | review scan complete: True
+   Historical price: 11.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C8BM1HGR
+   Image: https://m.media-amazon.com/images/I/61ph6yg1xCL._SL1500_.jpg
+
+7. Mamaearth Onion Hair Fall Shampoo for Hair Growth & Hair Fall Control, with Onion Oil & Plant Keratin 250ml
+   ASIN: B07WHJ5X6Q | brand: MAMAEARTH
+   Historical rating count: 33433 | rating: 4.0
+   Scanned reviews: 15 | saved: 15 | review scan complete: True
+   Historical price: 15.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B07WHJ5X6Q
+   Image: https://m.media-amazon.com/images/I/513nPRdxuQL._SL1200_.jpg
+
+8. WOW Skin Science Red Onion Black Seed Oil Shampoo with Red Onion Seed Oil Extract, Black Seed Oil & Pro-Vitamin B5 - No Parabens, Sulphates, Silicones, Color & PEG - 300ml
+   ASIN: B07YNHHH5N | brand: WOW Skin Science
+   Historical rating count: 28983 | rating: 3.9
+   Scanned reviews: 8 | saved: 8 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B07YNHHH5N
+   Image: https://m.media-amazon.com/images/I/7187Bk9eobL._SL1500_.jpg
+
+9. PURA D'OR Original Gold Label Anti-Thinning Biotin Shampoo Natural Earthy Scent,Clinically Tested Proven Results,Herbal DHT Blocker Hair Thickening Products For Women & Men,Color Treated Hair,16oz
+   ASIN: B0BV3W4JXS | brand: PURA D'OR
+   Historical rating count: 25999 | rating: 4.3
+   Scanned reviews: 259 | saved: 100 | review scan complete: True
+   Historical price: 29.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BV3W4JXS
+   Image: https://m.media-amazon.com/images/I/71cFWxqUicL._SL1500_.jpg
+
+10. Neutrogena T/Gel Therapeutic Shampoo Original Formula, Anti-Dandruff Treatment for Long-Lasting Relief of Itching and Flaking Scalp as a Result of Psoriasis and Seborrheic Dermatitis, 16 Fl Oz
+   ASIN: B0009KN8UA | brand: Neutrogena
+   Historical rating count: 22704 | rating: 4.6
+   Scanned reviews: 97 | saved: 97 | review scan complete: True
+   Historical price: 16.89 (not a current store price)
+   Product: https://www.amazon.com/dp/B0009KN8UA
+   Image: https://m.media-amazon.com/images/I/61HmsyqnxIL._SL1500_.jpg
+
+11. Johnson's Baby Curl-Defining, Frizz Control, Tear-Free Kids' Shampoo with Shea Butter, Paraben-, Sulfate- & Dye-Free Formula, Hypoallergenic & Gentle for Toddler's Hair, 13.6 Fl Oz
+   ASIN: B07NNNVMVV | brand: Johnson's Baby
+   Historical rating count: 19335 | rating: 4.7
+   Scanned reviews: 2078 | saved: 100 | review scan complete: True
+   Historical price: 5.96 (not a current store price)
+   Product: https://www.amazon.com/dp/B07NNNVMVV
+   Image: https://m.media-amazon.com/images/I/71D5siu051L._AC_SL1500_.jpg
+
+12. SheaMoisture Shampoo Curl and Shine for Curly Hair Coconut and Hibiscus Paraben Free Shampoo 13 oz
+   ASIN: B0BQ3ZV8ZH | brand: SheaMoisture
+   Historical rating count: 19169 | rating: 4.5
+   Scanned reviews: 892 | saved: 100 | review scan complete: True
+   Historical price: 10.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BQ3ZV8ZH
+   Image: https://m.media-amazon.com/images/I/81pvCwITKYL._SL1500_.jpg
+
+13. Nizoral AD AntiDandruff Shampoo, Fresh, 4 Fl Oz
+   ASIN: B0000Y3CRY | brand: Nizoral
+   Historical rating count: 18670 | rating: 4.6
+   Scanned reviews: 71 | saved: 71 | review scan complete: True
+   Historical price: 11.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B0000Y3CRY
+   Image: https://m.media-amazon.com/images/I/71SatjdKOlL._SL1500_.jpg
+
+14. Garnier Fructis Pure Clean Purifying Shampoo, Silicone-Free, 12.5 Fl Oz, 1 Count (Packaging May Vary)
+   ASIN: B01N97PCBH | brand: L’Oréal Paris
+   Historical rating count: 18382 | rating: 4.5
+   Scanned reviews: 897 | saved: 100 | review scan complete: True
+   Historical price: 2.82 (not a current store price)
+   Product: https://www.amazon.com/dp/B01N97PCBH
+   Image: https://m.media-amazon.com/images/I/71YwwbezQRL._SL1500_.jpg
+
+15. Renpure Originals Biotin & Collagen Thickening Shampoo, 32 Fl Oz (Pack of 1)
+   ASIN: B00TYAGMP4 | brand: RENPURE
+   Historical rating count: 16748 | rating: 4.4
+   Scanned reviews: 1242 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B00TYAGMP4
+   Image: https://m.media-amazon.com/images/I/715s64dehIL._SL1500_.jpg
+
+16. Selsun Blue Medicated Anti-dandruff Shampoo with Menthol, 11 fl. oz., Maximum Strength, Selenium Sulfide 1%
+   ASIN: B001UGL84U | brand: Selsun Blue
+   Historical rating count: 15925 | rating: 4.7
+   Scanned reviews: 60 | saved: 60 | review scan complete: True
+   Historical price: 7.48 (not a current store price)
+   Product: https://www.amazon.com/dp/B001UGL84U
+   Image: https://m.media-amazon.com/images/I/61dFsWOj9lL._AC_SL1500_.jpg
+
+17. Sheamoisture Strengthen and Restore Shampoo for Damaged Hair 100% Pure Jamaican Black Castor Oil Cleanse and Nourish 13 oz
+   ASIN: B01LFQYXBO | brand: SheaMoisture
+   Historical rating count: 15822 | rating: 4.6
+   Scanned reviews: 782 | saved: 100 | review scan complete: True
+   Historical price: 10.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B01LFQYXBO
+   Image: https://m.media-amazon.com/images/I/61LTH3-KSsL._SL1400_.jpg
+
+18. Just For Men Control GX Grey Reducing Shampoo, Gradual Hair Color for Stronger and Healthier Hair, 4 Fl Oz - Pack of 1 (Packaging May Vary)
+   ASIN: B09FG4G5RS | brand: Just for Men
+   Historical rating count: 15760 | rating: 4.3
+   Scanned reviews: 34 | saved: 34 | review scan complete: True
+   Historical price: 9.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B09FG4G5RS
+   Image: https://m.media-amazon.com/images/I/81ywMpU3AEL._SL1500_.jpg
+
+19. Head & Shoulders Anti Hairfall Shampoo, 675ml
+   ASIN: B00ENZRCBI | brand: Head & Shoulders
+   Historical rating count: 15271 | rating: 4.3
+   Scanned reviews: 1 | saved: 1 | review scan complete: True
+   Historical price: 26.5 (not a current store price)
+   Product: https://www.amazon.com/dp/B00ENZRCBI
+   Image: https://m.media-amazon.com/images/I/515IAgI9BqL._SL1500_.jpg
+
+20. Head & Shoulders Smooth & Silky Shampoo, 675ml
+   ASIN: B00JS3PICK | brand: Head & Shoulders
+   Historical rating count: 14952 | rating: 4.3
+   Scanned reviews: 3 | saved: 2 | review scan complete: True
+   Historical price: 14.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B00JS3PICK
+   Image: https://m.media-amazon.com/images/I/61cktkNgAgL._SL1500_.jpg
+
+21. MAMAEARTH Anti Hair Fall Express Spa Range with Onion Hair Oil 150ml + Onion Shampoo for Hair Fall Control 250ml
+   ASIN: B0842VBLDJ | brand: MAMAEARTH
+   Historical rating count: 13030 | rating: 3.9
+   Scanned reviews: 2 | saved: 2 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B0842VBLDJ
+   Image: https://m.media-amazon.com/images/I/51T+qX2CflL._SL1200_.jpg
+
+22. Selsun Blue Moisturizing Anti-dandruff Shampoo with Aloe, 11 fl. oz., Selenium Sulfide 1%
+   ASIN: B001TSNM34 | brand: Selsun Blue
+   Historical rating count: 12940 | rating: 4.6
+   Scanned reviews: 105 | saved: 100 | review scan complete: True
+   Historical price: 7.48 (not a current store price)
+   Product: https://www.amazon.com/dp/B001TSNM34
+   Image: https://m.media-amazon.com/images/I/61MmzoUpKrL._AC_SL1500_.jpg
+
+23. OGX Extra Strength Refreshing Scalp + Teatree Mint , Invigorating Scalp Shampoo with Tea Tree & Peppermint Oil & Witch Hazel, Paraben/ Sulfate-Free Surfactants, 13 fl oz
+   ASIN: B09QVLCX5Y | brand: OGX
+   Historical rating count: 12820 | rating: 4.5
+   Scanned reviews: 691 | saved: 100 | review scan complete: True
+   Historical price: 7.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B09QVLCX5Y
+   Image: https://m.media-amazon.com/images/I/71ZdAOm4MFL._SL1500_.jpg
+
+24. Aveeno Apple Cider Vinegar Sulfate-Free Shampoo for Balance & High Shine, Daily Clarifying & Soothing Scalp Shampoo for Oily or Dull Hair, Paraben & Dye-Free, 12 Fl Oz
+   ASIN: B09QVF8CYL | brand: Aveeno
+   Historical rating count: 12564 | rating: 4.4
+   Scanned reviews: 933 | saved: 100 | review scan complete: True
+   Historical price: 6.52 (not a current store price)
+   Product: https://www.amazon.com/dp/B09QVF8CYL
+   Image: https://m.media-amazon.com/images/I/71G9EAwoWXL._SL1500_.jpg
+
+25. OGX Hydrating + Tea Tree Mint Shampoo, Nourishing & Invigorating Scalp Shampoo with Tea Tree & Peppermint Oil & Milk Proteins, Paraben-Free, Sulfate-Free Surfactants, 13 fl oz
+   ASIN: B098CY2DNC | brand: OGX
+   Historical rating count: 12430 | rating: 4.5
+   Scanned reviews: 1060 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B098CY2DNC
+   Image: https://m.media-amazon.com/images/I/71leJdX+TqL._SL1500_.jpg
+
+26. Avalon Organics Therapy Thickening Shampoo, Biotin B-Complex, 14 Oz
+   ASIN: B09J97YVNK | brand: Avalon Organics
+   Historical rating count: 11867 | rating: 4.3
+   Scanned reviews: 2335 | saved: 100 | review scan complete: True
+   Historical price: 10.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B09J97YVNK
+   Image: https://m.media-amazon.com/images/I/71KdYKCFtjL._SL1500_.jpg
+
+27. Ultrax Labs Hair Surge | Caffeine Hair Growth Shampoo for thinning hair, Hair Loss, and Thickening w/Ketoconazole for men and women 8 oz
+   ASIN: B0BQQX6YH2 | brand: Ultrax Labs
+   Historical rating count: 11678 | rating: 4.0
+   Scanned reviews: 216 | saved: 100 | review scan complete: True
+   Historical price: 79.95 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BQQX6YH2
+   Image: https://m.media-amazon.com/images/I/51HMAn06cML._SL1080_.jpg
+
+28. OGX Protecting + Silk Blowout Quick Drying Thermal Spray, 6 Fl Oz (Pack of 1)
+   ASIN: B098D6RLP7 | brand: OGX
+   Historical rating count: 11664 | rating: 4.3
+   Scanned reviews: 601 | saved: 100 | review scan complete: True
+   Historical price: 7.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B098D6RLP7
+   Image: https://m.media-amazon.com/images/I/410OUtSyI-L._SL1000_.jpg
+
+29. VIP 3 in 1 Hair Color Shampoo (180 ml / 6.08 fl oz)
+   ASIN: B0797TVJQ8 | brand: VIP
+   Historical rating count: 11524 | rating: 3.8
+   Scanned reviews: 6 | saved: 6 | review scan complete: True
+   Historical price: 16.89 (not a current store price)
+   Product: https://www.amazon.com/dp/B0797TVJQ8
+   Image: https://m.media-amazon.com/images/I/71qYwqbv0lL._SL1500_.jpg
+
+30. Just For Men Control GX Grey Reducing Beard Wash Shampoo, Gradually Colors Mustache and Beard, Leaves Facial Hair Softer and Fuller, 4 Fl Oz - Pack of 1
+   ASIN: B0BQLSWBZG | brand: Just for Men
+   Historical rating count: 11436 | rating: 4.1
+   Scanned reviews: 747 | saved: 100 | review scan complete: True
+   Historical price: 9.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BQLSWBZG
+   Image: https://m.media-amazon.com/images/I/81VhVac7eOL._AC_SL1500_.jpg
+
+31. L'Oreal Paris Serie Expert Magnesium Silver Neutralising Shampoo, Multi, 16.9 Fl Oz
+   ASIN: B071KWYBZZ | brand: L'OREAL PROFESSIONNEL PARIS
+   Historical rating count: 11374 | rating: 4.5
+   Scanned reviews: 272 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B071KWYBZZ
+   Image: https://m.media-amazon.com/images/I/61W-wJXYS1L._SL1500_.jpg
+
+32. Garnier Fructis Grow Strong Shampoo, 33.8 Fl Oz, 1 Count (Packaging May Vary)
+   ASIN: B074VLGVJ3 | brand: Garnier
+   Historical rating count: 11263 | rating: 4.7
+   Scanned reviews: 436 | saved: 100 | review scan complete: True
+   Historical price: 8.47 (not a current store price)
+   Product: https://www.amazon.com/dp/B074VLGVJ3
+   Image: https://m.media-amazon.com/images/I/71ridjzS4aL._SL1500_.jpg
+
+33. TRESemmé Rich Moisture Hydrating Shampoo for Dry Hair Formulated With Pro Style Technology 28 oz
+   ASIN: B00UB6OSAQ | brand: TRESemmé
+   Historical rating count: 11257 | rating: 4.7
+   Scanned reviews: 306 | saved: 100 | review scan complete: True
+   Historical price: 5.94 (not a current store price)
+   Product: https://www.amazon.com/dp/B00UB6OSAQ
+   Image: https://m.media-amazon.com/images/I/719BHiaq47L._SL1500_.jpg
+
+34. TRESemmé Rich Moisture Hydrating Shampoo for Dry Hair Formulated With Pro Style Technology 28 oz
+   ASIN: B00TBJSRLA | brand: TRESemmé
+   Historical rating count: 11256 | rating: 4.7
+   Scanned reviews: 393 | saved: 100 | review scan complete: True
+   Historical price: 6.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B00TBJSRLA
+   Image: https://m.media-amazon.com/images/I/719BHiaq47L._SL1500_.jpg
+
+35. John Frieda Go Blonder Lightening Shampoo for Blonde Color-Treated Hair, Paraben Free, Phthalate Free, Silicone Free, Ammonia Free, Cruelty Free, Vegan Friendly Blonde Shampoo  8.3 oz Bottle
+   ASIN: B01KZNQICA | brand: John Frieda
+   Historical rating count: 10687 | rating: 4.4
+   Scanned reviews: 68 | saved: 67 | review scan complete: True
+   Historical price: 9.11 (not a current store price)
+   Product: https://www.amazon.com/dp/B01KZNQICA
+   Image: https://m.media-amazon.com/images/I/61U9hmze5xL._SL1500_.jpg
+
+36. Vanicream, Shampoo for Sensitive Skin, Fragrance, Gluten and Sulfate Free - 12 fl Ounce
+   ASIN: B09YM25BY9 | brand: Vanicream
+   Historical rating count: 10340 | rating: 4.5
+   Scanned reviews: 175 | saved: 100 | review scan complete: True
+   Historical price: 11.99 (not a current store price)
+   Product: https://www.amazon.com/dp/B09YM25BY9
+   Image: https://m.media-amazon.com/images/I/51Y+5elZdgL._AC_SL1500_.jpg
+
+37. Cantu Sulfate-Free Cleansing Cream Shampoo with Shea Butter for Natural Hair, 13.5 fl oz (Packaging May Vary)
+   ASIN: B0CCZK7VWN | brand: Cantu
+   Historical rating count: 10257 | rating: 4.6
+   Scanned reviews: 425 | saved: 100 | review scan complete: True
+   Historical price: 5.38 (not a current store price)
+   Product: https://www.amazon.com/dp/B0CCZK7VWN
+   Image: https://m.media-amazon.com/images/I/61w7NFmFT3L._SL1500_.jpg
+
+38. Sunsilk Stunning Black Shine Shampoo, 650ml
+   ASIN: B0CDQ7WMTM | brand: sunsilk
+   Historical rating count: 10211 | rating: 4.1
+   Scanned reviews: 14 | saved: 14 | review scan complete: True
+   Historical price: 18.8 (not a current store price)
+   Product: https://www.amazon.com/dp/B0CDQ7WMTM
+   Image: https://m.media-amazon.com/images/I/51orhBOASQS._SL1000_.jpg
+
+39. philosophy shampoo, shower gel & bubble bath, 16 oz
+   ASIN: B08CWRM269 | brand: philosophy
+   Historical rating count: 10170 | rating: 4.6
+   Scanned reviews: 1118 | saved: 100 | review scan complete: True
+   Historical price: 22.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B08CWRM269
+   Image: https://m.media-amazon.com/images/I/61FZHE6DYWL._SL1500_.jpg
+
+40. Neutrogena Anti-Residue Clarifying Shampoo, Gentle Non-Irritating Clarifying Shampoo to Remove Hair Build-Up & Residue, 12 fl. oz
+   ASIN: B072569DNX | brand: Neutrogena
+   Historical rating count: 9992 | rating: 4.7
+   Scanned reviews: 807 | saved: 100 | review scan complete: True
+   Historical price: 54.45 (not a current store price)
+   Product: https://www.amazon.com/dp/B072569DNX
+   Image: https://m.media-amazon.com/images/I/71FnnXVRCDL._SL1500_.jpg
+
+41. Nioxin System 2 Scalp Cleansing Shampoo with Peppermint Oil, Treats Dry and Sensitive Scalp, Anti-Hair Breakage, For Natural Hair with Progressed Thinning, 33.8 Fl Oz (Packaging May Vary)
+   ASIN: B005NOPU2G | brand: Nioxin
+   Historical rating count: 9364 | rating: 4.7
+   Scanned reviews: 6 | saved: 6 | review scan complete: True
+   Historical price: 45.0 (not a current store price)
+   Product: https://www.amazon.com/dp/B005NOPU2G
+   Image: https://m.media-amazon.com/images/I/51xS8Ss9ZVL._SL1500_.jpg
+
+42. L'Oreal Paris Elvive Color Vibrancy Protecting Shampoo, for Color Treated Hair, Shampoo with Linseed Elixir and Anti-Oxidants, for Anti-Fade, High Shine, and Color Protection, 28 Fl Oz
+   ASIN: B0B6WSN3WR | brand: L'Oréal Paris
+   Historical rating count: 8987 | rating: 4.6
+   Scanned reviews: 510 | saved: 100 | review scan complete: True
+   Historical price: 8.49 (not a current store price)
+   Product: https://www.amazon.com/dp/B0B6WSN3WR
+   Image: https://m.media-amazon.com/images/I/71Dv7mExEHL._SL1500_.jpg
+
+43. Head and Shoulders Itchy Scalp Care Daily-Use Anti-Dandruff Paraben Free Shampoo, 13.5 fl oz
+   ASIN: B0043OYFJQ | brand: Head & Shoulders
+   Historical rating count: 8729 | rating: 4.5
+   Scanned reviews: 643 | saved: 100 | review scan complete: True
+   Historical price: 6.79 (not a current store price)
+   Product: https://www.amazon.com/dp/B0043OYFJQ
+   Image: https://m.media-amazon.com/images/I/71gqQpGjCwL._SL1500_.jpg
+
+44. WOW Skin Science Apple Cider Vinegar Shampoo - Hair Growth Shampoo for Thinning Hair, Hair Loss & Dandruff Shampoo - Parabens & Sulfate Free Shampoo - Clarifying Shampoo for Build Up Purifying Shampoo (10.14 Fl Oz (Pack of 1))
+   ASIN: B0C5JCH663 | brand: WOW Skin Science
+   Historical rating count: 8567 | rating: 4.4
+   Scanned reviews: 45 | saved: 45 | review scan complete: True
+   Historical price: 7.85 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C5JCH663
+   Image: https://m.media-amazon.com/images/I/61qS4xVO5xL._SL1500_.jpg
+
+45. WOW Coconut Milk No Sulphate, Parabens, Silicones, Salt andColour Shampoo, 300mL
+   ASIN: B07BTKR2HM | brand: WOW! EZ FINISHES
+   Historical rating count: 8305 | rating: 3.8
+   Scanned reviews: 3 | saved: 3 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B07BTKR2HM
+   Image: https://m.media-amazon.com/images/I/71pMqKp-XaL._SL1500_.jpg
+
+46. Viviscal Gorgeous Growth Densifying Shampoo for Thicker, Fuller Hair Ana:Tel Proprietary Complex with Keratin, Biotin, Zinc 8.45 Ounce
+   ASIN: B08S2Q4HR8 | brand: Viviscal
+   Historical rating count: 8302 | rating: 4.3
+   Scanned reviews: 624 | saved: 100 | review scan complete: True
+   Historical price: None (not a current store price)
+   Product: https://www.amazon.com/dp/B08S2Q4HR8
+   Image: https://m.media-amazon.com/images/I/617gmSu9WrL._SL1500_.jpg
+
+47. Medicasp Coal Tar Gel Dandruff Shampoo to Treat Seborrheic Dermatitis Psoriasis, 6 Ounce (Pack of 1)
+   ASIN: B0944LT3SN | brand: Medicasp
+   Historical rating count: 8267 | rating: 4.2
+   Scanned reviews: 18 | saved: 17 | review scan complete: True
+   Historical price: 7.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B0944LT3SN
+   Image: https://m.media-amazon.com/images/I/81dyzOWOODL._SL1500_.jpg
+
+48. Maria Nila Color Refresh, 10.1 Fl Oz, Color Bomb, Semi-Permanent Pigments, 100% Vegan & Sulfate/Paraben free
+   ASIN: B0BN5YNDN3 | brand: Maria Nila
+   Historical rating count: 8237 | rating: 4.4
+   Scanned reviews: 19 | saved: 19 | review scan complete: True
+   Historical price: 32.5 (not a current store price)
+   Product: https://www.amazon.com/dp/B0BN5YNDN3
+   Image: https://m.media-amazon.com/images/I/51J4yw16oML._SL1500_.jpg
+
+49. Nexxus Keraphix Shampoo With ProteinFusion for Damaged Hair Keratin Protein, Black Rice, Silicone-Free 33.8 oz
+   ASIN: B0C4HWHKBN | brand: Nexxus
+   Historical rating count: 8208 | rating: 4.5
+   Scanned reviews: 669 | saved: 100 | review scan complete: True
+   Historical price: 18.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B0C4HWHKBN
+   Image: https://m.media-amazon.com/images/I/71D+hR9SfGL._SL1500_.jpg
+
+50. OGX Ever Straightening + Brazilian Keratin Therapy Shampoo, for Lustrous, Shiny Hair, Paraben-Free, Sulfate-Free Surfactants, Coconut Oil, Keratin powder,Avocado oil and cocoa butter, 13 Fl Oz
+   ASIN: B004ISW5YY | brand: OGX
+   Historical rating count: 8085 | rating: 4.5
+   Scanned reviews: 152 | saved: 100 | review scan complete: True
+   Historical price: 6.97 (not a current store price)
+   Product: https://www.amazon.com/dp/B004ISW5YY
+   Image: https://m.media-amazon.com/images/I/61Tu2moTatL._SL1500_.jpg

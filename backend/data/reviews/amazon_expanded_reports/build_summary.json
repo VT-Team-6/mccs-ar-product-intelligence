@@ -1,0 +1,207 @@
+{
+  "status": "complete",
+  "metadata_stop": "complete",
+  "reviews_stop": "complete",
+  "elapsed_seconds": 4615.22,
+  "metadata_products_not_written_due_to_size": 0,
+  "size_cap": {
+    "policy": "popularity_rank_within_each_product_type",
+    "reached": false,
+    "pressure_events": 0,
+    "first_hit_seconds_into_review_stage": null,
+    "evicted_products": 0,
+    "evicted_products_per_type": {},
+    "evicted_saved_reviews": 0,
+    "removed_review_text_bytes": 0,
+    "evicted_saved_reviews_per_type": {},
+    "reusable_page_bytes_freed": 0,
+    "skipped_review_records_from_evicted_products": 0,
+    "individually_oversized_reviews_skipped": 0,
+    "initial_products_per_type": {
+      "shoes": 30000,
+      "backpacks": 30000,
+      "headphones": 30000,
+      "shampoo": 12168,
+      "ground_coffee": 3256
+    },
+    "final_products_per_type": {
+      "shoes": 30000,
+      "backpacks": 30000,
+      "headphones": 30000,
+      "shampoo": 12168,
+      "ground_coffee": 3256
+    },
+    "database_file_bytes": 2431885312,
+    "active_database_bytes": 2431885312,
+    "eviction_audit_file": "size_cap_evictions.jsonl"
+  },
+  "coverage": {
+    "shoes": {
+      "products": 30000,
+      "products_with_reviews": 29996,
+      "saved_reviews": 1005742
+    },
+    "backpacks": {
+      "products": 30000,
+      "products_with_reviews": 29993,
+      "saved_reviews": 542136
+    },
+    "headphones": {
+      "products": 30000,
+      "products_with_reviews": 29999,
+      "saved_reviews": 1145946
+    },
+    "shampoo": {
+      "products": 12168,
+      "products_with_reviews": 12164,
+      "saved_reviews": 168669
+    },
+    "ground_coffee": {
+      "products": 3256,
+      "products_with_reviews": 3255,
+      "saved_reviews": 49143
+    }
+  },
+  "sources": [
+    {
+      "phase": "metadata",
+      "source": "Amazon_Fashion",
+      "status": "complete",
+      "rows": 826108,
+      "bytes": 224299124,
+      "matched": 47353,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 826108, \"matched\": 47353, \"bytes\": 224299124, \"error\": null, \"malformed\": 0, \"rejections\": {\"other_type\": 773526, \"shoes:accessory_or_out_of_scope\": 5139, \"backpacks:accessory_or_out_of_scope\": 77, \"backpacks:incidental_mention\": 13}, \"category_labels\": {}}"
+    },
+    {
+      "phase": "metadata",
+      "source": "Beauty_and_Personal_Care",
+      "status": "complete",
+      "rows": 1028914,
+      "bytes": 711243207,
+      "matched": 12168,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 1028914, \"matched\": 12168, \"bytes\": 711243207, \"error\": null, \"malformed\": 0, \"rejections\": {\"other_type\": 995789, \"shampoo:accessory_or_out_of_scope\": 7161, \"shampoo:multipack\": 3460, \"shampoo:unknown_package_size\": 4808, \"shampoo:conditioner_or_set\": 4038, \"shampoo:outside_retail_size\": 1106, \"shampoo:bulk_or_bundle\": 384}, \"category_labels\": {\"Shampoos\": 10535, \"Shampoo & Conditioner Sets\": 308, \"Hair Regrowth Shampoos\": 274, \"Daily Shampoo\": 56, \"Dry Shampoos\": 41}}"
+    },
+    {
+      "phase": "metadata",
+      "source": "Clothing_Shoes_and_Jewelry",
+      "status": "complete",
+      "rows": 7218481,
+      "bytes": 4051587355,
+      "matched": 1965261,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 7218481, \"matched\": 1965261, \"bytes\": 4051587355, \"error\": null, \"malformed\": 0, \"rejections\": {\"other_type\": 5185844, \"shoes:accessory_or_out_of_scope\": 66405, \"backpacks:accessory_or_out_of_scope\": 754, \"backpacks:incidental_mention\": 44, \"missing_identity\": 173}, \"category_labels\": {\"Shoes\": 553155, \"Sandals\": 281501, \"Boot Shop\": 168992, \"Fashion Sneakers\": 152954, \"Boots\": 149728, \"Pumps\": 94156, \"Loafers & Slip-Ons\": 87092, \"Slippers\": 72716, \"Heeled Sandals\": 47734, \"Sneakers\": 46700, \"Oxfords\": 44677, \"Mules & Clogs\": 37646, \"Shoe, Jewelry & Watch Accessories\": 35773, \"Casual Daypacks\": 22708, \"Sport Sandals & Slides\": 18966, \"Hiking Boots\": 17934, \"Hiking Shoes\": 16917, \"Water Shoes\": 15745, \"Kids' Backpacks\": 8036, \"Industrial & Construction Boots\": 6738, \"Clogs & Mules\": 5644, \"Fashion Backpacks\": 4327, \"Backpacks\": 3971, \"Loafers\": 3338, \"Shoe Decoration Charms\": 3060, \"Girls Sneakers\": 2657, \"Footwear\": 2005, \"Rain Footwear\": 1973, \"Sport Sandals\": 1935, \"Oxford & Derby\": 1265, \"Designer Shoes & Handbags\": 1108, \"Backpacking Boots\": 1054, \"Equestrian Sport Boots\": 1050, \"Shoe Care & Accessories\": 993, \"Snow Boots\": 950, \"Shoe & Boot Trees\": 723, \"Prime Day: 30% off Select Clothing, Shoes & More for Men, Women, Kids & Baby\": 715, \"Kids Shoes Union\": 709, \"Shoe Polishes\": 695, \"Shoe Brushes\": 519, \"Women's Sandal Markdowns\": 512, \"Oxfords & Loafers\": 469, \"Uniform Dress Shoes\": 377, \"Girls Sandals & Pumps\": 345, \"Oxford & Loafer\": 319, \"Girls Boots, Clogs & Mules\": 279, \"Boys Sneakers (fs, no puma)\": 258, \"Girls Athletic & Oxfords\": 249, \"Women's Comfort Shoes FA Test\": 222, \"Girls Flats & Loafers\": 220, \"Shoe Dryers\": 218, \"Shoe Treatments & Polishes\": 207, \"Backpacks, Bags, & Luggage\": 188, \"Rain Boots\": 186, \"TurboTax Refund Bonus Exclusive: 20% Off Select Shoes\": 159, \"Free One-Day Shipping in Shoes & Handbags\": 136, \"Comfort Shoes\": 135, \"Fire & Safety Boots\": 135, \"Girls Sneakers (fs, no puma)\": 132, \"Up to 30% off Shoes, Handbags and More\": 101, \"20% Off $100 Shoes for Women\": 95, \"Shoe Care Treatments & Dyes\": 94, \"Girls Sneakers (no fs)\": 93, \"Mountaineering Boots\": 90, \"Women's Shoes\": 83, \"25% Off Harley Davidson Footwear\": 81, \"TEST W GENZ SHOES\": 76, \"Shoe Measuring Devices\": 76, \"PP Slippers Under $40\": 75, \"Boys Sneakers\": 75, \"Boys Boots, Clogs & Mules\": 73, \"Boys Sneakers (no fs)\": 65, \"20% Off Athletic & Outdoor Shoes, Boots & More\": 58, \"Girls Slippers & Outdoors\": 43, \"Shoes Outlet\": 43, \"Food Service Shoes\": 41, \"Electric Shoe Polishers\": 41, \"Kid's May Shoes Promotion: 20% Off $50\": 40, \"Boys Oxfords & Sandals\": 35, \"4+ Stars: Clothes, Shoes and Jewelry\": 34}}"
+    },
+    {
+      "phase": "metadata",
+      "source": "Electronics",
+      "status": "complete",
+      "rows": 1610012,
+      "bytes": 1312900427,
+      "matched": 77915,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 1610012, \"matched\": 77915, \"bytes\": 1312900427, \"error\": null, \"malformed\": 0, \"rejections\": {\"other_type\": 1511792, \"headphones:accessory_or_out_of_scope\": 20299, \"missing_identity\": 6}, \"category_labels\": {\"Earbud Headphones\": 35286, \"Over-Ear Headphones\": 8414, \"Headphones & Earbuds\": 5223, \"On-Ear Headphones\": 3636, \"Headsets & Microphones\": 3329, \"Computer Headsets\": 2674, \"Headsets\": 2253, \"Bluetooth Headsets\": 543, \"Headsets & Intercoms\": 324, \"Open-Ear Headphones\": 226, \"Car Headphones\": 146, \"Cell Phone Headsets\": 110, \"Headphones\": 36, \"Computer Headsets and Mics\": 18, \"Headphones & Components\": 1, \"Big Savings in Home Audio & Headphones\": 1, \"Fitness Headphones\": 1}}"
+    },
+    {
+      "phase": "metadata",
+      "source": "Grocery_and_Gourmet_Food",
+      "status": "complete",
+      "rows": 603274,
+      "bytes": 324346561,
+      "matched": 3256,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 603274, \"matched\": 3256, \"bytes\": 324346561, \"error\": null, \"malformed\": 0, \"rejections\": {\"other_type\": 595061, \"ground_coffee:unknown_package_size\": 847, \"ground_coffee:multipack\": 2380, \"ground_coffee:accessory_or_out_of_scope\": 703, \"ground_coffee:outside_retail_size\": 776, \"ground_coffee:bulk_or_bundle\": 251}, \"category_labels\": {\"Ground Coffee\": 2875}}"
+    },
+    {
+      "phase": "metadata",
+      "source": "Sports_and_Outdoors",
+      "status": "complete",
+      "rows": 1587421,
+      "bytes": 1037418105,
+      "matched": 55917,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 1587421, \"matched\": 55917, \"bytes\": 1037418105, \"error\": null, \"malformed\": 0, \"rejections\": {\"other_type\": 1520103, \"backpacks:accessory_or_out_of_scope\": 4150, \"shoes:accessory_or_out_of_scope\": 7172, \"backpacks:incidental_mention\": 77, \"missing_identity\": 2}, \"category_labels\": {\"Hiking Daypacks\": 8650, \"Tactical Backpacks\": 3699, \"Backpacks\": 2602, \"Fishing Boot & Wader Bags\": 2003, \"Boots\": 1977, \"Slippers\": 1504, \"Daypacks & Casual Bags\": 1478, \"Internal Frame Backpacks\": 1471, \"Floor Pumps\": 1135, \"Bilge Pumps\": 874, \"Frame-Mounted Pumps\": 852, \"Footwear & Accessories\": 834, \"Sandals\": 646, \"Backpack Accessories\": 550, \"Sneakers\": 479, \"Boot Bags\": 469, \"CO2 Pumps\": 409, \"Diving Boots\": 372, \"Footwear\": 368, \"Water Pressure Pumps\": 165, \"Bike Pumps\": 154, \"Running Shoes\": 130, \"External Frame Backpacks\": 91, \"Apparel & Footwear\": 74, \"Shower Pumps & Sumps\": 44, \"Backpacks & Messenger Bags\": 34, \"Water Shoes\": 10, \"Save up to 50% on select adidas clothing, shoes, and gear\": 2, \"Save 25% on Pelican Coolers, Drinkware & Backpacks\": 1, \"Rock Climbing Shoes\": 1}}"
+    },
+    {
+      "phase": "reviews",
+      "source": "Amazon_Fashion",
+      "status": "complete",
+      "rows": 2500939,
+      "bytes": 292425439,
+      "matched": 13772,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 2500939, \"matched\": 13772, \"bytes\": 292425439, \"error\": null, \"malformed\": 0, \"rejections\": {}, \"category_labels\": {}}"
+    },
+    {
+      "phase": "reviews",
+      "source": "Beauty_and_Personal_Care",
+      "status": "complete",
+      "rows": 23911390,
+      "bytes": 2960355713,
+      "matched": 262306,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 23911390, \"matched\": 262306, \"bytes\": 2960355713, \"error\": null, \"malformed\": 0, \"rejections\": {}, \"category_labels\": {}}"
+    },
+    {
+      "phase": "reviews",
+      "source": "Clothing_Shoes_and_Jewelry",
+      "status": "complete",
+      "rows": 66033346,
+      "bytes": 7109695439,
+      "matched": 6387983,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 66033346, \"matched\": 6387983, \"bytes\": 7109695439, \"error\": null, \"malformed\": 0, \"rejections\": {}, \"category_labels\": {}}"
+    },
+    {
+      "phase": "reviews",
+      "source": "Electronics",
+      "status": "complete",
+      "rows": 43886944,
+      "bytes": 6474438619,
+      "matched": 3664289,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 43886944, \"matched\": 3664289, \"bytes\": 6474438619, \"error\": null, \"malformed\": 0, \"rejections\": {}, \"category_labels\": {}}"
+    },
+    {
+      "phase": "reviews",
+      "source": "Grocery_and_Gourmet_Food",
+      "status": "complete",
+      "rows": 14318520,
+      "bytes": 1630860152,
+      "matched": 141486,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 14318520, \"matched\": 141486, \"bytes\": 1630860152, \"error\": null, \"malformed\": 0, \"rejections\": {}, \"category_labels\": {}}"
+    },
+    {
+      "phase": "reviews",
+      "source": "Sports_and_Outdoors",
+      "status": "complete",
+      "rows": 19595170,
+      "bytes": 2634864204,
+      "matched": 575667,
+      "error": null,
+      "details": "{\"status\": \"complete\", \"rows\": 19595170, \"matched\": 575667, \"bytes\": 2634864204, \"error\": null, \"malformed\": 0, \"rejections\": {}, \"category_labels\": {}}"
+    }
+  ],
+  "database_bytes": 2431885312,
+  "config": {
+    "mode": "full",
+    "output": "C:\\Users\\artiz\\Documents\\classes\\IPD\\mccs_project\\backend\\data\\reviews\\amazon_expanded.sqlite",
+    "minutes": null,
+    "target_gb": 3.0,
+    "products_per_type": 30000,
+    "reviews_per_product": 100,
+    "top": 50,
+    "heartbeat": 10,
+    "network_timeout": 20,
+    "idle_timeout": 90,
+    "seed": "mccs-2023-v1",
+    "coffee_min_grams": 100,
+    "coffee_max_grams": 680,
+    "shampoo_min_ml": 100,
+    "shampoo_max_ml": 1000,
+    "base_url": "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw",
+    "source_dir": null
+  }
+}
