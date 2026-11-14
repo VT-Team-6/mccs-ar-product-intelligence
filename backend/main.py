@@ -9,7 +9,7 @@ from product_features import refresh_recommendation_data
 from fastapi.staticfiles import StaticFiles
 
 from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, inventory, admin, compare
-from routers import review_images
+from routers import product_images, review_images
 import auth
 
 
@@ -33,6 +33,8 @@ app.include_router(products.router)
 app.include_router(scan.router)
 app.include_router(search.router)
 app.include_router(shopper_products.router)
+app.include_router(product_images.router)
+app.include_router(product_images.admin_router)
 app.include_router(stores.router)
 app.include_router(me.router)
 app.include_router(reviews.router)

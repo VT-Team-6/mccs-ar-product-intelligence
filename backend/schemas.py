@@ -92,6 +92,25 @@ class Product(BaseModel):
     store_inventory: StoreInventory | None = None
 
 
+class ProductImage(BaseModel):
+    """One extra photo of a product, shown alongside its main image.
+
+    image_url is sent back exactly as stored, so a relative /static/... path
+    stays relative and the client resolves it against its API address.
+    """
+
+    image_id: int
+    image_url: str
+
+
+class ProductImageCreate(BaseModel):
+    """A gallery photo to add, by link. Uploads are a separate multipart route."""
+
+    image_url: str = Field(min_length=1, max_length=500)
+
+    _validate_image_url = field_validator("image_url")(validate_product_image_url)
+
+
 class Store(BaseModel):
     """A location the shopper can pick. Public catalog data."""
 
