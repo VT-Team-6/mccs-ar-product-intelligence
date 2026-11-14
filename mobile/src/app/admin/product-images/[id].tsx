@@ -25,6 +25,7 @@ import {
   type ProductImage,
 } from "@/api/products";
 import { useAuth } from "@/auth/AuthContext";
+import { AmazonImagePicker } from "@/components/amazon-image-picker";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
@@ -47,6 +48,7 @@ export default function ManageImagesScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState("");
+  const [picking, setPicking] = useState(false);
 
   // Reloads the product and its gallery whenever the screen is shown, so a
   // change made on the product page is reflected here.
@@ -133,6 +135,16 @@ export default function ManageImagesScreen() {
         file: asset.file,
       });
       return "Image uploaded.";
+    });
+  };
+
+  // Adds the photo chosen from an Amazon listing, using the same picker as the
+  // product form. It saves immediately: unlike the product form, this screen has
+  // no "Save" step to defer it to.
+  const addFromListing = async (imageUrl: string) => {
+    await run(async () => {
+      await addProductImage(Number(id), imageUrl);
+      return "Image added.";
     });
   };
 
@@ -246,6 +258,17 @@ export default function ManageImagesScreen() {
                   </ThemedView>
                 </Pressable>
 
+                <Pressable
+                  onPress={() => setPicking(true)}
+                  disabled={busy}
+                  accessibilityRole="button"
+                  style={({ pressed }) => (pressed || busy) && styles.pressed}
+                >
+                  <ThemedView type="backgroundSelected" style={styles.buttonView}>
+                    <ThemedText type="smallBold">Choose Amazon image</ThemedText>
+                  </ThemedView>
+                </Pressable>
+
                 <ThemedText type="small" themeColor="textSecondary">
                   Or paste a direct image link:
                 </ThemedText>
@@ -292,6 +315,15 @@ export default function ManageImagesScreen() {
           </ScrollView>
         )}
       </SafeAreaView>
+
+      {canManage && product && (
+        <AmazonImagePicker
+          visible={picking}
+          productName={product.name}
+          onClose={() => setPicking(false)}
+          onChoose={(imageUrl) => void addFromListing(imageUrl)}
+        />
+      )}
     </ThemedView>
   );
 }
