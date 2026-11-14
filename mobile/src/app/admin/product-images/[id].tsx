@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -26,6 +26,8 @@ import {
 } from "@/api/products";
 import { useAuth } from "@/auth/AuthContext";
 import { AmazonImagePicker } from "@/components/amazon-image-picker";
+import { FailureDialog, type Failure } from "@/components/failure-dialog";
+import { ActionProgress, FeedbackNotice } from "@/components/feedback-banner";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
@@ -44,18 +46,23 @@ export default function ManageImagesScreen() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [images, setImages] = useState<ProductImage[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
+  const [failure, setFailure] = useState<Failure | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [picking, setPicking] = useState(false);
+  // True while an action is running. `pending` drives the UI, but this ref is
+  // what the guards read: two quick taps would both see the same render's
+  // `pending`, while a ref is already updated by the first one.
+  const running = useRef(false);
 
   // Reloads the product and its gallery whenever the screen is shown, so a
   // change made on the product page is reflected here.
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      setError(null);
+      setLoadError(null);
       Promise.all([getProduct(Number(id)), listProductImages(Number(id))])
         .then(([loadedProduct, loadedImages]) => {
           if (cancelled) return;
@@ -63,7 +70,7 @@ export default function ManageImagesScreen() {
           setImages(loadedImages);
         })
         .catch((problem: Error) => {
-          if (!cancelled) setError(problem.message);
+          if (!cancelled) setLoadError(problem.message);
         });
       return () => {
         cancelled = true;
@@ -80,72 +87,140 @@ export default function ManageImagesScreen() {
     setImages(await listProductImages(Number(id)));
   };
 
-  const run = async (action: () => Promise<string>) => {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    setMessage(null);
+  // Runs one add/remove action and reports it in three places the admin can see:
+  // a labelled progress row, an inline banner, and (on failure) a popup offering
+  // to run exactly the same thing again.
+  const perform = async (
+    label: string,
+    title: string,
+    action: () => Promise<string>,
+    retry: () => void,
+  ) => {
+    if (running.current) return;
+    running.current = true;
+    setPending(label);
+    setFailure(null);
+    setNotice(null);
     try {
-      setMessage(await action());
+      setNotice(await action());
       await reload();
     } catch (problem) {
-      setError(
-        problem instanceof Error ? problem.message : "Something went wrong.",
-      );
+      setFailure({
+        title,
+        message:
+          problem instanceof Error
+            ? problem.message
+            : "Something went wrong. Try again.",
+        retry: { label: "Try again", run: retry },
+      });
     } finally {
-      setBusy(false);
+      running.current = false;
+      setPending(null);
     }
   };
 
-  const addByUrl = async () => {
-    const problem = imageUrlProblem(url);
+  // Adds an image by link. The typed link is left in the box on failure, so the
+  // admin can correct it rather than retype it.
+  const addByUrl = async (imageUrl = url) => {
+    const retry = () => void addByUrl(imageUrl);
+    const problem = imageUrlProblem(imageUrl);
     if (problem) {
-      setError(problem);
+      setNotice(null);
+      setFailure({ title: "Check the image link", message: problem });
       return;
     }
-    await run(async () => {
-      await addProductImage(Number(id), url);
-      setUrl("");
-      return "Image added.";
-    });
+    await perform(
+      "Adding image…",
+      "Could not add the image",
+      async () => {
+        await addProductImage(Number(id), imageUrl);
+        setUrl("");
+        return "Image added.";
+      },
+      retry,
+    );
+  };
+
+  // Uploads one already-picked photo. Kept separate from the picker so a retry
+  // re-sends the photo the admin chose instead of reopening the gallery.
+  const uploadAsset = async (asset: ImagePicker.ImagePickerAsset) => {
+    const retry = () => void uploadAsset(asset);
+    await perform(
+      "Uploading photo…",
+      "Could not upload the photo",
+      async () => {
+        await uploadProductImage(Number(id), {
+          uri: asset.uri,
+          name: asset.fileName,
+          type: asset.mimeType,
+          // Web fills this in; native leaves it undefined.
+          file: asset.file,
+        });
+        return "Image uploaded.";
+      },
+      retry,
+    );
   };
 
   const pickAndUpload = async () => {
-    setError(null);
-    setMessage(null);
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError("Allow photo access to choose a picture from your device.");
-      return;
-    }
-    const picked = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      // Keeps uploads under the backend's 5 MB limit.
-      quality: 0.8,
-      allowsMultipleSelection: false,
-    });
-    if (picked.canceled || picked.assets.length === 0) return;
-    const asset = picked.assets[0];
-    await run(async () => {
-      await uploadProductImage(Number(id), {
-        uri: asset.uri,
-        name: asset.fileName,
-        type: asset.mimeType,
-        // Web fills this in; native leaves it undefined.
-        file: asset.file,
+    if (running.current) return;
+    running.current = true;
+    setFailure(null);
+    setNotice(null);
+    setPending("Opening your photos…");
+    let asset: ImagePicker.ImagePickerAsset | null = null;
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setFailure({
+          title: "Photo access needed",
+          message:
+            "Allow photo access in your device settings, then try again to choose a picture.",
+          retry: { label: "Try again", run: () => void pickAndUpload() },
+        });
+        return;
+      }
+      const picked = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        // Keeps uploads under the backend's 5 MB limit.
+        quality: 0.8,
+        allowsMultipleSelection: false,
       });
-      return "Image uploaded.";
-    });
+      // Cancelling the picker is a decision, not a failure: say nothing.
+      if (picked.canceled || picked.assets.length === 0) return;
+      asset = picked.assets[0];
+    } catch (problem) {
+      setFailure({
+        title: "Could not open your photos",
+        message:
+          problem instanceof Error
+            ? problem.message
+            : "The photo picker could not be opened.",
+        retry: { label: "Try again", run: () => void pickAndUpload() },
+      });
+      return;
+    } finally {
+      // Release the lock either way, so the upload below can take it and a
+      // cancelled pick never leaves the screen stuck.
+      running.current = false;
+      setPending(null);
+    }
+    if (asset) await uploadAsset(asset);
   };
 
   // Adds the photo chosen from an Amazon listing, using the same picker as the
   // product form. It saves immediately: unlike the product form, this screen has
   // no "Save" step to defer it to.
   const addFromListing = async (imageUrl: string) => {
-    await run(async () => {
-      await addProductImage(Number(id), imageUrl);
-      return "Image added.";
-    });
+    await perform(
+      "Adding image…",
+      "Could not add the image",
+      async () => {
+        await addProductImage(Number(id), imageUrl);
+        return "Image added.";
+      },
+      () => void addFromListing(imageUrl),
+    );
   };
 
   const remove = async (image: ProductImage) => {
@@ -155,10 +230,21 @@ export default function ManageImagesScreen() {
       "Remove",
     );
     if (!confirmed) return;
-    await run(async () => {
-      await deleteProductImage(Number(id), image.image_id);
-      return "Image removed.";
-    });
+    await removeImage(image);
+  };
+
+  // Separate from remove() so a retry repeats the delete without asking the
+  // admin to confirm again.
+  const removeImage = async (image: ProductImage) => {
+    await perform(
+      "Removing image…",
+      "Could not remove the image",
+      async () => {
+        await deleteProductImage(Number(id), image.image_id);
+        return "Image removed.";
+      },
+      () => void removeImage(image),
+    );
   };
 
   const mainImage = product ? productImageUrl(product) : null;
@@ -186,8 +272,12 @@ export default function ManageImagesScreen() {
           </ThemedText>
         )}
 
-        {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
-        {!product && !error && <ActivityIndicator />}
+        {loadError && (
+          <ThemedText type="small" style={styles.loadError}>
+            {loadError}
+          </ThemedText>
+        )}
+        {!product && !loadError && <ActivityIndicator />}
 
         {product && (
           <ScrollView
@@ -220,7 +310,7 @@ export default function ManageImagesScreen() {
                 image.
               </ThemedText>
 
-              {images === null && !error && <ActivityIndicator />}
+              {images === null && !loadError && <ActivityIndicator />}
               {images !== null && images.length === 0 && (
                 <ThemedText type="small" themeColor="textSecondary">
                   No extra images yet.
@@ -234,12 +324,31 @@ export default function ManageImagesScreen() {
                       key={image.image_id}
                       image={image}
                       onRemove={() => remove(image)}
-                      disabled={busy || !canManage}
+                      disabled={pending !== null || !canManage}
                     />
                   ))}
                 </View>
               )}
             </ThemedView>
+
+            {/* One status slot for every action: progress, or what failed, or
+                what succeeded. It sits between the grid and the add controls, so
+                it is in view whichever button was pressed. */}
+            {pending ? (
+              <ActionProgress label={pending} />
+            ) : failure ? (
+              <FeedbackNotice
+                kind="error"
+                message={failure.message}
+                onDismiss={() => setFailure(null)}
+              />
+            ) : notice ? (
+              <FeedbackNotice
+                kind="success"
+                message={notice}
+                onDismiss={() => setNotice(null)}
+              />
+            ) : null}
 
             {canManage && (
               <ThemedView type="backgroundElement" style={styles.section}>
@@ -247,22 +356,20 @@ export default function ManageImagesScreen() {
 
                 <Pressable
                   onPress={pickAndUpload}
-                  disabled={busy}
+                  disabled={pending !== null}
                   accessibilityRole="button"
-                  style={({ pressed }) => (pressed || busy) && styles.pressed}
+                  style={({ pressed }) => (pressed || pending !== null) && styles.pressed}
                 >
                   <ThemedView type="backgroundSelected" style={styles.buttonView}>
-                    <ThemedText type="smallBold">
-                      {busy ? "Working…" : "Upload from device"}
-                    </ThemedText>
+                    <ThemedText type="smallBold">Upload from device</ThemedText>
                   </ThemedView>
                 </Pressable>
 
                 <Pressable
                   onPress={() => setPicking(true)}
-                  disabled={busy}
+                  disabled={pending !== null}
                   accessibilityRole="button"
-                  style={({ pressed }) => (pressed || busy) && styles.pressed}
+                  style={({ pressed }) => (pressed || pending !== null) && styles.pressed}
                 >
                   <ThemedView type="backgroundSelected" style={styles.buttonView}>
                     <ThemedText type="smallBold">Choose Amazon image</ThemedText>
@@ -282,18 +389,18 @@ export default function ManageImagesScreen() {
                   autoCorrect={false}
                   keyboardType="url"
                   maxLength={500}
-                  editable={!busy}
+                  editable={pending === null}
                   style={[
                     styles.input,
                     { color: theme.text, backgroundColor: theme.backgroundSelected },
                   ]}
                 />
                 <Pressable
-                  onPress={addByUrl}
-                  disabled={busy || !url.trim()}
+                  onPress={() => void addByUrl()}
+                  disabled={pending !== null || !url.trim()}
                   accessibilityRole="button"
                   style={({ pressed }) =>
-                    (pressed || busy || !url.trim()) && styles.pressed
+                    (pressed || pending !== null || !url.trim()) && styles.pressed
                   }
                 >
                   <ThemedView type="backgroundSelected" style={styles.buttonView}>
@@ -309,9 +416,6 @@ export default function ManageImagesScreen() {
                 added it or the app admin can change them.
               </ThemedText>
             )}
-
-            {busy && <ActivityIndicator />}
-            {message && <ThemedText type="small">{message}</ThemedText>}
           </ScrollView>
         )}
       </SafeAreaView>
@@ -324,6 +428,8 @@ export default function ManageImagesScreen() {
           onChoose={(imageUrl) => void addFromListing(imageUrl)}
         />
       )}
+
+      <FailureDialog failure={failure} onClose={() => setFailure(null)} />
     </ThemedView>
   );
 }
@@ -423,6 +529,9 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.two,
   },
   remove: {
+    color: "#E5484D",
+  },
+  loadError: {
     color: "#E5484D",
   },
   input: {
