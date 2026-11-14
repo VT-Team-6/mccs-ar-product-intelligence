@@ -311,6 +311,17 @@ export default function ProductScreen() {
             <ThemedView style={styles.actions}>
               {canEdit && (
                 <ActionButton
+                  label="Manage images"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/admin/product-images/[id]",
+                      params: { id: String(product.product_id) },
+                    })
+                  }
+                />
+              )}
+              {canEdit && (
+                <ActionButton
                   label="Edit"
                   onPress={() =>
                     router.push({

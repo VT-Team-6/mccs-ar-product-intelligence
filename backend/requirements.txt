@@ -27,3 +27,4 @@ scikit-learn==1.9.1
 fastembed==0.9.0
 openai
 httpx
+python-multipart==0.0.20

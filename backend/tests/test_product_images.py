@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
-from schemas import ProductCreate, ProductUpdate
+from schemas import ProductCreate, ProductImageCreate, ProductUpdate
 
 
 class ImageUrlTests(unittest.TestCase):
@@ -41,6 +41,20 @@ class ImageUrlTests(unittest.TestCase):
                 for schema in (ProductCreate,ProductUpdate):
                     with self.assertRaises(ValidationError):
                         schema(name='Example',product_type='Coffee',image_url=url)
+
+    def test_gallery_images_use_the_same_rules_as_the_featured_image(self):
+        """A gallery link is validated exactly like products.image_url."""
+        for url in ('https://example.test/sole.jpg','/static/products/shoe.png'):
+            with self.subTest(url=url):
+                self.assertEqual(ProductImageCreate(image_url=url).image_url,url)
+        # Trimmed, so a pasted link with stray spaces is stored clean.
+        self.assertEqual(ProductImageCreate(image_url='  https://example.test/a.jpg ').image_url,
+                         'https://example.test/a.jpg')
+        for url in ('not-a-link','https://','javascript:alert(1)','file:///C:/image.png',
+                    'https://example.test/a b.jpg','https://example.test/'+('x'*500),''):
+            with self.subTest(url=url):
+                with self.assertRaises(ValidationError):
+                    ProductImageCreate(image_url=url)
 
 
 class ListingImageEndpointTests(unittest.TestCase):

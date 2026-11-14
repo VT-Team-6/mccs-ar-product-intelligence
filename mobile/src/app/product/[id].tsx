@@ -1,11 +1,17 @@
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
-import { productImageUrl, storePriceLine, storeStock, type Product } from '@/api/products';
+import {
+  listProductImages,
+  productImageUrl,
+  storePriceLine,
+  storeStock,
+  type Product,
+} from '@/api/products';
+import { ProductImageGallery } from '@/components/product-image-gallery';
 import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -26,6 +32,9 @@ export default function ShopperProductScreen() {
   const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedId, setLoadedId] = useState<number | null>(null);
+  // The product's extra photos, featured image not included. A failure here is not
+  // an error for the page: the featured image alone still works.
+  const [extraImages, setExtraImages] = useState<string[]>([]);
   // True while a like request is running, so the heart cannot be double-tapped
   const [savingLike, setSavingLike] = useState(false);
   // Stops one visit from being recorded more than once
@@ -54,6 +63,28 @@ export default function ShopperProductScreen() {
       cancelled = true;
     };
   }, [id, store?.store_id]);
+
+  // The extra photos are a separate request so the product payload stays the
+  // same shape everywhere else in the app. They are loaded alongside the
+  // product and a failure is ignored: the featured image alone is still usable.
+  useEffect(() => {
+    let cancelled = false;
+    const productId = Number(id);
+    if (!Number.isInteger(productId)) return;
+    listProductImages(productId)
+      .then((images) => {
+        if (cancelled) return;
+        setExtraImages(
+          images.map((image) => productImageUrl(image)).filter((url): url is string => !!url),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setExtraImages([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   // Records that this product was opened in user history.
   useEffect(() => {
@@ -106,6 +137,11 @@ export default function ShopperProductScreen() {
   };
 
   const imageUrl = product ? productImageUrl(product) : null;
+  // Featured photo first, then the extra ones, so the gallery's first slide is
+  // exactly what every card and listing shows.
+  const galleryImages = product
+    ? [...(imageUrl ? [imageUrl] : []), ...extraImages]
+    : [];
 
   // The store has this product on record but no longer sells it. Shown as its
   // own state so a scan never implies a price or availability that isn't there.
@@ -139,15 +175,7 @@ export default function ShopperProductScreen() {
           <ScrollView
             ref={scrollRef}
             contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.two }]}>
-            {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={[styles.image, styles.whiteBackground]}
-                contentFit="contain"
-              />
-            ) : (
-              <ThemedView type="backgroundSelected" style={styles.image} />
-            )}
+            <ProductImageGallery imageUrls={galleryImages} productName={product.name} />
 
             <ThemedView style={styles.section}>
               <ThemedText type="subtitle" style={styles.name}>
@@ -312,15 +340,6 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.three,
-  },
-  image: {
-    width: '100%',
-    aspectRatio: 1.4,
-    borderRadius: Spacing.three,
-  },
-  // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
-  whiteBackground: {
-    backgroundColor: '#ffffff',
   },
   section: {
     gap: Spacing.one,

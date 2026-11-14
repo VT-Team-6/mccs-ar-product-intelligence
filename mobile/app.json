@@ -41,6 +41,13 @@
           "locationWhenInUsePermission": "MCCS uses your location to show which stores are closest to you."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "MCCS uses your photos so an admin can add product pictures.",
+          "microphonePermission": false
+        }
+      ],
       "./plugins/with-ios-scene-delegate"
     ],
     "experiments": {
