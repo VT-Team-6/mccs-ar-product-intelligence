@@ -395,3 +395,146 @@ def test_deleting_a_product_removes_its_gallery_rows(client, db):
     assert db.execute(
         "SELECT count(*) AS n FROM product_images WHERE product_id = %s", (product_id,)
     ).fetchone()["n"] == 0
+
+
+# --- making an image featured ----------------------------------------------
+
+
+def _set_featured_url(client, product_id, url):
+    assert client.put(
+        f"/api/admin/products/{product_id}", json={"image_url": url}
+    ).status_code == 200
+
+
+def _featured_url(client, product_id):
+    return client.get(f"/api/admin/products/{product_id}").json()["image_url"]
+
+
+def _owned_product_id(db, store_id=1) -> int:
+    """The product id that _owned_product just created for this store."""
+    return db.execute(
+        "SELECT max(product_id) AS id FROM products WHERE created_by_store_id = %s",
+        (store_id,),
+    ).fetchone()["id"]
+
+
+def _gallery_urls(client, product_id):
+    # Re-sign-in as the product's owner: the helper is called after tests that
+    # switch identity (e.g. to prove another store is refused).
+    response = client.get(f"/api/admin/products/{product_id}/images")
+    assert response.status_code == 200, response.text
+    return [image["image_url"] for image in response.json()]
+
+
+def _make_featured(client, product_id, image_id):
+    return client.put(
+        f"/api/admin/products/{product_id}/images/{image_id}/featured"
+    )
+
+
+def test_making_an_image_featured_swaps_it_with_the_previous_one(client, db):
+    product_id = _owned_product(client, db)
+    _set_featured_url(client, product_id, SECOND_IMAGE)
+    promoted = _add(client, product_id, THIRD_IMAGE).json()
+
+    response = _make_featured(client, product_id, promoted["image_id"])
+
+    assert response.status_code == 200
+    # The promoted photo is now the featured image...
+    assert _featured_url(client, product_id) == THIRD_IMAGE
+    # ...and it is no longer duplicated in the gallery.
+    assert promoted["image_url"] not in _gallery_urls(client, product_id)
+    # The photo it replaced is still available as an extra image.
+    assert _gallery_urls(client, product_id) == [SECOND_IMAGE]
+    # The endpoint answers with the gallery the screen reloads.
+    assert [image["image_url"] for image in response.json()] == [SECOND_IMAGE]
+
+
+def test_making_the_same_image_featured_again_restores_the_original(client, db):
+    product_id = _owned_product(client, db)
+    _set_featured_url(client, product_id, SECOND_IMAGE)
+    promoted = _add(client, product_id, THIRD_IMAGE).json()
+    _make_featured(client, product_id, promoted["image_id"])
+
+    # The swapped-out photo is the only gallery entry; promoting it undoes the swap.
+    swapped_back = client.get(
+        f"/api/admin/products/{product_id}/images"
+    ).json()[0]
+    assert _make_featured(client, product_id, swapped_back["image_id"]).status_code == 200
+
+    assert _featured_url(client, product_id) == SECOND_IMAGE
+    assert _gallery_urls(client, product_id) == [THIRD_IMAGE]
+
+
+def test_deleting_a_swapped_in_upload_does_not_delete_the_featured_image(
+    client, db, images_dir
+):
+    # The regression a "copy the url" implementation would hit: the promoted file
+    # must survive removing the gallery row that it replaced.
+    product_id = _owned_product(client, db)
+    _set_featured_url(client, product_id, SECOND_IMAGE)
+    promoted = _add_upload(client, product_id).json()
+    promoted_file = images_dir / promoted["image_url"].removeprefix("/static/products/")
+
+    assert _make_featured(client, product_id, promoted["image_id"]).status_code == 200
+
+    old_row = client.get(f"/api/admin/products/{product_id}/images").json()[0]
+    assert client.delete(
+        f"/api/admin/products/{product_id}/images/{old_row['image_id']}"
+    ).status_code == 200
+
+    # The featured image's file is untouched, and the product still points at it.
+    assert promoted_file.exists()
+    assert _featured_url(client, product_id) == promoted["image_url"]
+
+
+def test_a_swapped_back_upload_keeps_its_file_when_removed(client, db, images_dir):
+    # Ownership has to follow the swapped-out photo, not default to "url", or the
+    # original upload would be left behind on disk forever.
+    product_id = _owned_product(client, db)
+    original = _add_upload(client, product_id).json()
+    original_file = images_dir / original["image_url"].removeprefix("/static/products/")
+    assert _make_featured(client, product_id, original["image_id"]).status_code == 200
+    assert _featured_url(client, product_id) == original["image_url"]
+    # The product had no featured image, so nothing came back to the gallery.
+    assert _gallery_urls(client, product_id) == []
+
+    replacement = _add_upload(client, product_id).json()
+    assert _make_featured(client, product_id, replacement["image_id"]).status_code == 200
+    # The original is back in the gallery, and its file is still there.
+    assert _gallery_urls(client, product_id) == [original["image_url"]]
+    assert original_file.exists()
+
+    swapped_back = client.get(f"/api/admin/products/{product_id}/images").json()[0]
+    assert client.delete(
+        f"/api/admin/products/{product_id}/images/{swapped_back['image_id']}"
+    ).status_code == 200
+
+    # It was an upload, so removing its row removes the file.
+    assert not original_file.exists()
+
+
+def test_promoting_an_image_of_another_product_is_404(client, db):
+    first = _owned_product(client, db, store_id=1)
+    image_id = _add(client, first, SECOND_IMAGE).json()["image_id"]
+    _owned_product(client, db, store_id=1)
+    second = _owned_product_id(db)
+    # Back to the first product's owner: the second creation switched identity.
+    _sign_in_as(client, db, "store_admin", [1], token="creator-1")
+
+    assert _make_featured(client, second, image_id).status_code == 404
+    # Neither product changed.
+    assert _gallery_urls(client, first) == [SECOND_IMAGE]
+
+
+def test_another_store_cannot_make_an_image_featured(client, db):
+    product_id = _owned_product(client, db, store_id=1)
+    _set_featured_url(client, product_id, SECOND_IMAGE)
+    promoted = _add(client, product_id, THIRD_IMAGE).json()
+    _sign_in_as(client, db, "store_admin", [2])
+
+    assert _make_featured(client, product_id, promoted["image_id"]).status_code == 403
+    # Back as the owner to read the admin view, which shows nothing changed.
+    _sign_in_as(client, db, "store_admin", [1], token="creator-1")
+    assert _featured_url(client, product_id) == SECOND_IMAGE
+    assert _gallery_urls(client, product_id) == [THIRD_IMAGE]

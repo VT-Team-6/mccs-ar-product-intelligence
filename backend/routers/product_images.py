@@ -254,6 +254,85 @@ async def upload_product_image(
     return stored
 
 
+@admin_router.put("/{product_id}/images/{image_id}/featured", response_model=list[ProductImage])
+def make_product_image_featured(
+    product_id: int,
+    image_id: int,
+    user=Depends(require_permission("create_products")),
+) -> list[dict]:
+    """Promote one extra image to be the product's featured image.
+
+    This is a swap, not a copy: the promoted photo leaves the gallery and the
+    photo it replaces takes its place there. Keeping both would mean the same
+    photo is listed twice, and removing the gallery copy would then delete the
+    file the featured image points at — see _remove_uploaded_file.
+    """
+    with get_connection() as conn:
+        require_product_owner(conn, user, product_id)
+
+        chosen = conn.execute(
+            """
+            SELECT image_url
+            FROM product_images
+            WHERE product_id = %s AND image_id = %s
+            """,
+            (product_id, image_id),
+        ).fetchone()
+        if chosen is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Image {image_id} not found on product {product_id}",
+            )
+
+        outgoing = conn.execute(
+            "SELECT image_url FROM products WHERE product_id = %s",
+            (product_id,),
+        ).fetchone()["image_url"]
+
+        # Remove first: it frees the name for the outgoing image below (the
+        # unique constraint) and guarantees the featured image is never also a
+        # gallery row.
+        conn.execute(
+            "DELETE FROM product_images WHERE product_id = %s AND image_id = %s",
+            (product_id, image_id),
+        )
+        conn.execute(
+            """
+            UPDATE products
+            SET image_url = %s, updated_at = CURRENT_TIMESTAMP
+            WHERE product_id = %s
+            """,
+            (chosen["image_url"], product_id),
+        )
+
+        if outgoing:
+            # The old featured image becomes an extra image, so the admin can
+            # put it back with one more tap. Its file ownership follows from the
+            # link: anything we serve from our own folder may have been written
+            # by an upload, so it must still be deletable as one.
+            #
+            # ON CONFLICT: editing a product can already point image_url at a
+            # photo that is also in the gallery, so the outgoing link may be
+            # listed there. That state is left as it is rather than failing the
+            # swap the admin asked for.
+            conn.execute(
+                """
+                INSERT INTO product_images (product_id, image_url, source)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (product_id, image_url) DO NOTHING
+                """,
+                (
+                    product_id,
+                    outgoing,
+                    "upload"
+                    if outgoing.startswith(PUBLIC_IMAGES_PREFIX)
+                    else "url",
+                ),
+            )
+
+        return _gallery(conn, product_id)
+
+
 @admin_router.delete("/{product_id}/images/{image_id}")
 def delete_product_image(
     product_id: int,

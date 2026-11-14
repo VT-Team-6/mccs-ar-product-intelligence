@@ -321,6 +321,29 @@ export async function deleteProductImage(
   }
 }
 
+// Promote an extra image to be the product's featured image. The backend swaps
+// it with the current one, so the photo it replaces comes back in the gallery;
+// it returns that gallery so the screen can show the result immediately.
+export async function makeProductImageFeatured(
+  productId: number,
+  imageId: number,
+): Promise<ProductImage[]> {
+  const response = await authenticatedFetch(
+    `/api/admin/products/${productId}/images/${imageId}/featured`,
+    { method: "PUT" },
+  );
+  if (response.status === 404) {
+    throw new Error("That image is no longer on this product.");
+  }
+  if (!response.ok) {
+    throw await imageProblem(
+      response,
+      `Could not change the featured image (error ${response.status})`,
+    );
+  }
+  return response.json();
+}
+
 // What the shopper should read where a price would go. The payload cannot tell
 // "no store selected" from "this store doesn't carry it" (both are a null
 // store_inventory), so the active store decides which copy is true.

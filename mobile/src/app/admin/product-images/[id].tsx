@@ -19,6 +19,7 @@ import {
   deleteProductImage,
   getProduct,
   listProductImages,
+  makeProductImageFeatured,
   productImageUrl,
   uploadProductImage,
   type Product,
@@ -90,11 +91,16 @@ export default function ManageImagesScreen() {
   // Runs one add/remove action and reports it in three places the admin can see:
   // a labelled progress row, an inline banner, and (on failure) a popup offering
   // to run exactly the same thing again.
+  //
+  // `refreshProduct` also refetches the product itself, which the featured-image
+  // preview reads: changing the featured image would otherwise leave that
+  // preview showing the old photo until the screen is reopened.
   const perform = async (
     label: string,
     title: string,
     action: () => Promise<string>,
     retry: () => void,
+    refreshProduct = false,
   ) => {
     if (running.current) return;
     running.current = true;
@@ -104,6 +110,9 @@ export default function ManageImagesScreen() {
     try {
       setNotice(await action());
       await reload();
+      if (refreshProduct) {
+        setProduct(await getProduct(Number(id)));
+      }
     } catch (problem) {
       setFailure({
         title,
@@ -253,6 +262,23 @@ export default function ManageImagesScreen() {
     );
   };
 
+  // Promote an extra image. The backend swaps it with the current featured
+  // image, so the photo it replaces returns to the gallery and the action is
+  // reversible by promoting that one in turn.
+  const makeFeatured = async (image: ProductImage) => {
+    await perform(
+      "Making this the featured image…",
+      "Could not change the featured image",
+      async () => {
+        await makeProductImageFeatured(Number(id), image.image_id);
+        return "This is now the featured image.";
+      },
+      () => void makeFeatured(image),
+      // The featured preview reads the product, so refetch it as well.
+      true,
+    );
+  };
+
   const featuredImage = product ? productImageUrl(product) : null;
   // Owners can change the gallery; someone who can open the product page but
   // not edit it sees the photos read-only.
@@ -303,7 +329,8 @@ export default function ManageImagesScreen() {
               )}
               <ThemedText type="small" themeColor="textSecondary">
                 The featured image is the photo shown on cards and listings, and
-                first on the product page. Change it by editing the product.
+                first on the product page. Edit the product to set it directly,
+                or use Feature on an extra image below.
               </ThemedText>
             </ThemedView>
 
@@ -329,6 +356,7 @@ export default function ManageImagesScreen() {
                     <ExtraImage
                       key={image.image_id}
                       image={image}
+                      onMakeFeatured={() => makeFeatured(image)}
                       onRemove={() => remove(image)}
                       disabled={pending !== null || !canManage}
                     />
@@ -445,10 +473,12 @@ export default function ManageImagesScreen() {
 
 function ExtraImage({
   image,
+  onMakeFeatured,
   onRemove,
   disabled,
 }: {
   image: ProductImage;
+  onMakeFeatured: () => void;
   onRemove: () => void;
   disabled: boolean;
 }) {
@@ -464,18 +494,36 @@ function ExtraImage({
       ) : (
         <ThemedView type="backgroundSelected" style={styles.cardImage} />
       )}
-      <Pressable
-        onPress={onRemove}
-        disabled={disabled}
-        accessibilityRole="button"
-        accessibilityLabel="Remove this image"
-        hitSlop={8}
-        style={({ pressed }) => (pressed || disabled) && styles.pressed}
-      >
-        <ThemedText type="smallBold" style={styles.remove}>
-          Remove
-        </ThemedText>
-      </Pressable>
+      <View style={styles.cardActions}>
+        <Pressable
+          onPress={onMakeFeatured}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel="Make this the featured image"
+          style={({ pressed }) => [
+            styles.cardAction,
+            (pressed || disabled) && styles.pressed,
+          ]}
+        >
+          <ThemedText type="smallBold" numberOfLines={1}>
+            Feature
+          </ThemedText>
+        </Pressable>
+        <Pressable
+          onPress={onRemove}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel="Remove this image"
+          style={({ pressed }) => [
+            styles.cardAction,
+            (pressed || disabled) && styles.pressed,
+          ]}
+        >
+          <ThemedText type="smallBold" style={styles.remove} numberOfLines={1}>
+            Remove
+          </ThemedText>
+        </Pressable>
+      </View>
     </ThemedView>
   );
 }
@@ -536,6 +584,22 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 100,
     borderRadius: Spacing.two,
+  },
+  // Two labels have to share the card's inner width, so each action takes half
+  // of it (flexBasis: 0 + flexGrow) instead of sizing to its own text. Without
+  // this the pair overflowed the card's padding.
+  cardActions: {
+    flexDirection: "row",
+    gap: Spacing.two,
+  },
+  cardAction: {
+    flexGrow: 1,
+    flexBasis: 0,
+    minWidth: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    // Keeps each a comfortable tap target inside the small card.
+    minHeight: 40,
   },
   remove: {
     color: "#E5484D",
