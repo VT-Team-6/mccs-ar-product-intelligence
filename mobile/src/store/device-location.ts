@@ -19,6 +19,27 @@ export type DeviceLocation =
   | { status: 'denied'; canAskAgain: boolean }
   | { status: 'unavailable'; reason: 'services-off' | 'no-fix' | 'error' };
 
+/** Everything except a fix: what the UI has to explain. */
+export type LocationRefusal = Exclude<DeviceLocation, { status: 'granted' }>;
+
+// Why a location attempt produced no fix, in the shopper's terms. Each one names
+// the way forward instead of an error code. Shared by the store sheet and the
+// product page so a refusal reads the same wherever it happens.
+export function locationProblem(refusal: LocationRefusal): string {
+  if (refusal.status === 'denied') {
+    return refusal.canAskAgain
+      ? 'Location is off for this app. You can allow it next time, or search a ZIP.'
+      : 'Location is blocked for this app. Allow it in settings, or search a ZIP.';
+  }
+  if (refusal.reason === 'services-off') {
+    return 'Location services are off on this device. Turn them on, or search a ZIP.';
+  }
+  if (refusal.reason === 'no-fix') {
+    return 'Could not get your location. Try again, or search a ZIP.';
+  }
+  return 'Could not use your location. Try again, or search a ZIP.';
+}
+
 export async function locateDevice(): Promise<DeviceLocation> {
   try {
     // Permission can be granted while location is switched off system-wide, so

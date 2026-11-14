@@ -30,7 +30,7 @@ import { ThemedView } from '../components/themed-view';
 import { Spacing } from '../constants/theme';
 import { useTheme } from '../hooks/use-theme';
 import { confirmAction } from '../utils/confirm';
-import { locateDevice, type DeviceLocation } from './device-location';
+import { locateDevice, locationProblem, type LocationRefusal } from './device-location';
 import { distanceToStore, formatMiles } from './distance';
 
 // The cache is a startup accelerator, not a per-account record, so it holds the
@@ -53,7 +53,24 @@ type StoreContextType = {
    * price prompt meant.
    */
   openStoreSelector: (options?: { allowClear?: boolean }) => void;
+  /**
+   * The device's own coordinates, once the shopper has asked for them. Lives here
+   * so distances mean the same thing everywhere: the sheet and the product page 
+   * must not measure from different places. Null until asked, and cleared on sign-out.
+   */
+  deviceOrigin: DeviceOrigin | null;
+  // A fix is being requested. Both surfaces disable their button while true.
+  locating: boolean;
+  // Why the last attempt produced no fix. One state, so a refusal anywhere shows everywhere.
+  locationRefusal: LocationRefusal | null;
+  // Asks the device for its location. The only path that can raise the permission prompt.
+  useDeviceLocation: () => Promise<void>;
+  // Drops the fix and returns to measuring from the active store.
+  clearDeviceOrigin: () => void;
 };
+
+// Where distances are measured from when the shopper uses the device's location.
+export type DeviceOrigin = { latitude: number; longitude: number };
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
@@ -97,6 +114,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [allowClear, setAllowClear] = useState(false);
+  const [deviceOrigin, setDeviceOrigin] = useState<DeviceOrigin | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationRefusal, setLocationRefusal] = useState<LocationRefusal | null>(null);
 
   // Learns the shopper's store once a user is signed in. The cache paints first
   // so the name is on screen immediately; the server then overrides it.
@@ -107,11 +127,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!user) {
         // Sign-out: drop the in-memory store and the cache. The account's saved
         // store stays on the server, so the same person gets it back next time,
-        // and a different person never inherits it.
+        // and a different person never inherits it. The same goes for the device
+        // fix: it belongs to the person who asked for it, not to the next shopper.
         await writeCache(null);
         if (cancelled) return;
         setStores([]);
         setStoreState(null);
+        setDeviceOrigin(null);
+        setLocationRefusal(null);
         setLoading(true);
         return;
       }
@@ -183,6 +206,29 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setSheetOpen(true);
   }, []);
 
+  // The only path that can show the system permission prompt. Asking twice in a
+  // row is prevented, since a second tap while the GPS is working would queue a
+  // duplicate request behind the first.
+  const useDeviceLocation = useCallback(async () => {
+    if (locating) return;
+    setLocating(true);
+    setLocationRefusal(null);
+    const result = await locateDevice();
+    if (result.status === 'granted') {
+      setDeviceOrigin({ latitude: result.latitude, longitude: result.longitude });
+    } else {
+      // A refusal leaves any existing origin alone, so the sheet and the product
+      // page keep their ordering instead of falling back to "no distances".
+      setLocationRefusal(result);
+    }
+    setLocating(false);
+  }, [locating]);
+
+  const clearDeviceOrigin = useCallback(() => {
+    setDeviceOrigin(null);
+    setLocationRefusal(null);
+  }, []);
+
   const pick = useCallback(
     async (picked: Store) => {
       setSheetOpen(false);
@@ -215,8 +261,30 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [setStore]);
 
   const value = useMemo(
-    () => ({ store, stores, loading, setStore, openStoreSelector }),
-    [store, stores, loading, setStore, openStoreSelector],
+    () => ({
+      store,
+      stores,
+      loading,
+      setStore,
+      openStoreSelector,
+      deviceOrigin,
+      locating,
+      locationRefusal,
+      useDeviceLocation,
+      clearDeviceOrigin,
+    }),
+    [
+      store,
+      stores,
+      loading,
+      setStore,
+      openStoreSelector,
+      deviceOrigin,
+      locating,
+      locationRefusal,
+      useDeviceLocation,
+      clearDeviceOrigin,
+    ],
   );
 
   return (
@@ -224,12 +292,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       {children}
       <StoreSelectorSheet
         // Remounting on each open resets the mode, the typed ZIP and the search
-        // results, so a previous search never reappears.
+        // results, so a previous search never reappears. The device fix lives in
+        // the provider, so it deliberately survives this remount.
         key={sheetOpen ? 'open' : 'closed'}
         visible={sheetOpen}
         stores={stores}
         selected={store}
         allowClear={allowClear}
+        deviceOrigin={deviceOrigin}
+        locating={locating}
+        locationRefusal={locationRefusal}
+        onUseDeviceLocation={useDeviceLocation}
+        onClearDeviceOrigin={clearDeviceOrigin}
         onPick={pick}
         onClear={clear}
         onClose={() => setSheetOpen(false)}
@@ -248,32 +322,8 @@ export function useStore() {
   return context;
 }
 
-// What distances are measured from inside the sheet: the device's own fix or a
-// place the shopper searched for. 
-type Origin = {
-  kind: 'device' | 'place';
-  /** The geocoder's id, present only for a searched place. */
-  placeId?: number;
-  latitude: number;
-  longitude: number;
-  name: string;
-};
-
-// Location Service error handling. 
-function locationProblem(refusal: Exclude<DeviceLocation, { status: 'granted' }>): string {
-  if (refusal.status === 'denied') {
-    return refusal.canAskAgain
-      ? 'Location is off for this app. You can allow it next time, or search a ZIP.'
-      : 'Location is blocked for this app. Allow it in settings, or search a ZIP.';
-  }
-  if (refusal.reason === 'services-off') {
-    return 'Location services are off on this device. Turn them on, or search a ZIP.';
-  }
-  if (refusal.reason === 'no-fix') {
-    return 'Could not get your location. Try again, or search a ZIP.';
-  }
-  return 'Could not use your location. Try again, or search a ZIP.';
-}
+// Location Service error handling lives in ./device-location so the sheet and the
+// product page cannot drift apart.
 
 // Mounted once, from the provider, so every entry point (the Account row, the
 // product page link, and every "select a store" price prompt) opens this same
@@ -283,6 +333,11 @@ function StoreSelectorSheet({
   stores,
   selected,
   allowClear,
+  deviceOrigin,
+  locating,
+  locationRefusal,
+  onUseDeviceLocation,
+  onClearDeviceOrigin,
   onPick,
   onClear,
   onClose,
@@ -291,6 +346,11 @@ function StoreSelectorSheet({
   stores: Store[];
   selected: Store | null;
   allowClear: boolean;
+  deviceOrigin: DeviceOrigin | null;
+  locating: boolean;
+  locationRefusal: LocationRefusal | null;
+  onUseDeviceLocation: () => void;
+  onClearDeviceOrigin: () => void;
   onPick: (store: Store) => void;
   onClear: () => void;
   onClose: () => void;
@@ -302,27 +362,48 @@ function StoreSelectorSheet({
   const [searching, setSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<LocationSuggestion[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
-  // The origin is the device's own location or a place the shopper searched for.
-  const [origin, setOrigin] = useState<Origin | null>(null);
-  // The device's own location is requested only when the shopper taps "Use my location". 
-  // The sheet can render every failure reason, so a refusal never breaks store selection.
-  const [locating, setLocating] = useState<'idle' | 'busy'>('idle');
-  const [locationRefusal, setLocationRefusal] = useState<
-    Exclude<DeviceLocation, { status: 'granted' }> | null
-  >(null);
+  // Only the searched place is local. The device's fix comes from the provider,
+  // because it outlives this sheet (the product page measures from it too), while
+  // a search is this visit's choice and resets on the next open.
+  const [placeOrigin, setPlaceOrigin] = useState<{
+    placeId: number;
+    latitude: number;
+    longitude: number;
+    name: string;
+  } | null>(null);
 
   // Reopening starts clean, so a previous search doesn't surprise the shopper.
   // Reset by remounting (see the `key` on StoreSelectorSheet in the provider)
-  // rather than an effect that clears state.
-  const selectedOrigin = origin
-    ? { latitude: origin.latitude, longitude: origin.longitude, name: origin.name }
-    : selected
-      ? { latitude: selected.latitude, longitude: selected.longitude, name: selected.name }
-      : null;
+  // rather than an effect that clears state. An explicit search wins over the
+  // device fix: the shopper just typed it.
+  const selectedOrigin = placeOrigin
+    ? { latitude: placeOrigin.latitude, longitude: placeOrigin.longitude, name: placeOrigin.name }
+    : deviceOrigin
+      ? {
+          latitude: deviceOrigin.latitude,
+          longitude: deviceOrigin.longitude,
+          name: 'your current location',
+        }
+      : selected
+        ? { latitude: selected.latitude, longitude: selected.longitude, name: selected.name }
+        : null;
 
   // Every store is listed, nearest first. Nothing is filtered out by a radius:
   // a picker should show every location. Stores without coordinates keep the
   // API's order at the end rather than sorting as distance 0.
+
+  // The device row only claims to be in use when it is the origin actually
+  // sorting the list: a searched place overrides it for this visit, so showing
+  // "Using your current location" beside a place-based sort would be a lie.
+  const usingDevice = deviceOrigin !== null && placeOrigin === null;
+
+  // Pressing the button drops a searched place first, so the request is never
+  // invisible: without this, a fix would arrive and still lose to that place.
+  const requestDeviceLocation = () => {
+    setPlaceOrigin(null);
+    void onUseDeviceLocation();
+  };
+
   const rows = stores
     .map((item) => ({
       item,
@@ -361,29 +442,6 @@ function StoreSelectorSheet({
     } finally {
       setSearching(false);
     }
-  };
-
-  // The only path that can show the system permission prompt. Asking twice in a
-  // row is prevented, since a second tap while the GPS is working would queue a
-  // duplicate request behind the first.
-  const useDeviceLocation = async () => {
-    if (locating === 'busy') return;
-    setLocating('busy');
-    setLocationRefusal(null);
-    const result = await locateDevice();
-    if (result.status === 'granted') {
-      setOrigin({
-        kind: 'device',
-        latitude: result.latitude,
-        longitude: result.longitude,
-        name: 'your current location',
-      });
-    } else {
-      // A refusal leaves the origin alone: the selected store, or a searched
-      // place, keeps sorting the list, so the sheet never loses its ordering.
-      setLocationRefusal(result);
-    }
-    setLocating('idle');
   };
 
   return (
@@ -428,13 +486,13 @@ function StoreSelectorSheet({
 
           {mode === 'near' && (
             <View style={styles.locationBlock}>
-              {origin?.kind === 'device' ? (
+              {usingDevice ? (
                 <View style={styles.locationActive}>
                   <ThemedText type="small" themeColor="textSecondary" style={styles.locationText}>
                     Using your current location.
                   </ThemedText>
                   <Pressable
-                    onPress={() => setOrigin(null)}
+                    onPress={onClearDeviceOrigin}
                     accessibilityRole="button"
                     accessibilityLabel="Stop using your current location"
                     hitSlop={8}>
@@ -443,9 +501,9 @@ function StoreSelectorSheet({
                 </View>
               ) : (
                 <ActionButton
-                  label={locating === 'busy' ? 'Finding you…' : 'Use my location'}
-                  onPress={useDeviceLocation}
-                  disabled={locating === 'busy'}
+                  label={locating ? 'Finding you…' : 'Use my location'}
+                  onPress={requestDeviceLocation}
+                  disabled={locating}
                   compact
                 />
               )}
@@ -511,13 +569,12 @@ function StoreSelectorSheet({
                     Pick a place to measure distances from.
                   </ThemedText>
                   {suggestions.map((place) => {
-                    const active = origin?.kind === 'place' && origin.placeId === place.id;
+                    const active = placeOrigin?.placeId === place.id;
                     return (
                       <Pressable
                         key={place.id}
                         onPress={() =>
-                          setOrigin({
-                            kind: 'place',
+                          setPlaceOrigin({
                             placeId: place.id,
                             latitude: place.latitude,
                             longitude: place.longitude,
