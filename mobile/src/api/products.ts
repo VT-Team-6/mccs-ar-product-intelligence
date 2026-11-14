@@ -296,7 +296,7 @@ export async function uploadProductImage(
     throw new Error("That image is larger than 5 MB. Choose a smaller photo.");
   }
   if (response.status === 415) {
-    throw new Error("Use a PNG, JPEG, or WebP photo.");
+    throw new Error("Use a PNG, JPEG, WebP, or AVIF photo.");
   }
   if (!response.ok) {
     throw await imageProblem(response, `Could not upload the image (error ${response.status})`);

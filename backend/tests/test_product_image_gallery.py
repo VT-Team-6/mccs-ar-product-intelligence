@@ -19,6 +19,10 @@ from main import app
 # A real PNG signature followed by filler: enough for the upload type sniffing,
 # and small enough that the 5 MB limit is never approached.
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+# An ISO base media file format header: a size, the "ftyp" box, then the brand.
+# AVIF and HEIC differ only in that brand, which is the whole point of the pair.
+AVIF_BYTES = b"\x00\x00\x00\x1cftypavif" + b"0" * 64
+HEIC_BYTES = b"\x00\x00\x00\x18ftypheic" + b"0" * 64
 SECOND_IMAGE = "https://example.test/sole.jpg"
 THIRD_IMAGE = "/static/products/brooks-ghost-15.png"
 
@@ -271,6 +275,40 @@ def test_a_file_that_is_not_an_image_is_refused(client, db, images_dir):
 
     assert response.status_code == 415
     # The rejected upload left nothing behind.
+    assert list(images_dir.iterdir()) == []
+
+
+def test_an_avif_image_is_accepted(client, db, images_dir):
+    product_id = _owned_product(client, db)
+
+    response = _add_upload(
+        client, product_id, content=AVIF_BYTES, name="photo.avif"
+    )
+
+    assert response.status_code == 201
+    image = response.json()
+    assert image["image_url"].startswith("/static/products/product-")
+    assert image["image_url"].endswith(".avif")
+    # The extension is what StaticFiles turns into the Content-Type, so the
+    # bytes must be on disk under exactly the name the URL points at.
+    stored = images_dir / image["image_url"].removeprefix("/static/products/")
+    assert stored.read_bytes() == AVIF_BYTES
+    assert [entry["image_id"] for entry in client.get(
+        f"/api/admin/products/{product_id}/images"
+    ).json()] == [image["image_id"]]
+
+
+def test_a_heic_image_is_still_refused(client, db, images_dir):
+    # AVIF and HEIC share the ISO-BMFF container and differ only in the brand.
+    # The app asks iOS for a compatible (JPEG) representation instead, so HEIC
+    # stays out: this pins that decision against a future "accept all ftyp" change.
+    product_id = _owned_product(client, db)
+
+    response = _add_upload(
+        client, product_id, content=HEIC_BYTES, name="photo.heic"
+    )
+
+    assert response.status_code == 415
     assert list(images_dir.iterdir()) == []
 
 

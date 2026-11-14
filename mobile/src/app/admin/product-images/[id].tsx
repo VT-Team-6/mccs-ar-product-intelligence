@@ -185,6 +185,12 @@ export default function ManageImagesScreen() {
         // Keeps uploads under the backend's 5 MB limit.
         quality: 0.8,
         allowsMultipleSelection: false,
+        // An iPhone photo may be stored as HEIC, which the backend does not
+        // accept. "Compatible" makes iOS transcode it to JPEG while picking,
+        // so the file that arrives is a type the app can store. Android and
+        // web ignore this option.
+        preferredAssetRepresentationMode:
+          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
       });
       // Cancelling the picker is a decision, not a failure: say nothing.
       if (picked.canceled || picked.assets.length === 0) return;
@@ -353,6 +359,9 @@ export default function ManageImagesScreen() {
             {canManage && (
               <ThemedView type="backgroundElement" style={styles.section}>
                 <ThemedText type="smallBold">Add an image</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Photos must be PNG, JPEG, WebP, or AVIF, up to 5 MB.
+                </ThemedText>
 
                 <Pressable
                   onPress={pickAndUpload}

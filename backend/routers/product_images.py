@@ -34,22 +34,39 @@ PUBLIC_IMAGES_PREFIX = "/static/products/"
 # Max size for image uploads.
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
-# Check the magic number of the first few bytes to see if it's a supported image type.
-# Does not rely on the file extension, which is easy to spoof.
+# How many leading bytes _image_extension() needs to recognise every supported
+# format.
+SIGNATURE_BYTES = 12
+
+# The formats the app is allowed to store, matched on their magic numbers rather
+# than the file extension, which is easy to spoof.
 _SIGNATURES = (
     (b"\x89PNG\r\n\x1a\n", "png"),
     (b"\xff\xd8\xff", "jpg"),
 )
 
+# ISO base media file format containers (HEIC, AVIF) all start with an "ftyp"
+# box, so the brand at bytes 8-12 is what tells them apart.
+_ISOBMFF_BRANDS = ((b"avif", "avif"),)
+
 
 def _image_extension(header: bytes) -> str | None:
-    """The extension for a supported image, or None for anything else."""
+    """The extension for a supported image, or None for anything else.
+
+    `header` must be at least SIGNATURE_BYTES long; the call site slices that
+    many bytes from the upload.
+    """
     for signature, extension in _SIGNATURES:
         if header.startswith(signature):
             return extension
-    # Check magic number for WebP format.
+    # WebP is a RIFF container whose type field (bytes 8-12) spells WEBP.
     if header[:4] == b"RIFF" and header[8:12] == b"WEBP":
         return "webp"
+    # AVIF: an "ftyp" box whose brand (bytes 8-12) is "avif".
+    if header[4:8] == b"ftyp":
+        for brand, extension in _ISOBMFF_BRANDS:
+            if header[8:12] == brand:
+                return extension
     return None
 
 
@@ -208,11 +225,11 @@ async def upload_product_image(
             status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail="Images must be 5 MB or smaller",
         )
-    extension = _image_extension(content[:12])
+    extension = _image_extension(content[:SIGNATURE_BYTES])
     if extension is None:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            detail="Use a PNG, JPEG, or WebP image",
+            detail="Use a PNG, JPEG, WebP, or AVIF image",
         )
 
     # The file is written inside the transaction's lifetime and removed again if
