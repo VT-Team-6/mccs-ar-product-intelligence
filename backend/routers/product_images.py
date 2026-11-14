@@ -1,10 +1,4 @@
-"""Product photos beyond the main one.
-
-The product's main photo stays in products.image_url: it is what cards, search
-results and listings show, and it remains the first image on the detail page.
-This module owns the *extra* photos a product can have, stored as links in
-product_images.
-
+"""
 Two routers, the same split as routers/reviews.py:
 
 * router        - the shopper read (public, like the product itself)
@@ -12,8 +6,7 @@ Two routers, the same split as routers/reviews.py:
                   or the store that added the product
 
 Uploads are written into backend/static/products, the folder the seed photos
-already live in, so main.py's existing /static mount serves them and no new
-storage scheme is introduced.
+already live in, so main.py's existing /static mount serves them
 """
 
 from pathlib import Path
@@ -38,10 +31,11 @@ admin_router = APIRouter(prefix="/api/admin/products", tags=["admin-product-imag
 PRODUCT_IMAGES_DIR = Path(__file__).resolve().parent.parent / "static" / "products"
 PUBLIC_IMAGES_PREFIX = "/static/products/"
 
+# Max size for image uploads.
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
-# The stored type comes from the file's own bytes, never from the name the
-# client sent, so an executable renamed to .png is rejected.
+# Check the magic number of the first few bytes to see if it's a supported image type.
+# Does not rely on the file extension, which is easy to spoof.
 _SIGNATURES = (
     (b"\x89PNG\r\n\x1a\n", "png"),
     (b"\xff\xd8\xff", "jpg"),
@@ -53,7 +47,7 @@ def _image_extension(header: bytes) -> str | None:
     for signature, extension in _SIGNATURES:
         if header.startswith(signature):
             return extension
-    # WebP is a RIFF container whose type field (bytes 8-12) spells WEBP.
+    # Check magic number for WebP format.
     if header[:4] == b"RIFF" and header[8:12] == b"WEBP":
         return "webp"
     return None
@@ -230,8 +224,7 @@ async def upload_product_image(
             # Ownership first: a rejected upload must never leave a file behind.
             require_product_owner(conn, user, product_id)
             PRODUCT_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-            # A fresh name each time: a photo already handed out must never
-            # change under a shopper.
+            # A fresh name each time
             name = f"product-{product_id}-{uuid4().hex}.{extension}"
             (PRODUCT_IMAGES_DIR / name).write_bytes(content)
             stored = _insert_image(
