@@ -64,3 +64,4 @@ backend/data/reviews/*.sqlite
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+backend/data/reviews/*/
