@@ -30,6 +30,14 @@ run `docker compose down -v` then `docker compose up -d` to rebuild the volume.
 ### IOS
 If someone with running on iphone could update this that would be great
 
+### After updating a native module (or changing app.json plugins)
+
+`app.json` was updated to support location services with `expo-location`, so rebuild is required to see changes. 
+
+1. `npx expo prebuild --clean` (regenerates `android/` and `ios/`)
+2. `npm run android` (or `npx eas-cli@latest build --profile development`)
+
+
 ## Roles and permissions
 
 Access is decided by two things, and both are needed:

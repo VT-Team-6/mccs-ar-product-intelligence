@@ -1,21 +1,16 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { getProductStock, type ProductStockEntry } from '@/api/inventory';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useStore } from '@/store/StoreContext';
 import { distanceToStore, formatMiles } from '@/store/distance';
+import { locationProblem } from '@/store/device-location';
 
 type Props = {
   productId: number;
-  /** The store the shopper is at now; it is excluded, since the page already says its stock. */
-  selectedStore: { store_id: number; latitude: number | null; longitude: number | null } | null;
-  selectedStoreName: string | null;
-  /** Picking a row changes the active store, so the whole page reprices. */
-  onPick: (storeId: number) => void;
-  /** Opens the shared store sheet when there is nothing to measure from. */
-  onSelectStore: () => void;
 };
 
 type Row = {
@@ -23,9 +18,12 @@ type Row = {
   miles: number | null;
 };
 
+/** Where distances are measured from on this page. */
+type Origin = { latitude: number | null; longitude: number | null; name: string };
+
 // Sorts nearest first, keeping stores with no coordinates last in the order the
 // API gave (store_id). A null distance must never sort as 0.
-function orderRows(entries: ProductStockEntry[], origin: Props['selectedStore']): Row[] {
+function orderRows(entries: ProductStockEntry[], origin: Origin | null): Row[] {
   const rows = entries.map((entry) => ({
     entry,
     miles: origin
@@ -49,15 +47,23 @@ function orderRows(entries: ProductStockEntry[], origin: Props['selectedStore'])
 // Other stores that carry this product, nearest first, with their stock.
 // Renders nothing when it has nothing useful to say: no other store, or the
 // lookup failed. It must never block or clutter the product page.
-export function NearbyStores({
-  productId,
-  selectedStore,
-  selectedStoreName,
-  onPick,
-  onSelectStore,
-}: Props) {
+export function NearbyStores({ productId }: Props) {
+  const {
+    store,
+    stores,
+    setStore,
+    openStoreSelector,
+    deviceOrigin,
+    locating,
+    locationRefusal,
+    useDeviceLocation,
+    clearDeviceOrigin,
+  } = useStore();
   const [entries, setEntries] = useState<ProductStockEntry[] | null>(null);
   const [error, setError] = useState(false);
+  // A failed store change is worth saying out loud: otherwise the price on the
+  // page silently disagrees with the row the shopper just tapped.
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,6 +84,19 @@ export function NearbyStores({
     };
   }, [productId]);
 
+  // the active store changes app-wide and the page reprices.
+  const pick = async (storeId: number) => {
+    const picked = stores.find((item) => item.store_id === storeId);
+    if (!picked) return;
+    setSaveError(null);
+    try {
+      await setStore(picked);
+    } catch {
+      // setStore leaves the old store in place, so say why the price didn't move.
+      setSaveError('Could not save your store. Check your connection and try again.');
+    }
+  };
+
   if (error) return null;
   if (entries === null) {
     return (
@@ -90,23 +109,77 @@ export function NearbyStores({
     );
   }
 
-  const others = entries.filter((entry) => entry.store_id !== selectedStore?.store_id);
+  // The active store is excluded
+  const others = entries.filter((entry) => entry.store_id !== store?.store_id);
   if (others.length === 0) return null;
 
-  const rows = orderRows(others, selectedStore);
+  // A device fix wins over the default which is the store being shopped at
+  const origin: Origin | null = deviceOrigin
+    ? {
+        latitude: deviceOrigin.latitude,
+        longitude: deviceOrigin.longitude,
+        name: 'your current location',
+      }
+    : store
+      ? { latitude: store.latitude, longitude: store.longitude, name: store.name }
+      : null;
+
+  const rows = orderRows(others, origin);
 
   return (
     <ThemedView type="backgroundElement" style={styles.section}>
       <ThemedText type="smallBold">Nearby stores</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        {selectedStore
-          ? `Sorted by distance from ${selectedStoreName ?? 'your store'}`
+        {origin
+          ? `Sorted by distance from ${origin.name}`
           : 'Select a store to see how far each one is.'}
       </ThemedText>
 
-      {!selectedStore && (
+      {deviceOrigin ? (
+        <View style={styles.locationActive}>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.locationText}>
+            Using your current location.
+          </ThemedText>
+          <Pressable
+            onPress={clearDeviceOrigin}
+            accessibilityRole="button"
+            accessibilityLabel="Stop using your current location"
+            hitSlop={8}>
+            <ThemedText type="linkPrimary">Stop</ThemedText>
+          </Pressable>
+        </View>
+      ) : (
         <Pressable
-          onPress={onSelectStore}
+          onPress={useDeviceLocation}
+          disabled={locating}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: locating, busy: locating }}
+          hitSlop={8}
+          style={({ pressed }) => [(pressed || locating) && styles.pressed]}>
+          <ThemedText type="linkPrimary">
+            {locating ? 'Finding you…' : 'Use my location'}
+          </ThemedText>
+        </Pressable>
+      )}
+
+      {locationRefusal && (
+        <ThemedText type="small" style={styles.locationText}>
+          {locationProblem(locationRefusal)}
+        </ThemedText>
+      )}
+      {locationRefusal?.status === 'denied' && !locationRefusal.canAskAgain && (
+        <Pressable
+          onPress={() => Linking.openSettings()}
+          accessibilityRole="button"
+          accessibilityLabel="Open device settings to allow location"
+          hitSlop={8}>
+          <ThemedText type="linkPrimary">Open settings</ThemedText>
+        </Pressable>
+      )}
+
+      {!origin && (
+        <Pressable
+          onPress={() => openStoreSelector()}
           accessibilityRole="button"
           hitSlop={8}>
           <ThemedText type="linkPrimary">
@@ -115,10 +188,16 @@ export function NearbyStores({
         </Pressable>
       )}
 
+      {saveError && (
+        <ThemedText type="small" style={styles.error}>
+          {saveError}
+        </ThemedText>
+      )}
+
       {rows.map(({ entry, miles }) => (
         <Pressable
           key={entry.store_id}
-          onPress={() => onPick(entry.store_id)}
+          onPress={() => pick(entry.store_id)}
           accessibilityRole="button"
           accessibilityLabel={`Shop at ${entry.store_name}`}
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
@@ -165,5 +244,13 @@ const styles = StyleSheet.create({
   },
   rowText: { flex: 1, gap: Spacing.half },
   rowRight: { alignItems: 'flex-end', gap: Spacing.half },
+  locationActive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  locationText: { flexShrink: 1 },
+  error: { color: '#E5484D' },
   pressed: { opacity: 0.6 },
 });

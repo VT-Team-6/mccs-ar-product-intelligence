@@ -21,7 +21,7 @@ export default function ShopperProductScreen() {
   const { id, from, via } = useLocalSearchParams<{ id: string; from?: string; via?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { store, stores, setStore, openStoreSelector } = useStore();
+  const { store, openStoreSelector } = useStore();
 
   const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -106,19 +106,6 @@ export default function ShopperProductScreen() {
   };
 
   const imageUrl = product ? productImageUrl(product) : null;
-
-  // Picking a nearby store is the same action as picking one in the sheet, so it
-  // goes through setStore: the active store changes app-wide and the page
-  // refetches, rather than this section swapping prices on its own.
-  const pickStore = async (storeId: number) => {
-    const picked = stores.find((item) => item.store_id === storeId);
-    if (!picked) return;
-    try {
-      await setStore(picked);
-    } catch {
-      setError('Could not save your store. Check your connection and try again.');
-    }
-  };
 
   // The store has this product on record but no longer sells it. Shown as its
   // own state so a scan never implies a price or availability that isn't there.
@@ -247,13 +234,7 @@ export default function ShopperProductScreen() {
               </ThemedView>
             )}
 
-            <NearbyStores
-              productId={product.product_id}
-              selectedStore={store}
-              selectedStoreName={store?.name ?? null}
-              onPick={pickStore}
-              onSelectStore={() => openStoreSelector()}
-            />
+            <NearbyStores productId={product.product_id} />
 
             {product.description && <ThemedText>{product.description}</ThemedText>}
 
