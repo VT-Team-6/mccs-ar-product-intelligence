@@ -160,7 +160,7 @@ def test_admin_list_matches_the_shopper_list(client, db):
 # --- rejecting duplicates and junk ----------------------------------------
 
 
-def test_the_main_image_cannot_be_added_again(client, db):
+def test_the_featured_image_cannot_be_added_again(client, db):
     product_id = _owned_product(client, db)
     assert client.put(
         f"/api/admin/products/{product_id}", json={"image_url": SECOND_IMAGE}
@@ -169,7 +169,7 @@ def test_the_main_image_cannot_be_added_again(client, db):
     response = _add(client, product_id, SECOND_IMAGE)
 
     assert response.status_code == 409
-    assert "main image" in response.json()["detail"]
+    assert "featured image" in response.json()["detail"]
 
 
 def test_the_same_image_cannot_be_added_twice(client, db):

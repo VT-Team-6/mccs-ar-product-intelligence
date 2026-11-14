@@ -93,7 +93,7 @@ class Product(BaseModel):
 
 
 class ProductImage(BaseModel):
-    """One extra photo of a product, shown alongside its main image.
+    """One extra photo of a product, shown alongside its featured image.
 
     image_url is sent back exactly as stored, so a relative /static/... path
     stays relative and the client resolves it against its API address.

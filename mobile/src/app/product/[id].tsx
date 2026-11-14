@@ -32,8 +32,8 @@ export default function ShopperProductScreen() {
   const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadedId, setLoadedId] = useState<number | null>(null);
-  // The product's extra photos, main image not included. A failure here is not
-  // an error for the page: the main image alone still works.
+  // The product's extra photos, featured image not included. A failure here is not
+  // an error for the page: the featured image alone still works.
   const [extraImages, setExtraImages] = useState<string[]>([]);
   // True while a like request is running, so the heart cannot be double-tapped
   const [savingLike, setSavingLike] = useState(false);
@@ -66,7 +66,7 @@ export default function ShopperProductScreen() {
 
   // The extra photos are a separate request so the product payload stays the
   // same shape everywhere else in the app. They are loaded alongside the
-  // product and a failure is ignored: the main image alone is still usable.
+  // product and a failure is ignored: the featured image alone is still usable.
   useEffect(() => {
     let cancelled = false;
     const productId = Number(id);
@@ -137,7 +137,7 @@ export default function ShopperProductScreen() {
   };
 
   const imageUrl = product ? productImageUrl(product) : null;
-  // Main photo first, then the extra ones, so the gallery's first slide is
+  // Featured photo first, then the extra ones, so the gallery's first slide is
   // exactly what every card and listing shows.
   const galleryImages = product
     ? [...(imageUrl ? [imageUrl] : []), ...extraImages]

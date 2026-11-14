@@ -36,7 +36,7 @@ import { confirmAction } from "@/utils/confirm";
 import { imageUrlProblem } from "@/utils/product-images";
 
 // Add or remove a product's extra photos, e.g. /admin/product-images/12.
-// The main photo is not editable here: it is the product's own image_url, which
+// The featured photo is not editable here: it is the product's own image_url, which
 // stays the picture every card and listing shows.
 export default function ManageImagesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -253,7 +253,7 @@ export default function ManageImagesScreen() {
     );
   };
 
-  const mainImage = product ? productImageUrl(product) : null;
+  const featuredImage = product ? productImageUrl(product) : null;
   // Owners can change the gallery; someone who can open the product page but
   // not edit it sees the photos read-only.
   const canManage = product !== null && canEditProduct(profile, product);
@@ -291,18 +291,18 @@ export default function ManageImagesScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <ThemedView type="backgroundElement" style={styles.section}>
-              <ThemedText type="smallBold">Main image</ThemedText>
-              {mainImage ? (
+              <ThemedText type="smallBold">Featured image</ThemedText>
+              {featuredImage ? (
                 <Image
-                  source={{ uri: mainImage }}
-                  style={[styles.mainImage, styles.whiteBackground]}
+                  source={{ uri: featuredImage }}
+                  style={[styles.featuredImage, styles.whiteBackground]}
                   contentFit="contain"
                 />
               ) : (
-                <ThemedView type="backgroundSelected" style={styles.mainImage} />
+                <ThemedView type="backgroundSelected" style={styles.featuredImage} />
               )}
               <ThemedText type="small" themeColor="textSecondary">
-                The main image is the photo shown on cards and listings, and
+                The featured image is the photo shown on cards and listings, and
                 first on the product page. Change it by editing the product.
               </ThemedText>
             </ThemedView>
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.three,
   },
-  mainImage: {
+  featuredImage: {
     width: "100%",
     borderRadius: Spacing.two,
     ...Platform.select({

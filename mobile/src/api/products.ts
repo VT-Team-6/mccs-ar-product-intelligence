@@ -199,7 +199,7 @@ export function productQrUrl(productId: number): string {
 
 // --- Extra product images -------------------------------------------------
 
-// One photo beyond the product's main image. image_url is exactly what the
+// One photo beyond the product's featured image. image_url is exactly what the
 // backend stored, so it may be a full http(s) link or a /static/... path that
 // productImageUrl() turns into a full link.
 export type ProductImage = {
@@ -234,7 +234,7 @@ export async function listProductImages(
   return response.json();
 }
 
-// Add a photo by link. The backend refuses the main image and repeats with 409.
+// Add a photo by link. The backend refuses the featured image and repeats with 409.
 export async function addProductImage(
   productId: number,
   imageUrl: string,

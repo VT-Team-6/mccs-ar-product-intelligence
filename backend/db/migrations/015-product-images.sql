@@ -1,4 +1,4 @@
--- Extra photos for a product, shown on its detail page. The product's main
+-- Extra photos for a product, shown on its detail page. The product's featured
 -- photo stays in products.image_url: the first image the app shows, and the
 -- one used on cards and listings. Rows here are the additional views.
 --

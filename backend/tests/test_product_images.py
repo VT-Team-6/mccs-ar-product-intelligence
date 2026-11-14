@@ -42,7 +42,7 @@ class ImageUrlTests(unittest.TestCase):
                     with self.assertRaises(ValidationError):
                         schema(name='Example',product_type='Coffee',image_url=url)
 
-    def test_gallery_images_use_the_same_rules_as_the_main_image(self):
+    def test_gallery_images_use_the_same_rules_as_the_featured_image(self):
         """A gallery link is validated exactly like products.image_url."""
         for url in ('https://example.test/sole.jpg','/static/products/shoe.png'):
             with self.subTest(url=url):

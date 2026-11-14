@@ -17,7 +17,7 @@ type Props = {
   disabled?: boolean;
 };
 
-// The product form's main image: a link the admin can paste, preview, or pick
+// The product form's featured image: a link the admin can paste, preview, or pick
 // from a specific Amazon listing.
 export function ProductImagePicker({ productName, value, onChange, onVerified, disabled = false }: Props) {
   const theme = useTheme();

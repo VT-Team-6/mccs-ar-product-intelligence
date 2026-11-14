@@ -19,7 +19,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
-  /** Full links the app can load, main image first. */
+  /** Full links the app can load, featured image first. */
   imageUrls: string[];
   /** Accessibility name for the image buttons, e.g. the product's name. */
   productName: string;
@@ -27,7 +27,7 @@ type Props = {
 
 // The product's photos on its detail page.
 //
-// The main image is shown exactly where a single product photo used to be, so a
+// The featured image is shown exactly where a single product photo used to be, so a
 // product with one photo looks unchanged. When there are more, arrows sit over
 // the photo and the counter underneath says which one is showing. Tapping the
 // photo opens it full screen, where it can be swiped left and right.

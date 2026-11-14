@@ -94,14 +94,14 @@ def _require_product(conn, product_id: int) -> None:
 
 
 def _require_new_url(conn, product_id: int, image_url: str) -> None:
-    """409 when this link would add nothing (the main photo, or a repeat)."""
-    main_image = conn.execute(
+    """409 when this link would add nothing (the featured photo, or a repeat)."""
+    featured_image = conn.execute(
         "SELECT image_url FROM products WHERE product_id = %s", (product_id,)
     ).fetchone()
-    if main_image is not None and main_image["image_url"] == image_url:
+    if featured_image is not None and featured_image["image_url"] == image_url:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="That is already the product's main image",
+            detail="That is already the product's featured image",
         )
     existing = conn.execute(
         """
