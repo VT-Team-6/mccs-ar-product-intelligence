@@ -31,3 +31,29 @@ export async function publicFetch(path: string, options: RequestInit = {}) {
     },
   });
 }
+
+// Like authenticatedFetch, but sends a FormData body (a file upload).
+// The Content-Type header is deliberately not set: the browser and React Native
+// have to add it themselves so it includes the multipart boundary, and setting
+// it by hand makes the backend fail to parse the file.
+export async function authenticatedFormFetch(
+  path: string,
+  form: FormData,
+  options: RequestInit = {},
+) {
+  const session = await fetchAuthSession();
+  const token = session.tokens?.accessToken?.toString();
+  if (!token) {
+    throw new Error("User is not authenticated. Please log in.");
+  }
+  const { headers, ...rest } = options;
+  return fetch(`${API_URL}${path}`, {
+    ...rest,
+    method: options.method ?? "POST",
+    body: form,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...headers,
+    },
+  });
+}
