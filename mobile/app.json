@@ -35,6 +35,12 @@
           "imageWidth": 76
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "MCCS uses your location to show which stores are closest to you."
+        }
+      ],
       "./plugins/with-ios-scene-delegate"
     ],
     "experiments": {

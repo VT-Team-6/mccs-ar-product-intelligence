@@ -11,6 +11,7 @@ import {
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -29,6 +30,7 @@ import { ThemedView } from '../components/themed-view';
 import { Spacing } from '../constants/theme';
 import { useTheme } from '../hooks/use-theme';
 import { confirmAction } from '../utils/confirm';
+import { locateDevice, type DeviceLocation } from './device-location';
 import { distanceToStore, formatMiles } from './distance';
 
 // The cache is a startup accelerator, not a per-account record, so it holds the
@@ -246,6 +248,33 @@ export function useStore() {
   return context;
 }
 
+// What distances are measured from inside the sheet: the device's own fix or a
+// place the shopper searched for. 
+type Origin = {
+  kind: 'device' | 'place';
+  /** The geocoder's id, present only for a searched place. */
+  placeId?: number;
+  latitude: number;
+  longitude: number;
+  name: string;
+};
+
+// Location Service error handling. 
+function locationProblem(refusal: Exclude<DeviceLocation, { status: 'granted' }>): string {
+  if (refusal.status === 'denied') {
+    return refusal.canAskAgain
+      ? 'Location is off for this app. You can allow it next time, or search a ZIP.'
+      : 'Location is blocked for this app. Allow it in settings, or search a ZIP.';
+  }
+  if (refusal.reason === 'services-off') {
+    return 'Location services are off on this device. Turn them on, or search a ZIP.';
+  }
+  if (refusal.reason === 'no-fix') {
+    return 'Could not get your location. Try again, or search a ZIP.';
+  }
+  return 'Could not use your location. Try again, or search a ZIP.';
+}
+
 // Mounted once, from the provider, so every entry point (the Account row, the
 // product page link, and every "select a store" price prompt) opens this same
 // sheet. Cancelling changes nothing.
@@ -273,15 +302,20 @@ function StoreSelectorSheet({
   const [searching, setSearching] = useState(false);
   const [suggestions, setSuggestions] = useState<LocationSuggestion[] | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
-  // The place distances are measured from. A searched location only sets this;
-  // it never changes the active store, which only a store row does.
-  const [origin, setOrigin] = useState<LocationSuggestion | null>(null);
+  // The origin is the device's own location or a place the shopper searched for.
+  const [origin, setOrigin] = useState<Origin | null>(null);
+  // The device's own location is requested only when the shopper taps "Use my location". 
+  // The sheet can render every failure reason, so a refusal never breaks store selection.
+  const [locating, setLocating] = useState<'idle' | 'busy'>('idle');
+  const [locationRefusal, setLocationRefusal] = useState<
+    Exclude<DeviceLocation, { status: 'granted' }> | null
+  >(null);
 
   // Reopening starts clean, so a previous search doesn't surprise the shopper.
   // Reset by remounting (see the `key` on StoreSelectorSheet in the provider)
   // rather than an effect that clears state.
   const selectedOrigin = origin
-    ? { latitude: origin.latitude, longitude: origin.longitude, name: origin.label }
+    ? { latitude: origin.latitude, longitude: origin.longitude, name: origin.name }
     : selected
       ? { latitude: selected.latitude, longitude: selected.longitude, name: selected.name }
       : null;
@@ -329,6 +363,29 @@ function StoreSelectorSheet({
     }
   };
 
+  // The only path that can show the system permission prompt. Asking twice in a
+  // row is prevented, since a second tap while the GPS is working would queue a
+  // duplicate request behind the first.
+  const useDeviceLocation = async () => {
+    if (locating === 'busy') return;
+    setLocating('busy');
+    setLocationRefusal(null);
+    const result = await locateDevice();
+    if (result.status === 'granted') {
+      setOrigin({
+        kind: 'device',
+        latitude: result.latitude,
+        longitude: result.longitude,
+        name: 'your current location',
+      });
+    } else {
+      // A refusal leaves the origin alone: the selected store, or a searched
+      // place, keeps sorting the list, so the sheet never loses its ordering.
+      setLocationRefusal(result);
+    }
+    setLocating('idle');
+  };
+
   return (
     <Modal
       visible={visible}
@@ -368,6 +425,47 @@ function StoreSelectorSheet({
               secondary={mode !== 'search'}
             />
           </View>
+
+          {mode === 'near' && (
+            <View style={styles.locationBlock}>
+              {origin?.kind === 'device' ? (
+                <View style={styles.locationActive}>
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.locationText}>
+                    Using your current location.
+                  </ThemedText>
+                  <Pressable
+                    onPress={() => setOrigin(null)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Stop using your current location"
+                    hitSlop={8}>
+                    <ThemedText type="linkPrimary">Stop</ThemedText>
+                  </Pressable>
+                </View>
+              ) : (
+                <ActionButton
+                  label={locating === 'busy' ? 'Finding you…' : 'Use my location'}
+                  onPress={useDeviceLocation}
+                  disabled={locating === 'busy'}
+                  compact
+                />
+              )}
+
+              {locationRefusal && (
+                <ThemedText type="small" style={styles.locationText}>
+                  {locationProblem(locationRefusal)}
+                </ThemedText>
+              )}
+              {locationRefusal?.status === 'denied' && !locationRefusal.canAskAgain && (
+                <Pressable
+                  onPress={() => Linking.openSettings()}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open device settings to allow location"
+                  hitSlop={8}>
+                  <ThemedText type="linkPrimary">Open settings</ThemedText>
+                </Pressable>
+              )}
+            </View>
+          )}
 
           {mode === 'search' && (
             <View style={styles.searchBlock}>
@@ -413,11 +511,19 @@ function StoreSelectorSheet({
                     Pick a place to measure distances from.
                   </ThemedText>
                   {suggestions.map((place) => {
-                    const active = origin?.id === place.id;
+                    const active = origin?.kind === 'place' && origin.placeId === place.id;
                     return (
                       <Pressable
                         key={place.id}
-                        onPress={() => setOrigin(place)}
+                        onPress={() =>
+                          setOrigin({
+                            kind: 'place',
+                            placeId: place.id,
+                            latitude: place.latitude,
+                            longitude: place.longitude,
+                            name: place.label,
+                          })
+                        }
                         accessibilityRole="button"
                         accessibilityState={{ selected: active }}
                         style={({ pressed }) => [styles.suggestion, pressed && styles.dimmed]}>
@@ -555,6 +661,14 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   modes: { flexDirection: 'row', gap: Spacing.two },
+  locationBlock: { gap: Spacing.two },
+  locationActive: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  locationText: { flexShrink: 1 },
   searchBlock: { gap: Spacing.two },
   searchRow: { flexDirection: 'row', alignItems: 'stretch', gap: Spacing.two },
   searchInput: {
