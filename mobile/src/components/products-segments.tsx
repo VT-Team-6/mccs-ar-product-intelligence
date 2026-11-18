@@ -9,16 +9,20 @@ import { MaxContentWidth, Spacing } from '@/constants/theme';
 const SEGMENTS = [
   { name: 'index', label: 'Likes', href: '/products' },
   { name: 'history', label: 'History', href: '/products/history' },
+  { name: 'shopping-list', label: 'Shopping List', href: '/products/shopping-list' },
 ] as const;
 
-// The two halves of the Products tab. Both are real routes, so a segment can be
-// linked to directly and Back still returns to the product that was opened.
+// Likes, History, and Shopping List share the Products tab.
+// Each segment is its own route. Replacing the route prevents
+// the navigation stack from growing when switching segments.
 export function ProductsSegments() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // The address of the screen that is showing, e.g. /products or /products/history
   const pathname = usePathname();
-  const active = pathname.startsWith('/products/history') ? 'history' : 'index';
+  const isInStoreMode = pathname.startsWith('/products/in-store');
+  const active = pathname.startsWith('/products/shopping-list') ? 'shopping-list'
+    : pathname.startsWith('/products/history') ? 'history' : 'index';
 
   return (
     <ThemedView
@@ -30,6 +34,9 @@ export function ProductsSegments() {
       <ThemedView type="backgroundElement" style={styles.group}>
         {SEGMENTS.map((segment) => {
           const selected = active === segment.name;
+          if (isInStoreMode) {
+            return null;
+          }
           return (
             <Pressable
               key={segment.name}
