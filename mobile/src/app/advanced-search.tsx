@@ -1,12 +1,14 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { RankPicker } from '@/components/rank-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { AppButton } from '@/components/ui/app-button';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SectionLabel } from '@/components/ui/section-label';
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { rankedCount } from '@/preferences/criteria';
 import {
@@ -16,8 +18,6 @@ import {
   rankingToParam,
 } from '@/search/advanced';
 
-// The blue used for links elsewhere in the app
-const ACCENT = '#3c87f7';
 
 // Advanced search: the shopper describes what they need in their own words,
 // like "waterproof hiking boots under $150", and can rank what matters most.
@@ -40,23 +40,17 @@ export default function AdvancedSearchScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/search' as Href))}
-            hitSlop={12}
-            style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedText type="linkPrimary">‹ Back</ThemedText>
-          </Pressable>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScreenHeader
+          title="Advanced search"
+          eyebrow="Find the best match"
+          subtitle="Describe what you need and we will find the best matches."
+          fallback="/search"
+        />
 
+        <View style={styles.content}>
           <View style={styles.section}>
-            <ThemedText type="subtitle">Advanced search</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              Describe what you need and we will find the best matches.
-            </ThemedText>
-          </View>
-
-          <View style={styles.section}>
+            <SectionLabel label="Step 1" />
             <ThemedText style={styles.questionTitle}>What are you looking for?</ThemedText>
             <TextInput
               value={text}
@@ -66,7 +60,10 @@ export default function AdvancedSearchScreen() {
               multiline
               maxLength={MAX_REQUEST_LENGTH}
               accessibilityLabel="What are you looking for?"
-              style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+              style={[
+                styles.input,
+                { color: theme.text, backgroundColor: theme.card, borderColor: theme.border },
+              ]}
             />
             <ThemedText type="small" themeColor="textSecondary" style={styles.counter}>
               {`${text.length} / ${MAX_REQUEST_LENGTH}`}
@@ -82,8 +79,10 @@ export default function AdvancedSearchScreen() {
                   onPress={() => setText(example)}
                   accessibilityRole="button"
                   style={({ pressed }) => pressed && styles.pressed}>
-                  <ThemedView type="backgroundElement" style={styles.example}>
-                    <ThemedText type="small">{example}</ThemedText>
+                  <ThemedView type="card" style={[styles.example, { borderColor: theme.link }]}>
+                    <ThemedText type="small" themeColor="link">
+                      {example}
+                    </ThemedText>
                   </ThemedView>
                 </Pressable>
               ))}
@@ -91,27 +90,15 @@ export default function AdvancedSearchScreen() {
           </View>
 
           <View style={styles.section}>
-            <ThemedText style={styles.questionTitle}>What matters most? (optional)</ThemedText>
+            <SectionLabel label="Step 2 (optional)" />
+            <ThemedText style={styles.questionTitle}>What matters most?</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Tap in order. Anything you don’t pick counts equally.
             </ThemedText>
           </View>
           <RankPicker value={ranking} onChange={setRanking} compact />
 
-          <Pressable
-            onPress={search}
-            disabled={!ready}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.button,
-              { backgroundColor: ACCENT },
-              !ready && styles.disabled,
-              pressed && styles.pressed,
-            ]}>
-            <ThemedText type="smallBold" style={styles.buttonText}>
-              Search
-            </ThemedText>
-          </Pressable>
+          <AppButton label="Search" onPress={search} disabled={!ready} />
           {!ready && (
             <ThemedText type="small" themeColor="textSecondary">
               {rankedCount(ranking) > 0
@@ -119,8 +106,8 @@ export default function AdvancedSearchScreen() {
                 : 'Describe what you need to search.'}
             </ThemedText>
           )}
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -128,19 +115,17 @@ export default function AdvancedSearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    maxWidth: MaxContentWidth,
+  scroll: {
+    paddingBottom: BottomTabInset + Spacing.four,
   },
   content: {
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
     gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.four,
   },
   section: {
     gap: Spacing.two,
@@ -155,7 +140,8 @@ const styles = StyleSheet.create({
     minHeight: 96,
     paddingVertical: Spacing.two + Spacing.half,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
     textAlignVertical: 'top',
   },
   counter: {
@@ -169,20 +155,10 @@ const styles = StyleSheet.create({
   example: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.four,
-  },
-  button: {
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
-  },
-  buttonText: {
-    color: '#ffffff',
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   pressed: {
     opacity: 0.6,
-  },
-  disabled: {
-    opacity: 0.4,
   },
 });

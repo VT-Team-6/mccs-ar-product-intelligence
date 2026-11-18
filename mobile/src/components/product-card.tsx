@@ -4,7 +4,8 @@ import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-nat
 import { productImageUrl, storePriceLine, type Product } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
 
 export type ProductCardProps = {
@@ -14,6 +15,8 @@ export type ProductCardProps = {
   meta?: string | null;
   // Label above the details, used by History to say how the user got here.
   event?: string | null;
+  // Small red tag above the name, such as the "#1" rank on search results
+  badge?: string | null;
   // The current like state, when the caller has one. Omit to hide the heart.
   isLiked?: boolean;
   onToggleLike?: () => void;
@@ -27,6 +30,7 @@ export function ProductCard({
   onPress,
   meta,
   event,
+  badge,
   isLiked,
   onToggleLike,
   style,
@@ -36,10 +40,11 @@ export function ProductCard({
   // One shared sheet, reached from the prompt rather than a modal per card.
   const price = storePriceLine(product, store?.store_id ?? null, store?.name ?? null);
   const imageUrl = productImageUrl(product);
+  const theme = useTheme();
 
   return (
     // Card format sourced from search page.
-    <ThemedView type="backgroundElement" style={[styles.row, style]}>
+    <ThemedView type="card" style={[styles.row, { borderColor: theme.border }, style]}>
       <Pressable
         onPress={onPress}
         disabled={!onPress}
@@ -58,7 +63,10 @@ export function ProductCard({
           <ThemedView type="backgroundSelected" style={styles.thumbnail} />
         )}
 
-        <ThemedView type="backgroundElement" style={styles.rowText}>
+        <ThemedView type="card" style={styles.rowText}>
+          {badge && (
+            <ThemedText style={styles.badge}>{badge}</ThemedText>
+          )}
           {event && (
             <ThemedText type="small" themeColor="textSecondary">
               {event}
@@ -98,7 +106,11 @@ export function ProductCard({
           )}
         </ThemedView>
 
-        {price.price && <ThemedText type="smallBold">{price.price}</ThemedText>}
+        {price.price && (
+          <ThemedText themeColor="link" style={styles.price}>
+            {price.price}
+          </ThemedText>
+        )}
       </Pressable>
 
       {onToggleLike && (
@@ -115,8 +127,8 @@ export function ProductCard({
           style={({ pressed }) => [styles.heartButton, pressed && styles.pressed]}>
           <ThemedText
             type="subtitle"
-            style={styles.heart}
-            themeColor={isLiked ? 'text' : 'textSecondary'}>
+            style={[styles.heart, isLiked && styles.liked]}
+            themeColor="textSecondary">
             {isLiked ? '♥' : '♡'}
           </ThemedText>
         </Pressable>
@@ -134,7 +146,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   // The product details are the big tap target; the heart sits beside it
   tapArea: {
@@ -163,8 +176,29 @@ const styles = StyleSheet.create({
     minWidth: 44,
     minHeight: 44,
   },
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: Brand.red,
+    color: '#ffffff',
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+    overflow: 'hidden',
+  },
+  price: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '800',
+  },
   heart: {
     fontSize: 26,
     lineHeight: 30,
+  },
+  liked: {
+    color: Brand.red,
   },
 });

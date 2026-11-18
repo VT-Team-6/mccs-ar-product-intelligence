@@ -19,7 +19,7 @@ import {
 import { ProductCard } from '@/components/product-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Brand, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
@@ -235,7 +235,10 @@ export default function LikesScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           clearButtonMode="while-editing"
-          style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+          style={[
+            styles.search,
+            { color: theme.text, backgroundColor: theme.card, borderColor: theme.border },
+          ]}
         />
 
         {/* Creates sort options. Price sorting needs a store (the backend
@@ -249,10 +252,20 @@ export default function LikesScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected: sort === option.value }}
                 style={({ pressed }) => pressed && styles.pressed}>
+                {/* The chosen sort is filled navy, the others are outlined */}
                 <ThemedView
-                  type={sort === option.value ? 'backgroundSelected' : 'backgroundElement'}
-                  style={styles.chip}>
-                  <ThemedText type="small">{option.label}</ThemedText>
+                  type="card"
+                  style={[
+                    styles.chip,
+                    sort === option.value
+                      ? { backgroundColor: Brand.navy, borderColor: Brand.navy }
+                      : { borderColor: theme.border },
+                  ]}>
+                  <ThemedText
+                    type="small"
+                    style={sort === option.value ? styles.chipSelectedText : undefined}>
+                    {option.label}
+                  </ThemedText>
                 </ThemedView>
               </Pressable>
             ),
@@ -404,7 +417,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.four,
     // The segment control above this stack already handles the top inset
     paddingTop: Spacing.three,
     gap: Spacing.two,
@@ -417,7 +430,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: Spacing.two + Spacing.half,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   sorts: {
     flexDirection: 'row',
@@ -427,7 +441,12 @@ const styles = StyleSheet.create({
   chip: {
     paddingVertical: Spacing.one + Spacing.half,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+  },
+  chipSelectedText: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
   message: {
     gap: Spacing.one,

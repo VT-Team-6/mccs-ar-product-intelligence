@@ -7,13 +7,13 @@ import { ProductCard } from '@/components/product-card';
 import { RankPicker } from '@/components/rank-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { criteriaFor, DEFAULT_PREFERENCES, rankedCount, type Preferences } from '@/preferences/criteria';
 import { useStore } from '@/store/StoreContext';
 
-// The blue used for links elsewhere in the app
-const ACCENT = '#3c87f7';
+// The main action and the For You highlight use MCCS red (see UI_STANDARDS.md)
+const ACCENT = Brand.red;
 
 type Props = {
   // The product on screen. Leave out for Advanced Search.

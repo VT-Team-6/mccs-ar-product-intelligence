@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { searchProducts, type Product } from '@/api/products';
 import { ProductCard } from '@/components/product-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
 
@@ -58,13 +58,9 @@ export default function SearchResultsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-                <Pressable onPress={() => router.back()} style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="linkPrimary">‹ Back</ThemedText>
-        </Pressable>
+      <ScreenHeader title="Search" eyebrow="Find products" />
 
-        <ThemedText type="subtitle">Search results</ThemedText>
-
+      <View style={styles.content}>
         {/* Pressing Search on the keyboard puts the text in ?q=, which runs the search */}
         <TextInput
           value={text}
@@ -77,7 +73,10 @@ export default function SearchResultsScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           clearButtonMode="while-editing"
-          style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+          style={[
+            styles.search,
+            { color: theme.text, backgroundColor: theme.card, borderColor: theme.border },
+          ]}
         />
         <Pressable
           onPress={() => router.push('/advanced-search' as Href)}
@@ -114,7 +113,7 @@ export default function SearchResultsScreen() {
             ) : null
           }
         />
-      </SafeAreaView>
+      </View>
     </ThemedView>
   );
 }
@@ -149,23 +148,23 @@ function ResultRow({ product, query }: { product: Product; query: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
-  safeArea: {
+  content: {
     flex: 1,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
     paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
-    maxWidth: MaxContentWidth,
   },
   search: {
     fontSize: 16,
     paddingVertical: Spacing.two + Spacing.half,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   message: {
     gap: Spacing.one,

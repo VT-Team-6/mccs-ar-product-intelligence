@@ -15,6 +15,8 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
     <Text
       style={[
         { color: theme[themeColor ?? 'text'] },
+        // Links use the theme's link color unless the caller picks another
+        type === 'linkPrimary' && !themeColor && { color: theme.link },
         type === 'default' && styles.default,
         type === 'title' && styles.title,
         type === 'small' && styles.small,
@@ -63,7 +65,7 @@ const styles = StyleSheet.create({
   linkPrimary: {
     lineHeight: 30,
     fontSize: 14,
-    color: '#3c87f7',
+    fontWeight: 700,
   },
   code: {
     fontFamily: Fonts.mono,

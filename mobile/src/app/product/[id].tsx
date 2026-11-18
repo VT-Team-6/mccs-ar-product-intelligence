@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
 import {
@@ -15,7 +15,10 @@ import { ProductImageGallery } from '@/components/product-image-gallery';
 import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SectionLabel } from '@/components/ui/section-label';
+import { Brand, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { AIAnalysisPanel} from '@/components/ai-analysis-panel';
 import { NearbyStores } from '@/components/nearby-stores';
 import { useStore } from '@/store/StoreContext';
@@ -28,6 +31,7 @@ export default function ShopperProductScreen() {
   const { id, from, via } = useLocalSearchParams<{ id: string; from?: string; via?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const { store, openStoreSelector } = useStore();
 
   const [product, setProduct] = useState<MyProduct | null>(null);
@@ -104,16 +108,7 @@ export default function ShopperProductScreen() {
     recordInteraction(productId, interaction).catch(() => undefined);
   }, [id, from, via]);
 
-  // Go to the previous page, else the "from" page, else the home page. 
-  const goBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else if (from && from.startsWith('/')) {
-      router.replace(from as Href);
-    } else {
-      router.replace('/');
-    }
-  };
+  // Back goes to the previous page, else the "from" page, else Home (BackButton)
 
   // Toggles the state of the heart icon and sends to backend.
   // If the backend fails, the heart is restored to its previous state.
@@ -164,11 +159,9 @@ export default function ShopperProductScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="linkPrimary">‹ Back</ThemedText>
-        </Pressable>
+      <ScreenHeader title="Product details" eyebrow={store?.name ?? 'MCCS'} from={from} />
 
+      <View style={styles.page}>
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
         {(!product || loadedId !== Number(id)) && !error && <ActivityIndicator />}
 
@@ -199,9 +192,12 @@ export default function ShopperProductScreen() {
               accessibilityState={{ selected: product.is_liked, busy: savingLike }}
               style={({ pressed }) => pressed && styles.pressed}>
               <ThemedView
-                type={product.is_liked ? 'backgroundSelected' : 'backgroundElement'}
-                style={styles.likeButton}>
-                <ThemedText type="subtitle" style={styles.heart}>
+                type="card"
+                style={[
+                  styles.likeButton,
+                  { borderColor: product.is_liked ? Brand.red : theme.border },
+                ]}>
+                <ThemedText type="subtitle" style={[styles.heart, product.is_liked && styles.liked]}>
                   {product.is_liked ? '♥' : '♡'}
                 </ThemedText>
                 <ThemedText type="smallBold">
@@ -213,12 +209,12 @@ export default function ShopperProductScreen() {
             {/* Allow customers to add this product to any shopping list. */}
             <AddToShoppingList productId={product.product_id} />
 
-            <ThemedView type="backgroundElement" style={styles.facts}>
+            <ThemedView type="card" style={[styles.facts, { borderColor: theme.border }]}>
               {discontinued ? (
                 <Fact label="Availability" value="Discontinued at this store" />
               ) : (
                 <>
-                  <Fact label="Price" value={price?.price ?? '—'} />
+                  <Fact label="Price" value={price?.price ?? '—'} strong />
                   {product.store_inventory && (
                     <Fact label="Availability" value={storeStock(product)} />
                   )}
@@ -299,7 +295,7 @@ export default function ShopperProductScreen() {
             )}
           </ScrollView>
         )}
-      </SafeAreaView>
+      </View>
     </ThemedView>
   );
 }
@@ -314,13 +310,16 @@ function likeErrorMessage(problem: unknown): string {
   return 'Could not save your like.';
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function Fact({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <ThemedView type="backgroundElement" style={styles.fact}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
+    <ThemedView type="card" style={styles.fact}>
+      <SectionLabel label={label} />
+      <ThemedText
+        type="smallBold"
+        themeColor={strong ? 'link' : undefined}
+        style={strong && styles.strong}>
+        {value}
       </ThemedText>
-      <ThemedText type="smallBold">{value}</ThemedText>
     </ThemedView>
   );
 }
@@ -328,16 +327,15 @@ function Fact({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
-  safeArea: {
+  page: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    gap: Spacing.two,
+    width: '100%',
     maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.two,
   },
   pressed: {
     opacity: 0.4,
@@ -358,17 +356,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.two,
     paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   heart: {
     fontSize: 26,
     lineHeight: 30,
   },
+  liked: {
+    color: Brand.red,
+  },
   facts: {
     flexDirection: 'row',
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.two,
+  },
+  strong: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '800',
   },
   discontinuedNotice: {
     borderRadius: Spacing.three,
@@ -383,8 +391,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-    backgroundColor: '#3c87f7',
+    borderRadius: Radius.medium,
+    backgroundColor: Brand.navy,
   },
   moreText: {
     color: '#ffffff',

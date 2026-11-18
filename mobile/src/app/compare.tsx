@@ -3,24 +3,24 @@ import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getComparison, type CompareItem, type ComparisonData } from '@/api/compare';
 import { productImageUrl, storePriceLine, storePriceValue } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SectionLabel } from '@/components/ui/section-label';
+import { BottomTabInset, Brand, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { compareHref, readSelection, selectionProblem } from '@/compare/selection';
+import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
 
-// The blue used for links elsewhere in the app
-const ACCENT = "#3c87f7";
 // Each product gets a column this wide. More than fit on screen scroll sideways.
 const COLUMN_WIDTH = 168;
 
@@ -82,19 +82,14 @@ export default function CompareScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.headerRow}>
-            <Pressable
-              onPress={goBack}
-              hitSlop={12}
-              style={({ pressed }) => pressed && styles.pressed}
-            >
-              <ThemedText type="linkPrimary">‹ Back</ThemedText>
-            </Pressable>
-          </View>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <ScreenHeader
+          title="Compare products"
+          eyebrow="Side by side"
+          fallback="/products/history"
+        />
 
-          <ThemedText type="subtitle">Compare products</ThemedText>
+        <View style={styles.content}>
 
           {loading ? (
             <ActivityIndicator />
@@ -128,19 +123,19 @@ export default function CompareScreen() {
             <>
               {data.missing.length > 0 && <MissingNote count={data.missing.length} />}
               {data.best_for_you !== null && (
-                <ThemedText type="smallBold" style={styles.bestForYou}>
-                  Best for you: {
-                    items.find(
-                    (item) => item.product.product_id === data.best_for_you
-                  )?.product.name ?? 'Selected product'
-                }
-              </ThemedText>
-            )}
+                <View style={styles.bestForYou}>
+                  <Text style={styles.bestForYouLabel}>BEST FOR YOU</Text>
+                  <Text style={styles.bestForYouName}>
+                    {items.find((item) => item.product.product_id === data.best_for_you)
+                      ?.product.name ?? 'Selected product'}
+                  </Text>
+                </View>
+              )}
               <ComparisonTable items={items} onOpen={openProduct} />
             </>
           ) : null}
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -158,6 +153,7 @@ function MissingNote({ count }: { count: number }) {
 // One column per product and one row per detail, so the same detail lines up across products
 function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (item: CompareItem) => void }) {
   const { store } = useStore();
+  const theme = useTheme();
   // Prices at the shopper's chosen store. storePriceValue already returns null
   // rather than NaN for a missing or non-finite price.
   const prices = items.map(({ product }) => {
@@ -179,7 +175,7 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
     >
       <View style={styles.tableBody}>
         <Row>
-          {items.map((item) => {
+          {items.map((item, index) => {
             const imageUrl = productImageUrl(item.product);
             return (
               <Pressable
@@ -188,9 +184,12 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
                 accessibilityRole="button"
                 style={({ pressed }) => [
                   styles.cell,
+                  styles.productCell,
+                  { backgroundColor: theme.card, borderColor: theme.border },
                   pressed && styles.pressed,
                 ]}
               >
+                <Text style={styles.productNumber}>{`PRODUCT ${index + 1}`}</Text>
                 {imageUrl ? (
                   <Image
                     source={{ uri: imageUrl }}
@@ -200,7 +199,7 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
                 ) : (
                   <ThemedView type="backgroundSelected" style={styles.image} />
                 )}
-                <ThemedText type="smallBold" numberOfLines={3}>
+                <ThemedText type="smallBold" numberOfLines={3} style={styles.productName}>
                   {item.product.name}
                 </ThemedText>
               </Pressable>
@@ -219,6 +218,7 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
               <Cell
                 key={item.product.product_id}
                 value={line.price ?? line.label}
+                strong={line.price !== null}
                 badge={lowestPrice.has(index) ? 'Lowest price' : null}
               />
             );
@@ -343,11 +343,7 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
 function Row({ label, children }: { label?: string; children: ReactNode }) {
   return (
     <View style={styles.rowGroup}>
-      {label && (
-        <ThemedText type="small" themeColor="textSecondary">
-          {label}
-        </ThemedText>
-      )}
+      {label && <SectionLabel label={label} />}
       <View style={styles.row}>{children}</View>
     </View>
   );
@@ -357,26 +353,31 @@ function Cell({
   value,
   badge = null,
   small = false,
+  strong = false,
   lines,
 }: {
   value: string;
   badge?: string | null;
   small?: boolean;
+  // Bold navy, used for prices
+  strong?: boolean;
   lines?: number;
 }) {
+  const theme = useTheme();
   return (
     <ThemedView
-      type="backgroundElement"
-      style={[styles.cell, styles.valueCell]}
+      type="card"
+      style={[styles.cell, styles.valueCell, { borderColor: theme.border }]}
     >
-      <ThemedText type={small ? "small" : "default"} numberOfLines={lines}>
+      <ThemedText
+        type={small ? "small" : "default"}
+        themeColor={strong ? "link" : undefined}
+        style={strong && styles.strong}
+        numberOfLines={lines}
+      >
         {value}
       </ThemedText>
-      {badge && (
-        <ThemedText type="smallBold" style={styles.badge}>
-          {badge}
-        </ThemedText>
-      )}
+      {badge && <Text style={styles.badge}>{badge.toUpperCase()}</Text>}
     </ThemedView>
   );
 }
@@ -397,23 +398,17 @@ function bestIndexes(values: (number | null)[], want: 'lowest' | 'highest'): Set
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop:
-      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  content: {
-    gap: Spacing.three,
+  scroll: {
     paddingBottom: BottomTabInset + Spacing.four,
   },
-  headerRow: {
-    flexDirection: "row",
+  content: {
+    width: "100%",
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.three,
   },
   message: {
     gap: Spacing.two,
@@ -435,22 +430,79 @@ const styles = StyleSheet.create({
     width: COLUMN_WIDTH,
     gap: Spacing.two,
   },
+  // The top card of each column: a navy "PRODUCT 1" strip, the photo and the name
+  productCell: {
+    borderWidth: 1,
+    borderRadius: Radius.medium,
+    overflow: "hidden",
+    alignItems: "center",
+    paddingBottom: Spacing.three,
+  },
+  productNumber: {
+    alignSelf: "stretch",
+    textAlign: "center",
+    backgroundColor: Brand.navy,
+    color: "#ffffff",
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: "800",
+    letterSpacing: 1.4,
+    paddingVertical: Spacing.one + 1,
+  },
+  productName: {
+    textAlign: "center",
+    paddingHorizontal: Spacing.two,
+  },
   valueCell: {
-    padding: Spacing.two,
-    borderRadius: Spacing.two,
-    gap: Spacing.half,
+    padding: Spacing.two + Spacing.one,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
+    gap: Spacing.one,
   },
   image: {
-    width: COLUMN_WIDTH,
-    height: 110,
-    borderRadius: Spacing.two,
+    width: COLUMN_WIDTH - Spacing.four,
+    height: 100,
+    borderRadius: Radius.small,
     backgroundColor: "#ffffff",
   },
-  badge: {
-    color: ACCENT,
+  strong: {
+    fontWeight: "800",
   },
-    bestForYou: {
-    color: ACCENT,
+  // Red pill, e.g. LOWEST PRICE
+  badge: {
+    alignSelf: "flex-start",
+    backgroundColor: Brand.red,
+    color: "#ffffff",
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: "800",
+    letterSpacing: 0.6,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+    overflow: "hidden",
+  },
+  bestForYou: {
+    backgroundColor: Brand.navy,
+    borderLeftWidth: 5,
+    borderLeftColor: Brand.red,
+    borderRadius: Radius.medium,
+    paddingVertical: Spacing.two + Spacing.one,
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.half,
+  },
+  bestForYouLabel: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+  },
+  bestForYouName: {
+    color: "#ffffff",
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "700",
   },
   pressed: {
     opacity: 0.6,
