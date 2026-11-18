@@ -15,7 +15,7 @@ import { ProductCard } from '@/components/product-card';
 import { MAX_COMPARE, compareHref, selectionProblem } from '@/compare/selection';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   compareButton: {
-    backgroundColor: '#3c87f7',
+    backgroundColor: Brand.red,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     borderRadius: Spacing.two,
@@ -556,8 +556,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxSelected: {
-    borderColor: '#3c87f7',
-    backgroundColor: '#3c87f7',
+    borderColor: Brand.navy,
+    backgroundColor: Brand.navy,
   },
   checkmark: {
     color: '#ffffff',

@@ -7,6 +7,7 @@ import { searchProducts, type Product } from '@/api/products';
 import { ProductCard } from '@/components/product-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { BackButton } from '@/components/ui/back-button';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
@@ -59,9 +60,7 @@ export default function SearchResultsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-                <Pressable onPress={() => router.back()} style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="linkPrimary">‹ Back</ThemedText>
-        </Pressable>
+        <BackButton />
 
         <ThemedText type="subtitle">Search results</ThemedText>
 

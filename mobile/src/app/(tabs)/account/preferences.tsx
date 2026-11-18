@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 
 import { getPreferences, savePreferences } from '@/api/preferences';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { BackButton } from '@/components/ui/back-button';
+import { AppButton } from '@/components/ui/app-button';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { RankPicker } from '@/components/rank-picker';
 import {
@@ -15,11 +16,8 @@ import {
   type Preferences,
 } from '@/preferences/criteria';
 
-// The blue used for links elsewhere in the app
-const ACCENT = '#3c87f7';
 
 export default function PreferencesScreen() {
-  const router = useRouter();
   // What is currently selected on screen
   const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
   // What is saved on the account, so we know whether there is anything to save
@@ -84,12 +82,7 @@ export default function PreferencesScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/account'))}
-          hitSlop={12}
-          style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="linkPrimary">‹ Back</ThemedText>
-        </Pressable>
+        <BackButton fallback="/account" />
         <ThemedText type="subtitle" style={styles.title}>Preferences</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
             Tap what matters most to you, in order. You only need to pick one; anything you don’t pick counts equally.
@@ -111,19 +104,13 @@ export default function PreferencesScreen() {
             <RankPicker value={preferences} onChange={change} compact />
 
             <ThemedView style={styles.actions}>
-              <Pressable
+              <AppButton
+                label="Save Preferences"
                 onPress={save}
-                disabled={!hasChanges || saving}
-                style={({ pressed }) => [
-                  styles.saveButton,
-                  { backgroundColor: ACCENT },
-                  (!hasChanges || saving) && styles.disabled,
-                  pressed && styles.pressed,
-                ]}>
-                <ThemedText type="smallBold" style={{ color: '#ffffff' }}>
-                  {saving ? 'Saving…' : 'Save Preferences'}
-                </ThemedText>
-              </Pressable>
+                disabled={!hasChanges}
+                loading={saving}
+                style={styles.saveButton}
+              />
 
               {rankedCount(preferences) > 0 && (
                 <Pressable onPress={reset} style={({ pressed }) => pressed && styles.pressed}>

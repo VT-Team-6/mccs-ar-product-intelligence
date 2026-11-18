@@ -2,12 +2,12 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { CRITERIA, toggleRank, type Preferences } from '@/preferences/criteria';
 
-// The blue used for links elsewhere in the app
-const ACCENT = '#3c87f7';
+// Selected ranks use MCCS navy (see UI_STANDARDS.md)
+const ACCENT = Brand.navy;
 const BADGE_SIZE = 28;
 const COMPACT_BADGE_SIZE = 24;
 

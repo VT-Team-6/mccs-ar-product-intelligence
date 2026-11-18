@@ -8,13 +8,13 @@ import { getRecommendations, type Recommendation, type RecommendationResult } fr
 import { ProductCard } from '@/components/product-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BottomTabInset, Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 import { CRITERIA } from '@/preferences/criteria';
 import { describeUnderstood, rankingFromParam } from '@/search/advanced';
 import { useStore } from '@/store/StoreContext';
 
-// The blue used for links elsewhere in the app
-const ACCENT = '#3c87f7';
+// The For You highlight uses MCCS red (see UI_STANDARDS.md)
+const ACCENT = Brand.red;
 
 // Results for an advanced search, e.g. /advanced-results?q=waterproof%20boots&rank=price
 export default function AdvancedResultsScreen() {

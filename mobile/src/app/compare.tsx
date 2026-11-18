@@ -15,12 +15,13 @@ import { getComparison, type CompareItem, type ComparisonData } from '@/api/comp
 import { productImageUrl, storePriceLine, storePriceValue } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { BackButton } from '@/components/ui/back-button';
+import { BottomTabInset, Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 import { compareHref, readSelection, selectionProblem } from '@/compare/selection';
 import { useStore } from '@/store/StoreContext';
 
-// The blue used for links elsewhere in the app
-const ACCENT = "#3c87f7";
+// Badges use MCCS navy (see UI_STANDARDS.md)
+const ACCENT = Brand.navy;
 // Each product gets a column this wide. More than fit on screen scroll sideways.
 const COLUMN_WIDTH = 168;
 
@@ -85,13 +86,7 @@ export default function CompareScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.headerRow}>
-            <Pressable
-              onPress={goBack}
-              hitSlop={12}
-              style={({ pressed }) => pressed && styles.pressed}
-            >
-              <ThemedText type="linkPrimary">‹ Back</ThemedText>
-            </Pressable>
+            <BackButton fallback="/products/history" />
           </View>
 
           <ThemedText type="subtitle">Compare products</ThemedText>

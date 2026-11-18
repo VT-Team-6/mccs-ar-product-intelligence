@@ -6,6 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RankPicker } from '@/components/rank-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { BackButton } from '@/components/ui/back-button';
+import { AppButton } from '@/components/ui/app-button';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { rankedCount } from '@/preferences/criteria';
@@ -16,8 +18,6 @@ import {
   rankingToParam,
 } from '@/search/advanced';
 
-// The blue used for links elsewhere in the app
-const ACCENT = '#3c87f7';
 
 // Advanced search: the shopper describes what they need in their own words,
 // like "waterproof hiking boots under $150", and can rank what matters most.
@@ -42,12 +42,7 @@ export default function AdvancedSearchScreen() {
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Pressable
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/search' as Href))}
-            hitSlop={12}
-            style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedText type="linkPrimary">‹ Back</ThemedText>
-          </Pressable>
+          <BackButton fallback="/search" />
 
           <View style={styles.section}>
             <ThemedText type="subtitle">Advanced search</ThemedText>
@@ -98,20 +93,7 @@ export default function AdvancedSearchScreen() {
           </View>
           <RankPicker value={ranking} onChange={setRanking} compact />
 
-          <Pressable
-            onPress={search}
-            disabled={!ready}
-            accessibilityRole="button"
-            style={({ pressed }) => [
-              styles.button,
-              { backgroundColor: ACCENT },
-              !ready && styles.disabled,
-              pressed && styles.pressed,
-            ]}>
-            <ThemedText type="smallBold" style={styles.buttonText}>
-              Search
-            </ThemedText>
-          </Pressable>
+          <AppButton label="Search" onPress={search} disabled={!ready} />
           {!ready && (
             <ThemedText type="small" themeColor="textSecondary">
               {rankedCount(ranking) > 0

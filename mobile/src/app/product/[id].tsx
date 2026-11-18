@@ -15,7 +15,8 @@ import { ProductImageGallery } from '@/components/product-image-gallery';
 import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { BackButton } from '@/components/ui/back-button';
+import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 import { AIAnalysisPanel} from '@/components/ai-analysis-panel';
 import { NearbyStores } from '@/components/nearby-stores';
 import { useStore } from '@/store/StoreContext';
@@ -103,16 +104,7 @@ export default function ShopperProductScreen() {
     recordInteraction(productId, interaction).catch(() => undefined);
   }, [id, from, via]);
 
-  // Go to the previous page, else the "from" page, else the home page. 
-  const goBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else if (from && from.startsWith('/')) {
-      router.replace(from as Href);
-    } else {
-      router.replace('/');
-    }
-  };
+  // Back goes to the previous page, else the "from" page, else Home (BackButton)
 
   // Toggles the state of the heart icon and sends to backend.
   // If the backend fails, the heart is restored to its previous state.
@@ -164,9 +156,7 @@ export default function ShopperProductScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="linkPrimary">‹ Back</ThemedText>
-        </Pressable>
+        <BackButton from={from} />
 
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
         {(!product || loadedId !== Number(id)) && !error && <ActivityIndicator />}
@@ -380,7 +370,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,
-    backgroundColor: '#3c87f7',
+    backgroundColor: Brand.navy,
   },
   moreText: {
     color: '#ffffff',
