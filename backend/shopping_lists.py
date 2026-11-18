@@ -244,7 +244,6 @@ def remove_item(
 
 
 
-""" Trisheka: connect this to the scan workflow"""
 def complete_active_product(
     conn: Connection, user_id: int, product_id: int
 ) -> bool:
@@ -279,3 +278,78 @@ def complete_active_product(
         (updated["shopping_list_id"],),
     )
     return True
+
+
+def _active_list(conn: Connection, user_id: int) -> dict | None:
+    """The customer's active list (id and name), or None if they have none."""
+    return conn.execute(
+        """
+        SELECT shopping_list_id, name
+        FROM shopping_lists
+        WHERE user_id = %s AND is_active = TRUE
+        """,
+        (user_id,),
+    ).fetchone()
+
+
+def _item_on_list(conn: Connection, list_id: int, product_id: int) -> dict | None:
+    return conn.execute(
+        """
+        SELECT is_completed
+        FROM shopping_list_items
+        WHERE shopping_list_id = %s AND product_id = %s
+        """,
+        (list_id, product_id),
+    ).fetchone()
+
+
+def check_off_scanned(conn: Connection, user_id: int, product_id: int) -> dict:
+    """Called after a scan: check the product off the active list if it is on it.
+
+    status says what happened, so the app can show the right message:
+      checked_off     the product was on the list and is now checked off
+      already_checked it was on the list and already checked off
+      not_on_list     the active list does not have this product
+      no_active_list  the customer has no active list
+    "list" is the updated active list (None when there is no active list).
+    """
+    active = _active_list(conn, user_id)
+    if active is None:
+        return {"status": "no_active_list", "product_id": product_id, "list": None}
+
+    list_id = active["shopping_list_id"]
+    if complete_active_product(conn, user_id, product_id):
+        status = "checked_off"
+    elif _item_on_list(conn, list_id, product_id) is not None:
+        status = "already_checked"
+    else:
+        status = "not_on_list"
+
+    return {
+        "status": status,
+        "product_id": product_id,
+        "list": get_list(conn, user_id, list_id),
+    }
+
+
+def active_list_status(conn: Connection, user_id: int, product_id: int) -> dict:
+    """Where this product stands on the active list, for the product page.
+
+    on_list is False when there is no active list or the product isn't on it.
+    """
+    active = _active_list(conn, user_id)
+    if active is None:
+        return {
+            "list_id": None,
+            "list_name": None,
+            "on_list": False,
+            "is_completed": False,
+        }
+
+    item = _item_on_list(conn, active["shopping_list_id"], product_id)
+    return {
+        "list_id": active["shopping_list_id"],
+        "list_name": active["name"],
+        "on_list": item is not None,
+        "is_completed": bool(item and item["is_completed"]),
+    }

@@ -20,13 +20,16 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Brand, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
   productId: number;
+  // Called after the product is added, so the page can refresh its list status
+  onAdded?: () => void;
 };
 
-export function AddToShoppingList({ productId }: Props) {
+export function AddToShoppingList({ productId, onAdded }: Props) {
   const [visible, setVisible] = useState(false);
   const [lists, setLists] = useState<ShoppingListSummary[]>([]);
   const [listItems, setListItems] = useState<
@@ -36,6 +39,7 @@ export function AddToShoppingList({ productId }: Props) {
   const [savingListId, setSavingListId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const theme = useTheme();
 
   const loadLists = useCallback(async () => {
     setLoading(true);
@@ -101,6 +105,7 @@ export function AddToShoppingList({ productId }: Props) {
       }));
 
       setMessage(`Added to ${updated.name}.`);
+      onAdded?.();
     } catch (problem) {
       setError(
         problem instanceof Error
@@ -118,10 +123,14 @@ export function AddToShoppingList({ productId }: Props) {
         onPress={openPicker}
         accessibilityRole="button"
         accessibilityLabel="Add to Shopping List"
-        style={styles.openButton}
+        style={({ pressed }) => [
+          styles.openButton,
+          { backgroundColor: theme.card, borderColor: theme.link },
+          pressed && styles.disabled,
+        ]}
       >
-        <ThemedText style={styles.openButtonText}>
-          Add to Shopping List
+        <ThemedText type="smallBold" themeColor="link">
+          ＋ Add to Shopping List
         </ThemedText>
       </Pressable>
 
@@ -133,8 +142,8 @@ export function AddToShoppingList({ productId }: Props) {
       >
         <View style={styles.overlay}>
           <ThemedView
-            type="backgroundElement"
-            style={styles.dialog}
+            type="card"
+            style={[styles.dialog, { borderColor: theme.border }]}
           >
             <View style={styles.header}>
               <ThemedText type="subtitle">
@@ -247,15 +256,12 @@ export function AddToShoppingList({ productId }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Navy outline, the secondary action next to Save to Likes (see UI_STANDARDS.md)
   openButton: {
-    padding: Spacing.three,
-    backgroundColor: '#3c87f7',
-    borderRadius: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1.5,
     alignItems: 'center',
-  },
-  openButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
   },
   overlay: {
     flex: 1,
@@ -269,7 +275,8 @@ const styles = StyleSheet.create({
     maxHeight: '75%',
     alignSelf: 'center',
     padding: Spacing.four,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.large,
+    borderWidth: 1,
     gap: Spacing.three,
   },
   header: {
@@ -293,8 +300,8 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   addButton: {
-    backgroundColor: '#3c87f7',
-    borderRadius: Spacing.two,
+    backgroundColor: Brand.navy,
+    borderRadius: Radius.small,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     minWidth: 64,
@@ -302,11 +309,11 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   successText: {
-    color: '#23865c',
-    fontWeight: '600',
+    color: Brand.success,
+    fontWeight: '700',
   },
   disabled: {
     opacity: 0.5,

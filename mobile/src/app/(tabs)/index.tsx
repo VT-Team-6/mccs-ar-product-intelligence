@@ -10,6 +10,7 @@ import { useRouter, type Href } from "expo-router";
 import { authenticatedFetch } from "@/api/client";
 import { API_URL } from "@/api/config";
 import { recordInteraction } from "@/api/me";
+import { checkOffScanned } from "@/api/shopping-lists";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, Brand, MaxContentWidth, Spacing, type ThemeColor } from "@/constants/theme";
@@ -78,6 +79,10 @@ export default function ScanScreen() {
       // The scan is recorded for the History tab; the product page records the
       // view itself. Recording never blocks opening the product.
       recordInteraction(result.product_id, "scanned").catch(() => undefined);
+      // Checks the product off the active shopping list if it's on it. Waited
+      // for, so the product page already shows "Checked off your list". A
+      // failure never stops the product from opening.
+      await checkOffScanned(result.product_id).catch(() => null);
       router.push(`/product/${result.product_id}?from=/` as Href);
     } catch {
       Alert.alert(

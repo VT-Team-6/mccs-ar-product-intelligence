@@ -23,6 +23,7 @@ import { AIAnalysisPanel} from '@/components/ai-analysis-panel';
 import { NearbyStores } from '@/components/nearby-stores';
 import { useStore } from '@/store/StoreContext';
 import { AddToShoppingList } from '@/components/add-to-shopping-list';
+import { ShoppingListStatus } from '@/components/shopping-list-status';
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
@@ -49,6 +50,8 @@ export default function ShopperProductScreen() {
   const scrollRef = useRef<ScrollView>(null);
   // Where the questions/results start on the page, so we can scroll them to the top
   const panelY = useRef(0);
+  // Goes up by one when the product is added to a list, so the list line reloads
+  const [listVersion, setListVersion] = useState(0);
 
   // Loads this product and the caller's like state when the page opens.
   // A product from a different page is ignored while the new one loads.
@@ -206,8 +209,13 @@ export default function ShopperProductScreen() {
               </ThemedView>
             </Pressable>
 
-            {/* Allow customers to add this product to any shopping list. */}
-            <AddToShoppingList productId={product.product_id} />
+            {/* Where this product stands on the active list, then a way to add it
+                to any list. */}
+            <ShoppingListStatus productId={product.product_id} refreshKey={listVersion} />
+            <AddToShoppingList
+              productId={product.product_id}
+              onAdded={() => setListVersion((version) => version + 1)}
+            />
 
             <ThemedView type="card" style={[styles.facts, { borderColor: theme.border }]}>
               {discontinued ? (
