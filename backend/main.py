@@ -9,9 +9,8 @@ from database import get_connection
 import reorders as reorder_alerts
 
 from fastapi.staticfiles import StaticFiles
-
 from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, inventory, admin, compare, reorders
-from routers import product_images, review_images
+from routers import product_images, review_images, shopping_lists
 import auth
 
 
@@ -50,6 +49,7 @@ app.include_router(product_images.router)
 app.include_router(product_images.admin_router)
 app.include_router(stores.router)
 app.include_router(me.router)
+app.include_router(shopping_lists.router)
 app.include_router(reviews.router)
 app.include_router(reviews.admin_router)
 app.include_router(review_images.router)

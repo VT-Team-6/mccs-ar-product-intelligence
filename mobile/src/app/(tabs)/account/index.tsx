@@ -2,21 +2,21 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  View,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { getMessages } from "@/api/reorders";
 import { useAuth } from "@/auth/AuthContext";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { SectionLabel } from "@/components/ui/section-label";
+import { BottomTabInset, Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 
 export default function AccountScreen() {
@@ -25,6 +25,7 @@ export default function AccountScreen() {
   const { store, openStoreSelector } = useStore();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
   // Tracks the "Try again" press, and makes the automatic retry happen once
   const [retrying, setRetrying] = useState(false);
   const attempted = useRef(false);
@@ -56,21 +57,26 @@ export default function AccountScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="subtitle">Account</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {profile?.email ?? ""}
-          </ThemedText>
-        </ThemedView>
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + BottomTabInset + Spacing.three,
+        }}
+      >
+        <ScreenHeader
+          title="Account"
+          eyebrow="MCCS"
+          subtitle={profile?.email ?? undefined}
+          back={false}
+        />
 
-        <ScrollView
-          contentContainerStyle={[
-            styles.list,
-            { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
-          ]}
-        >
+        <View style={styles.list}>
           {/* Admin Access */}
+          {(hasPermission("create_products") ||
+            hasPermission("manage_inventory") ||
+            hasPermission("manage_stock") ||
+            hasPermission("manage_store_admins") ||
+            hasPermission("manage_store_buyers")) && <SectionLabel label="Store staff" />}
+
           {hasPermission("create_products") && (
             <Row
               label="Manage Products"
@@ -121,8 +127,8 @@ export default function AccountScreen() {
               accessibilityRole="button"
               style={({ pressed }) => pressed && styles.pressed}
             >
-              <ThemedView type="backgroundElement" style={styles.row}>
-                <ThemedView type="backgroundElement" style={styles.rowText}>
+              <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
+                <ThemedView type="card" style={styles.rowText}>
                   <ThemedText type="smallBold">
                     Could not load your account
                   </ThemedText>
@@ -134,6 +140,8 @@ export default function AccountScreen() {
               </ThemedView>
             </Pressable>
           )}
+
+          <SectionLabel label="Your account" style={styles.groupLabel} />
 
           <Row
             label="Preferences"
@@ -149,9 +157,9 @@ export default function AccountScreen() {
             onPress={() => openStoreSelector({ allowClear: true })}
           />
 
-          <Row label="Sign out" onPress={signOut} />
-        </ScrollView>
-      </SafeAreaView>
+          <Row label="Sign out" onPress={signOut} danger />
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -160,26 +168,32 @@ function Row({
   label,
   hint,
   onPress,
+  danger = false,
 }: {
   label: string;
   hint?: string;
   onPress: () => void;
+  // Red text, for Sign out
+  danger?: boolean;
 }) {
+  const theme = useTheme();
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => pressed && styles.pressed}
     >
-      <ThemedView type="backgroundElement" style={styles.row}>
-        <ThemedView type="backgroundElement" style={styles.rowText}>
-          <ThemedText type="smallBold">{label}</ThemedText>
+      <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
+        <ThemedView type="card" style={styles.rowText}>
+          <ThemedText type="smallBold" style={danger && styles.danger}>
+            {label}
+          </ThemedText>
           {hint && (
             <ThemedText type="small" themeColor="textSecondary">
               {hint}
             </ThemedText>
           )}
         </ThemedView>
-        <ThemedText themeColor="textSecondary">›</ThemedText>
+        <ThemedText themeColor="link" style={styles.chevron}>›</ThemedText>
       </ThemedView>
     </Pressable>
   );
@@ -188,35 +202,36 @@ function Row({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.three,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop:
-      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
-    gap: Spacing.two,
-    maxWidth: MaxContentWidth,
-  },
-  header: {
-    gap: Spacing.half,
   },
   list: {
+    width: "100%",
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
     gap: Spacing.two,
+  },
+  groupLabel: {
     paddingTop: Spacing.two,
   },
-  row: {
+    row: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   rowText: {
     flex: 1,
     gap: Spacing.half,
+  },
+  chevron: {
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  danger: {
+    color: Brand.red,
   },
   pressed: {
     opacity: 0.6,
