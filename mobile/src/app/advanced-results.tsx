@@ -1,20 +1,23 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Product } from '@/api/products';
 import { getRecommendations, type Recommendation, type RecommendationResult } from '@/api/recommendations';
 import { ProductCard } from '@/components/product-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { SectionLabel } from '@/components/ui/section-label';
+import { BottomTabInset, Brand, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { CRITERIA } from '@/preferences/criteria';
 import { describeUnderstood, rankingFromParam } from '@/search/advanced';
 import { useStore } from '@/store/StoreContext';
 
-// The For You highlight uses MCCS red (see UI_STANDARDS.md)
-const ACCENT = Brand.red;
+// A red left edge on the For You pick. A plain object rather than a StyleSheet
+// style, because on web the card's own border color would otherwise win over it.
+const FOR_YOU_EDGE = { borderLeftWidth: 5, borderLeftColor: Brand.red };
 
 // Results for an advanced search, e.g. /advanced-results?q=waterproof%20boots&rank=price
 export default function AdvancedResultsScreen() {
@@ -25,6 +28,7 @@ export default function AdvancedResultsScreen() {
   const ranking = useMemo(() => rankingFromParam(rankParam), [rankParam]);
   // Reprice the cards when the shopper switches stores.
   const { store } = useStore();
+  const theme = useTheme();
 
   const [result, setResult] = useState<RecommendationResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,27 +98,29 @@ export default function AdvancedResultsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
-          <View style={styles.headerRow}>
-            <Pressable onPress={editSearch} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedText type="linkPrimary">‹ Edit search</ThemedText>
-            </Pressable>
-          </View>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <ScreenHeader
+          title="Best matches"
+          eyebrow="Advanced search"
+          subtitle={query !== '' ? `For "${query}"` : undefined}
+          // Back to the form with the same words and ranking filled in
+          backLabel="Edit search"
+          from={`/advanced-search?q=${encodeURIComponent(query)}&rank=${encodeURIComponent(rankParam)}`}
+        />
 
+        <View style={styles.content}>
           <View style={styles.section}>
-            <ThemedText type="subtitle">Best matches</ThemedText>
-            {query !== '' && (
-              <ThemedText themeColor="textSecondary">{`For "${query}"`}</ThemedText>
-            )}
             {understood.length > 0 && (
               <View style={styles.chips}>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Looking for:
-                </ThemedText>
+                <SectionLabel label="Looking for" style={styles.chipsLabel} />
                 {understood.map((label) => (
-                  <ThemedView key={label} type="backgroundElement" style={styles.chip}>
-                    <ThemedText type="small">{label}</ThemedText>
+                  <ThemedView
+                    key={label}
+                    type="card"
+                    style={[styles.chip, { borderColor: theme.link }]}>
+                    <ThemedText type="small" themeColor="link">
+                      {label}
+                    </ThemedText>
                   </ThemedView>
                 ))}
               </View>
@@ -156,24 +162,24 @@ export default function AdvancedResultsScreen() {
                 <ResultCard
                   key={item.product.product_id}
                   item={item}
-                  label={`#${index + 1}`}
+                  rank={index + 1}
                   onOpen={openProduct}
                 />
               ))}
 
               {result.for_you && (
                 <View style={styles.forYou}>
-                  <ThemedText type="subtitle">Recommended for You</ThemedText>
+                  <SectionLabel label="Recommended for you" />
                   <ThemedText type="small" themeColor="textSecondary">
                     Also based on your saved preferences and likes
                   </ThemedText>
-                  <ResultCard item={result.for_you} onOpen={openProduct} />
+                  <ResultCard item={result.for_you} onOpen={openProduct} highlight />
                 </View>
               )}
             </>
           ) : null}
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -181,12 +187,13 @@ export default function AdvancedResultsScreen() {
 // A product card with its rank and the reasons it was picked
 function ResultCard({
   item,
-  label,
+  rank,
   onOpen,
   highlight = false,
 }: {
   item: Recommendation;
-  label?: string;
+  // Shown as a red "#1" tag
+  rank?: number;
   onOpen: (product: Product) => void;
   highlight?: boolean;
 }) {
@@ -194,9 +201,9 @@ function ResultCard({
     <ProductCard
       product={item.product}
       onPress={() => onOpen(item.product)}
-      event={label}
+      badge={rank !== undefined ? `#${rank}` : null}
       meta={item.reasons.length > 0 ? item.reasons.join(' · ') : null}
-      style={highlight ? styles.highlight : undefined}
+      style={highlight ? FOR_YOU_EDGE : undefined}
     />
   );
 }
@@ -204,45 +211,39 @@ function ResultCard({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  content: {
-    gap: Spacing.three,
+  scroll: {
     paddingBottom: BottomTabInset + Spacing.four,
   },
-  headerRow: {
-    flexDirection: 'row',
+  content: {
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.three,
   },
   section: {
-    gap: Spacing.one,
+    gap: Spacing.two,
   },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: Spacing.one,
-    paddingTop: Spacing.one,
+  },
+  chipsLabel: {
+    marginRight: Spacing.one,
   },
   chip: {
     paddingVertical: Spacing.half,
-    paddingHorizontal: Spacing.two,
-    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
   },
   forYou: {
     gap: Spacing.two,
     paddingTop: Spacing.two,
-  },
-  highlight: {
-    borderWidth: 2,
-    borderColor: ACCENT,
   },
   pressed: {
     opacity: 0.6,

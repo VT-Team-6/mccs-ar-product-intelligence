@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Brand, Spacing } from '@/constants/theme';
+import { Brand, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { CRITERIA, toggleRank, type Preferences } from '@/preferences/criteria';
 
@@ -37,8 +37,12 @@ export function RankPicker({ value, onChange, compact = false, criteria = CRITER
             accessibilityLabel={ranked ? `${label}, ranked ${rank}. Tap to remove.` : `${label}, not ranked. Tap to rank.`}
             style={({ pressed }) => pressed && styles.pressed}>
             <ThemedView
-              type="backgroundElement"
-              style={[styles.card, compact && styles.compactCard, ranked && { borderColor: ACCENT }]}>
+              type="card"
+              style={[
+                styles.card,
+                compact && styles.compactCard,
+                { borderColor: ranked ? ACCENT : theme.border },
+              ]}>
               <View
                 style={[
                   styles.badge,
@@ -53,7 +57,7 @@ export function RankPicker({ value, onChange, compact = false, criteria = CRITER
                   </ThemedText>
                 )}
               </View>
-              <ThemedView type="backgroundElement" style={styles.cardText}>
+              <ThemedView type="card" style={styles.cardText}>
                 <ThemedText type="smallBold">{label}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   {hint}
@@ -76,9 +80,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
     borderWidth: 2,
-    borderColor: 'transparent',
   },
   badge: {
     width: BADGE_SIZE,

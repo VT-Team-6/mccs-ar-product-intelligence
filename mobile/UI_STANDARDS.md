@@ -24,7 +24,9 @@ All colors live in `src/constants/theme.ts`.
 
 | Main action on a screen | Red `Brand.red` (#940000) | Marine Corps style guide |
 
-| Cards and inputs | `theme.backgroundElement` | Follows light/dark mode |
+| Cards and inputs | `theme.card` with a 1px `theme.border` | White with a thin border, like the MCCS store site |
+
+| Prices, section labels | `theme.link` (navy), extra bold | Follows light/dark mode |
 
 | Body text / hints | `theme.text` / `theme.textSecondary` | Follows light/dark mode |
 
@@ -56,9 +58,27 @@ Don't add new hex colors in screens. The old blue `#3c87f7` is replaced by navy.
 
 &#x20; or to `from`, or to Home, so it also works after a web refresh.
 
-\- `ScreenHeader` (`components/ui/screen-header.tsx`): Back + title + optional
+\- `ScreenHeader` (`components/ui/screen-header.tsx`): the navy band with the red
 
-&#x20; subtitle on every inner screen.
+&#x20; stripe at the top of every screen, same look as the Home header. Takes `title`,
+
+&#x20; an optional small `eyebrow` above it, `subtitle`, Back settings, and `children`
+
+&#x20; for anything that belongs in the band (the Likes / History switch). It spans the
+
+&#x20; full width, so put it outside the screen's padded content.
+
+\- `SectionLabel` (`components/ui/section-label.tsx`): small navy capitals that
+
+&#x20; name a section, e.g. TODAY or PRICE.
+
+\- `ProductCard`: white card with a border, navy price, red heart when liked, and an
+
+&#x20; optional red `badge` such as "#1". A navy left edge marks a selected card, a red
+
+&#x20; left edge marks the For You pick.
+
+\- Highlights like "Lowest price" are small red pills in capitals.
 
 
 
@@ -70,7 +90,7 @@ Don't add new hex colors in screens. The old blue `#3c87f7` is replaced by navy.
 
 \- Gap between sections: `Spacing.three` (16). Inside a card: `Spacing.two` (8).
 
-\- Rounding from `Radius`: cards `large` (18), buttons and inputs `medium` (14),
+\- Rounding from `Radius`: cards, buttons and inputs `medium` (14), small buttons `small` (8),
 
 &#x20; chips `pill`.
 
@@ -82,9 +102,9 @@ Don't add new hex colors in screens. The old blue `#3c87f7` is replaced by navy.
 
 
 
-\- Screen title: `ScreenHeader` (28, extra bold).
+\- Screen title: `ScreenHeader` (28, extra bold, white on navy).
 
-\- Section title: 20, bold.
+\- Section title: `SectionLabel`.
 
 \- Body: `ThemedText` default (16). Hints: `type="small"` with `themeColor="textSecondary"`.
 

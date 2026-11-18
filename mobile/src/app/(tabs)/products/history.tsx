@@ -15,12 +15,18 @@ import { ProductCard } from '@/components/product-card';
 import { MAX_COMPARE, compareHref, selectionProblem } from '@/compare/selection';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BottomTabInset, Brand, MaxContentWidth, Spacing } from '@/constants/theme';
+import { SectionLabel } from '@/components/ui/section-label';
+import { BottomTabInset, Brand, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
 
 const PAGE_SIZE = 20;
+
+// A navy left edge on cards picked for comparing. Passed as a plain object
+// rather than a StyleSheet style, because on web the card's own border color
+// would otherwise win over it.
+const SELECTED_EDGE = { borderLeftWidth: 5, borderLeftColor: Brand.navy };
 
 // How each recorded interaction reads in the feed.
 const EVENT_LABELS: Record<string, string> = {
@@ -198,19 +204,20 @@ export default function HistoryScreen() {
           autoCapitalize="none"
           autoCorrect={false}
           clearButtonMode="while-editing"
-          style={[styles.search, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+          style={[
+            styles.search,
+            { color: theme.text, backgroundColor: theme.card, borderColor: theme.border },
+          ]}
         />
 
-        <ThemedView
-          type="backgroundElement"
-          style={styles.compareToolbar}
-        >
+        {/* Navy strip, like the Home header, so comparing stands out */}
+        <View style={styles.compareToolbar}>
           <View style={styles.compareToolbarText}>
-            <ThemedText type="smallBold">
+            <ThemedText type="smallBold" style={styles.onNavy}>
               Compare products
             </ThemedText>
 
-            <ThemedText type="small" themeColor="textSecondary">
+            <ThemedText type="small" style={styles.onNavyMuted}>
               {selectedIds.length} of {MAX_COMPARE} selected · Choose at least 2
             </ThemedText>
           </View>
@@ -224,7 +231,7 @@ export default function HistoryScreen() {
               accessibilityRole="button"
               accessibilityLabel="Clear comparison selection"
             >
-              <ThemedText type="linkPrimary">
+              <ThemedText type="linkPrimary" style={styles.onNavyLink}>
                 Clear
               </ThemedText>
             </Pressable>
@@ -249,7 +256,7 @@ export default function HistoryScreen() {
               Compare
             </ThemedText>
           </Pressable>
-        </ThemedView>
+        </View>
 
         {selectionMessage && (
           <ThemedText type="small" themeColor="textSecondary">
@@ -280,9 +287,7 @@ export default function HistoryScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
           renderSectionHeader={({ section }) => (
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              {section.title}
-            </ThemedText>
+            <SectionLabel label={section.title} style={styles.sectionTitle} />
           )}
           
           renderItem={({ item }) => {
@@ -317,6 +322,8 @@ export default function HistoryScreen() {
                     product={item.product}
                     isLiked={item.product.is_liked}
                     onToggleLike={() => toggleLike(item)}
+                    // A navy edge marks the products picked for comparing
+                    style={selected ? SELECTED_EDGE : undefined}
                     event={`${EVENT_LABELS[item.interaction] ?? item.interaction} · ${formatTime(
                       item.occurred_at,
                     )}`}
@@ -483,7 +490,7 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.four,
     // The segment control above this stack already handles the top inset
     paddingTop: Spacing.three,
     gap: Spacing.two,
@@ -496,7 +503,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: Spacing.two + Spacing.half,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   message: {
     gap: Spacing.one,
@@ -506,14 +514,27 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingTop: Spacing.two,
   },
-  sectionTitle: {    paddingTop: Spacing.two,
+  sectionTitle: {
+    paddingTop: Spacing.two,
   },
   compareToolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-    padding: Spacing.two,
-    borderRadius: Spacing.two,
+    paddingVertical: Spacing.two,
+    paddingLeft: Spacing.three,
+    paddingRight: Spacing.two,
+    borderRadius: Radius.medium,
+    backgroundColor: Brand.navy,
+  },
+  onNavy: {
+    color: '#ffffff',
+  },
+  onNavyMuted: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  onNavyLink: {
+    color: '#C9D6EC',
   },
   compareToolbarText: {
     flex: 1,
@@ -523,14 +544,14 @@ const styles = StyleSheet.create({
     backgroundColor: Brand.red,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.small,
   },
   compareButtonDisabled: {
     opacity: 0.4,
   },
   compareButtonText: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   historyEntry: {
     flexDirection: 'row',

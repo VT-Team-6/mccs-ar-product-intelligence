@@ -16,6 +16,9 @@ export const Colors = {
     textSecondary: '#60646C',
     // Links and secondary actions: navy, so they match the MCCS header
     link: '#0C2340',
+    // Cards: white with a thin border, like the MCCS store site
+    card: '#ffffff',
+    border: '#E3E6EC',
   },
   dark: {
     text: '#ffffff',
@@ -25,6 +28,8 @@ export const Colors = {
     textSecondary: '#B0B4BA',
     // Navy is too dark to read on black, so dark mode uses a light navy
     link: '#9DB8E6',
+    card: '#16181B',
+    border: '#2E3135',
   },
 } as const;
 

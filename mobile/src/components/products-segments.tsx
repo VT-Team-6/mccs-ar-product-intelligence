@@ -1,10 +1,8 @@
 import { usePathname, useRouter } from 'expo-router';
-import { Platform, Pressable, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { Brand, Radius, Spacing } from '@/constants/theme';
 
 const SEGMENTS = [
   { name: 'index', label: 'Likes', href: '/products' },
@@ -13,21 +11,16 @@ const SEGMENTS = [
 
 // The two halves of the Products tab. Both are real routes, so a segment can be
 // linked to directly and Back still returns to the product that was opened.
+// The switch sits inside the navy header band, like the Home header.
 export function ProductsSegments() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   // The address of the screen that is showing, e.g. /products or /products/history
   const pathname = usePathname();
   const active = pathname.startsWith('/products/history') ? 'history' : 'index';
 
   return (
-    <ThemedView
-      style={[
-        styles.bar,
-        // On web the tab bar sits at the top, so clear it as well
-        { paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : insets.top + Spacing.two },
-      ]}>
-      <ThemedView type="backgroundElement" style={styles.group}>
+    <ScreenHeader title="Products" eyebrow="MCCS · Your products" back={false}>
+      <View style={styles.group}>
         {SEGMENTS.map((segment) => {
           const selected = active === segment.name;
           return (
@@ -39,40 +32,41 @@ export function ProductsSegments() {
               }}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
-              style={styles.trigger}>
-              <ThemedView
-                type={selected ? 'backgroundSelected' : 'backgroundElement'}
-                style={styles.pill}>
-                <ThemedText type="smallBold">{segment.label}</ThemedText>
-              </ThemedView>
+              style={[styles.pill, selected && styles.pillSelected]}>
+              <Text style={[styles.label, selected && styles.labelSelected]}>{segment.label}</Text>
             </Pressable>
           );
         })}
-      </ThemedView>
-    </ThemedView>
+      </View>
+    </ScreenHeader>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.two,
-  },
   group: {
     flexDirection: 'row',
     gap: Spacing.half,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    padding: Spacing.half,
-    borderRadius: Spacing.three,
-  },
-  trigger: {
-    flex: 1,
+    marginTop: Spacing.one,
+    padding: Spacing.half + 1,
+    borderRadius: Radius.small + 2,
+    backgroundColor: Brand.navyLight,
   },
   pill: {
+    flex: 1,
     alignItems: 'center',
     paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.small,
+  },
+  pillSelected: {
+    backgroundColor: '#ffffff',
+  },
+  label: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.75)',
+  },
+  labelSelected: {
+    color: Brand.navy,
   },
 });

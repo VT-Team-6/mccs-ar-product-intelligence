@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { getPreferences, savePreferences } from '@/api/preferences';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { BackButton } from '@/components/ui/back-button';
 import { AppButton } from '@/components/ui/app-button';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { RankPicker } from '@/components/rank-picker';
 import {
@@ -81,11 +80,11 @@ export default function PreferencesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <BackButton fallback="/account" />
-        <ThemedText type="subtitle" style={styles.title}>Preferences</ThemedText>
+      <ScreenHeader title="Preferences" eyebrow="Your account" fallback="/account" />
+
+      <View style={styles.content}>
         <ThemedText type="small" themeColor="textSecondary">
-            Tap what matters most to you, in order. You only need to pick one; anything you don’t pick counts equally.
+          Tap what matters most to you, in order. You only need to pick one. Anything you don’t pick counts equally.
         </ThemedText>
 
         {loading ? (
@@ -122,7 +121,7 @@ export default function PreferencesScreen() {
             </ThemedView>
           </ScrollView>
         )}
-      </SafeAreaView>
+      </View>
     </ThemedView>
   );
 }
@@ -130,17 +129,16 @@ export default function PreferencesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
   },
-  safeArea: {
+  content: {
     flex: 1,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
     paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop: Platform.OS === 'web' ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
     gap: Spacing.two,
-    maxWidth: MaxContentWidth,
   },
   list: {
     gap: Spacing.two,
@@ -153,18 +151,8 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     alignSelf: 'stretch',
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
   },
   pressed: {
     opacity: 0.6,
-  },
-  disabled: {
-    opacity: 0.4,
-  },
-  title: {
-    fontSize: 26,
-    lineHeight: 32,
   },
 });

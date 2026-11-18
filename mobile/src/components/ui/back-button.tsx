@@ -12,10 +12,13 @@ export function BackButton({
   from,
   fallback = '/',
   label = 'Back',
+  onDark = false,
 }: {
   from?: string;
   fallback?: string;
   label?: string;
+  // True when the button sits on the navy header band
+  onDark?: boolean;
 }) {
   const router = useRouter();
 
@@ -36,7 +39,9 @@ export function BackButton({
       accessibilityRole="button"
       accessibilityLabel={label}
       style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
-      <ThemedText type="linkPrimary">{`‹ ${label}`}</ThemedText>
+      <ThemedText type="linkPrimary" style={onDark && styles.onDark}>
+        {`‹ ${label}`}
+      </ThemedText>
     </Pressable>
   );
 }
@@ -47,5 +52,8 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.6,
+  },
+  onDark: {
+    color: '#C9D6EC',
   },
 });
