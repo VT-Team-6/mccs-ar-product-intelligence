@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,7 +13,19 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
-import { approveEntry, removeEntry, updateStock, type InventoryStatus } from "@/api/inventory";
+import {
+  approveEntry,
+  listStoreBuyers,
+  removeEntry,
+  updateLowStockSettings,
+  updateStock,
+  type InventoryStatus,
+  type LowStockChange,
+  type StoreBuyer,
+} from "@/api/inventory";
+import { useAuth } from "@/auth/AuthContext";
+import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
+import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
@@ -35,7 +47,10 @@ export default function EditStockScreen() {
     price?: string;
     quantity?: string;
     status?: InventoryStatus;
+    lowStockAt?: string;
+    buyerId?: string;
   }>();
+  const { hasPermission } = useAuth();
   const router = useRouter();
   const theme = useTheme();
 
@@ -49,7 +64,35 @@ export default function EditStockScreen() {
     params.status === "discontinued" ? "discontinued" : "active",
   );
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  // The number field being typed in, for the bar above the keyboard
+  const [typing, setTyping] = useState<"price" | "quantity" | "lowStock" | null>(null);
+  const priceField = useRef<TextInput>(null);
+  const [barShowing, setBarShowing] = useState(false);
+  const quantityField = useRef<TextInput>(null);
+  const lowStockField = useRef<TextInput>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Low-stock level and buyer: only managers and app admins set these
+  const canSetLowStock = hasPermission("manage_inventory") && !pending;
+  // What's saved right now, so Save only sends the level or buyer when they changed
+  const [savedLevel, setSavedLevel] = useState(params.lowStockAt || "10");
+  const [savedBuyer, setSavedBuyer] = useState<number | null>(params.buyerId ? Number(params.buyerId) : null);
+  const [lowStockAt, setLowStockAt] = useState(savedLevel);
+  const [buyer, setBuyer] = useState<BuyerChoice>(savedBuyer);
+  const [buyers, setBuyers] = useState<StoreBuyer[]>([]);
+
+  // "Changes saved" fades after a few seconds
+  useEffect(() => {
+    if (!saved) return;
+    const timer = setTimeout(() => setSaved(false), 3000);
+    return () => clearTimeout(timer);
+  }, [saved]);
+
+  useEffect(() => {
+    if (!canSetLowStock) return;
+    listStoreBuyers(storeId).then(setBuyers).catch(() => setBuyers([]));
+  }, [canSetLowStock, storeId]);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/admin/inventory"));
 
@@ -66,22 +109,48 @@ export default function EditStockScreen() {
     return { price: Number(price.trim()), quantity: Number(quantity.trim()) };
   };
 
-  // Sends a change, then goes back to the list, which reloads itself
-  const run = async (action: () => Promise<unknown>) => {
+  // Sends a change. Approve and Decline go back to the list (which reloads
+  // itself); Save stays here so several changes can be made in a row.
+  const run = async (action: () => Promise<unknown>, after: "back" | "stay" = "back") => {
     setSaving(true);
+    setSaved(false);
     setError(null);
     try {
       await action();
-      goBack();
+      if (after === "back") {
+        goBack();
+        return;
+      }
+      setSaved(true);
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "Something went wrong. Try again.");
-      setSaving(false);
     }
+    setSaving(false);
   };
 
   const save = () => {
     const values = readValues();
-    if (values) run(() => updateStock(productId, storeId, { ...values, status }));
+    if (!values) return;
+    const lowStock: LowStockChange = {};
+    if (canSetLowStock) {
+      if (!WHOLE_NUMBER.test(lowStockAt.trim())) {
+        setError("Low stock at must be a whole number, 0 or more.");
+        return;
+      }
+      if (lowStockAt.trim() !== savedLevel) lowStock.low_stock_threshold = Number(lowStockAt.trim());
+      if (buyer !== savedBuyer) {
+        if (buyer === null) lowStock.clear_buyer = true;
+        else if (buyer !== "keep") lowStock.buyer_user_id = buyer;
+      }
+    }
+    run(async () => {
+      await updateStock(productId, storeId, { ...values, status });
+      if (Object.keys(lowStock).length > 0) {
+        await updateLowStockSettings(storeId, [productId], lowStock);
+        setSavedLevel(lowStockAt.trim());
+        if (buyer !== "keep") setSavedBuyer(buyer);
+      }
+    }, "stay");
   };
 
   const approve = () => {
@@ -104,7 +173,11 @@ export default function EditStockScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
           <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
             <ThemedText type="linkPrimary">‹ Cancel</ThemedText>
           </Pressable>
@@ -130,6 +203,10 @@ export default function EditStockScreen() {
               placeholder="89.99"
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
+              ref={priceField}
+              onFocus={() => setTyping("price")}
+              onBlur={() => setTyping(null)}
+              caretHidden={barShowing}
               style={inputStyle}
             />
           </View>
@@ -142,6 +219,10 @@ export default function EditStockScreen() {
               placeholder="0"
               placeholderTextColor={theme.textSecondary}
               keyboardType="number-pad"
+              ref={quantityField}
+              onFocus={() => setTyping("quantity")}
+              onBlur={() => setTyping(null)}
+              caretHidden={barShowing}
               style={inputStyle}
             />
           </View>
@@ -175,7 +256,35 @@ export default function EditStockScreen() {
             </View>
           )}
 
+          {canSetLowStock && (
+            <>
+              <View style={styles.field}>
+                <ThemedText type="smallBold">Low stock at</ThemedText>
+                <TextInput
+                  value={lowStockAt}
+                  onChangeText={setLowStockAt}
+                  placeholder="10"
+                  placeholderTextColor={theme.textSecondary}
+                  keyboardType="number-pad"
+              ref={lowStockField}
+              onFocus={() => setTyping("lowStock")}
+              onBlur={() => setTyping(null)}
+              caretHidden={barShowing}
+                  style={inputStyle}
+                />
+                <ThemedText type="small" themeColor="textSecondary">
+                  Managers are alerted when the stock drops to this number or below.
+                </ThemedText>
+              </View>
+              <View style={styles.field}>
+                <ThemedText type="smallBold">Buyer</ThemedText>
+                <BuyerPicker buyers={buyers} value={buyer} onChange={setBuyer} />
+              </View>
+            </>
+          )}
+
           {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
+          {saved && <ThemedText type="smallBold">Changes saved ✓</ThemedText>}
 
           {saving ? (
             <ActivityIndicator />
@@ -189,6 +298,28 @@ export default function EditStockScreen() {
           )}
         </ScrollView>
       </SafeAreaView>
+      <KeyboardDoneBar
+        label={
+          typing === "price"
+            ? "Price ($)"
+            : typing === "quantity"
+              ? "Quantity in stock"
+              : typing === "lowStock"
+                ? "Low stock at"
+                : null
+        }
+        value={typing === "price" ? price : typing === "quantity" ? quantity : lowStockAt}
+        field={
+          typing === "price"
+            ? priceField
+            : typing === "quantity"
+              ? quantityField
+              : typing === "lowStock"
+                ? lowStockField
+                : null
+        }
+        onShowingChange={setBarShowing}
+      />
     </ThemedView>
   );
 }

@@ -5,17 +5,30 @@ from qr import make_qr_png
 from pathlib import Path
 from contextlib import asynccontextmanager
 from product_features import refresh_recommendation_data
+from database import get_connection
+import reorders as reorder_alerts
 
 from fastapi.staticfiles import StaticFiles
 
-from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, inventory, admin, compare
+from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, inventory, admin, compare, reorders
 from routers import product_images, review_images
 import auth
+
+
+def check_low_stock() -> None:
+    try:
+        with get_connection() as conn:
+            found = reorder_alerts.check_all_stores(conn)
+        if found:
+            print(f"Low stock: {found} product(s) need reordering")
+    except Exception as error:  # never keep the backend from starting
+        print(f"Low stock check skipped: {error}")
 
 
 @asynccontextmanager
 async def lifespan(app):
     refresh_recommendation_data()  # build scores (and later the models) when the backend starts
+    check_low_stock()  # alerts for products that were already low (e.g. from the seed data)
     yield
 
 
@@ -47,6 +60,9 @@ app.include_router(inventory.product_stock_router)
 app.include_router(inventory.store_stock_router)
 app.include_router(inventory.writer_router)
 app.include_router(admin.router)
+app.include_router(reorders.manager_router)
+app.include_router(reorders.requests_router)
+app.include_router(reorders.messages_router)
 
 # Serves the files in backend/static, such as product images
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")

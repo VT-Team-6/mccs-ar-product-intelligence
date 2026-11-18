@@ -5,6 +5,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useColorScheme } from "react-native";
 
+import { NotificationBanner } from "@/components/notification-banner";
 import { AuthProvider } from "../auth/AuthContext";
 import AuthenticatedApp from "../auth/AuthenticatedApp";
 import { StoreProvider } from "../store/StoreContext";
@@ -25,6 +26,8 @@ export default function TabLayout() {
         <StoreProvider>
           <AuthenticatedApp>
             <Stack screenOptions={{ headerShown: false }} />
+            {/* After the Stack so it slides in on top of every screen */}
+            <NotificationBanner />
           </AuthenticatedApp>
         </StoreProvider>
       </AuthProvider>

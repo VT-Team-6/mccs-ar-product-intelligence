@@ -73,11 +73,11 @@ export default function AdminScreen() {
             The tabs are anchored in the root stack, so "/" is always below us. */}
         <ThemedView style={styles.topBar}>
           <Pressable
-            onPress={() => router.dismissTo("/")}
+            onPress={() => router.dismissTo("/account")}
             hitSlop={12}
             style={({ pressed }) => pressed && styles.pressed}
           >
-            <ThemedText type="linkPrimary">‹ User view</ThemedText>
+            <ThemedText type="linkPrimary">‹ Account</ThemedText>
           </Pressable>
           <Pressable
             onPress={() => router.push("/admin/products/new")}

@@ -310,6 +310,49 @@ class StoreStock(BaseModel):
     next_cursor: str | None
 
 
+class StaffStoreStockEntry(StoreStockEntry):
+    """A store's stock as its staff see it: adds the low-stock level and buyer."""
+
+    category: str | None = None
+    low_stock_threshold: int
+    low_stock: bool
+    buyer_user_id: int | None
+    buyer_email: str | None
+
+
+class StaffStoreStock(BaseModel):
+    store_id: int
+    name: str
+    items: list[StaffStoreStockEntry]
+    next_cursor: str | None
+
+
+class StoreBuyer(BaseModel):
+    user_id: int
+    email: str
+
+
+class LowStockSettings(BaseModel):
+    """Set the low-stock level and/or buyer on many of a store's products at once.
+
+    A field left out is not changed; clear_buyer removes the buyer.
+    """
+
+    store_id: int = Field(gt=0)
+    product_ids: list[int] = Field(min_length=1, max_length=2000)
+    low_stock_threshold: int | None = Field(default=None, ge=0, le=100_000)
+    buyer_user_id: int | None = Field(default=None, gt=0)
+    clear_buyer: bool = False
+
+    @model_validator(mode="after")
+    def _something_to_change(self):
+        if self.low_stock_threshold is None and self.buyer_user_id is None and not self.clear_buyer:
+            raise ValueError("Give a low-stock level or a buyer to change")
+        if self.clear_buyer and self.buyer_user_id is not None:
+            raise ValueError("Give a buyer or clear_buyer, not both")
+        return self
+
+
 class InventoryWrite(BaseModel):
     """Replace stock for one product+store. Omitted fields keep their value.
 
@@ -367,6 +410,37 @@ class InventoryApproval(BaseModel):
     price: Decimal | None = Field(
         default=None, ge=0, max_digits=10, decimal_places=2
     )
+
+
+class StockImport(BaseModel):
+    """An edited stock CSV for one store, sent as text."""
+
+    store_id: int = Field(gt=0)
+    csv: str = Field(min_length=1, max_length=2_000_000)
+
+
+class StockImportChange(BaseModel):
+    product_id: int
+    name: str
+    brand: str | None
+    old_quantity: int
+    new_quantity: int
+
+
+class StockImportProblem(BaseModel):
+    row: int
+    message: str
+
+
+class StockImportResult(BaseModel):
+    """What an import changes (preview) or changed (apply)."""
+
+    store_id: int
+    changes: list[StockImportChange]
+    unchanged: int
+    errors: list[StockImportProblem]
+    # How many products this import takes to their low-stock level or below
+    low_after: int = 0
 
 
 class PushedEntry(BaseModel):
@@ -430,3 +504,153 @@ class StaffStore(BaseModel):
 
 class StaffOptions(BaseModel):
     stores: list[StaffStore]
+
+
+# --- Reorders ---------------------------------------------------------------
+
+ReorderStatus = Literal["open", "requested", "ordered", "unavailable"]
+
+
+class ReorderProduct(BaseModel):
+    """A low product at a store, with its reorder status and latest order request."""
+
+    alert_id: int
+    product_id: int
+    name: str
+    brand: str | None
+    quantity: int
+    low_stock_threshold: int
+    suggested_quantity: int
+    status: ReorderStatus
+    created_at: datetime
+    buyer_user_id: int | None
+    buyer_email: str | None
+    request_id: int | None
+    requested_quantity: int | None
+    requested_from: str | None
+    requested_at: datetime | None
+    reason: str | None
+    updated_at: datetime | None
+
+
+class ReorderList(BaseModel):
+    products: list[ReorderProduct]
+    counts: dict[str, int]
+
+
+class ReorderGroup(BaseModel):
+    """Products that can be sent to one buyer. buyer_user_id is None for products with no buyer."""
+
+    buyer_user_id: int | None
+    buyer_email: str | None
+    items: list[ReorderProduct]
+
+
+class OrderRequestSendItem(BaseModel):
+    alert_id: int = Field(gt=0)
+    quantity: int = Field(gt=0, le=100_000)
+
+
+class OrderRequestSend(BaseModel):
+    """Send some of a store's low products to one buyer as one order request."""
+
+    store_id: int = Field(gt=0)
+    buyer_user_id: int = Field(gt=0)
+    items: list[OrderRequestSendItem] = Field(min_length=1, max_length=2000)
+    note: str = Field(default="", max_length=2000)
+    # Save this buyer on any of the products that have none
+    remember_buyer: bool = False
+
+    @field_validator("items")
+    @classmethod
+    def _each_alert_once(cls, items):
+        if len({item.alert_id for item in items}) != len(items):
+            raise ValueError("A product is in the request twice")
+        return items
+
+
+class OrderRequestUpdate(BaseModel):
+    """The buyer marks some of a request's products ordered or unavailable."""
+
+    product_ids: list[int] = Field(min_length=1, max_length=2000)
+    status: Literal["ordered", "unavailable"]
+    reason: str = Field(default="", max_length=500)
+
+
+class OrderRequestSummary(BaseModel):
+    pending: int
+    ordered: int
+    unavailable: int
+    received: int
+    finished: bool
+
+
+class OrderRequestItem(BaseModel):
+    product_id: int
+    name: str
+    brand: str | None
+    quantity: int
+    status: Literal["pending", "ordered", "unavailable"]
+    reason: str
+    updated_at: datetime | None
+    current_quantity: int | None
+    restocked: bool
+
+
+class OrderRequest(BaseModel):
+    request_id: int
+    store_id: int
+    store_name: str
+    store_address: str
+    buyer_user_id: int | None
+    buyer_email: str | None
+    sent_by_email: str | None
+    note: str
+    created_at: datetime
+    message: str
+    summary: OrderRequestSummary
+    items: list[OrderRequestItem]
+
+
+class OrderRequestListEntry(BaseModel):
+    request_id: int
+    store_id: int
+    store_name: str
+    sent_by_email: str | None
+    buyer_email: str | None
+    created_at: datetime
+    unread: bool
+    product_count: int
+    summary: OrderRequestSummary
+
+
+class BuyerItem(OrderRequestItem):
+    """A product in one of the buyer's order requests, for the By product view."""
+
+    request_id: int
+    store_name: str
+    requested_at: datetime
+
+
+class Message(BaseModel):
+    message_id: int
+    kind: Literal["low_stock", "order_request", "order_update"]
+    subject: str
+    body: str
+    store_id: int | None
+    request_id: int | None
+    created_at: datetime
+    read: bool
+
+
+class MessageList(BaseModel):
+    messages: list[Message]
+    unread: int
+
+
+class MarkRead(BaseModel):
+    """Which notifications to mark read; with nothing given, all of them."""
+
+    message_ids: list[int] | None = None
+    request_id: int | None = None
+    store_id: int | None = None

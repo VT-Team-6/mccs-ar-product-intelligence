@@ -1,5 +1,5 @@
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -12,6 +12,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
+import { getMessages } from "@/api/reorders";
 import { useAuth } from "@/auth/AuthContext";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -27,6 +28,18 @@ export default function AccountScreen() {
   // Tracks the "Try again" press, and makes the automatic retry happen once
   const [retrying, setRetrying] = useState(false);
   const attempted = useRef(false);
+  const [unread, setUnread] = useState(0);
+  const isStaff = hasPermission("manage_stock") || hasPermission("manage_inventory");
+
+  // The unread count for the Reorders row, checked each time Account opens
+  useFocusEffect(
+    useCallback(() => {
+      if (!isStaff) return;
+      getMessages()
+        .then((result) => setUnread(result.unread))
+        .catch(() => setUnread(0));
+    }, [isStaff]),
+  );
 
   // Refresh the profile on first load, if we haven't already loaded it. This is important for the case where the user has just signed in and we haven't yet asked the backend who they are.
   useEffect(() => {
@@ -76,6 +89,18 @@ export default function AccountScreen() {
               label="Manage Inventory/Stock"
               hint="Manage the store's products or stock"
               onPress={() => router.push("/admin/inventory")}
+            />
+          )}
+
+          {isStaff && (
+            <Row
+              label={unread > 0 ? `Reorders (${unread} new)` : "Reorders"}
+              hint={
+                hasPermission("manage_inventory")
+                  ? "Low-stock products and their order status"
+                  : "Order requests from your stores"
+              }
+              onPress={() => router.push("/account/reorders")}
             />
           )}
 

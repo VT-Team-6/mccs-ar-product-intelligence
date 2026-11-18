@@ -13,6 +13,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  exportStockCsv,
   getStoreInventory,
   listStores,
   type InventoryStatus,
@@ -21,10 +22,12 @@ import {
 } from "@/api/inventory";
 import { productImageUrl } from "@/api/products";
 import { useAuth } from "@/auth/AuthContext";
+import { StockImportModal } from "@/components/stock-import-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { pickCsv, saveCsv } from "@/utils/csv-file";
 
 const TABS: { status: InventoryStatus; label: string }[] = [
   { status: "active", label: "Active" },
@@ -33,7 +36,7 @@ const TABS: { status: InventoryStatus; label: string }[] = [
 ];
 
 export default function InventoryScreen() {
-  const { profile } = useAuth();
+  const { profile, hasPermission } = useAuth();
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -47,6 +50,10 @@ export default function InventoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  // The picked end-of-day stock file; the import popup is open while it's set
+  const [importCsv, setImportCsv] = useState<string | null>(null);
+  const [fileBusy, setFileBusy] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const store = stores.find((item) => item.store_id === storeId);
 
@@ -97,10 +104,39 @@ export default function InventoryScreen() {
     }, [loadInventory]),
   );
 
+
   const refresh = async () => {
     setRefreshing(true);
     await loadInventory();
     setRefreshing(false);
+  };
+
+  // Downloads the store's stock as a CSV to fill in at closing
+  const exportStock = async () => {
+    if (!store) return;
+    setFileBusy(true);
+    setFileError(null);
+    try {
+      const text = await exportStockCsv(store.store_id);
+      const slug = store.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const today = new Date().toISOString().slice(0, 10);
+      await saveCsv(`stock-${slug}-${today}.csv`, text);
+    } catch (problem) {
+      setFileError(problem instanceof Error ? problem.message : "Could not export the stock.");
+    } finally {
+      setFileBusy(false);
+    }
+  };
+
+  // Picks the filled-in CSV and opens the preview
+  const importStock = async () => {
+    setFileError(null);
+    try {
+      const text = await pickCsv();
+      if (text !== null) setImportCsv(text);
+    } catch (problem) {
+      setFileError(problem instanceof Error ? problem.message : "Could not open the file.");
+    }
   };
 
   const query = search.trim().toLowerCase();
@@ -123,6 +159,8 @@ export default function InventoryScreen() {
         price: item.price === null ? "" : item.price.toFixed(2),
         quantity: String(item.quantity),
         status: item.status,
+        lowStockAt: String(item.low_stock_threshold ?? 10),
+        buyerId: item.buyer_user_id ? String(item.buyer_user_id) : "",
       },
     });
 
@@ -131,11 +169,11 @@ export default function InventoryScreen() {
       <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <ThemedView style={styles.topBar}>
           <Pressable
-            onPress={() => router.dismissTo("/")}
+            onPress={() => router.dismissTo("/account")}
             hitSlop={12}
             style={({ pressed }) => pressed && styles.pressed}
           >
-            <ThemedText type="linkPrimary">‹ User view</ThemedText>
+            <ThemedText type="linkPrimary">‹ Account</ThemedText>
           </Pressable>
         </ThemedView>
 
@@ -204,6 +242,32 @@ export default function InventoryScreen() {
           ))}
         </View>
 
+        {store && status === "active" && (
+          <View style={styles.fileButtons}>
+            <FileButton label="Export stock" onPress={exportStock} disabled={fileBusy} />
+            <FileButton label="Import stock" onPress={importStock} disabled={fileBusy} />
+          </View>
+        )}
+        {store && status === "active" && hasPermission("manage_inventory") && (
+          <View style={styles.fileButtons}>
+            <FileButton
+              label="Low stock & buyers"
+              disabled={false}
+              onPress={() =>
+                router.push({
+                  pathname: "/admin/inventory/low-stock",
+                  params: { storeId: String(store.store_id), storeName: store.name },
+                })
+              }
+            />
+          </View>
+        )}
+        {fileError && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {fileError}
+          </ThemedText>
+        )}
+
         <TextInput
           value={search}
           onChangeText={setSearch}
@@ -239,14 +303,39 @@ export default function InventoryScreen() {
           }
         />
       </SafeAreaView>
+      {store && (
+        <StockImportModal
+          storeId={store.store_id}
+          storeName={store.name}
+          csv={importCsv}
+          onClose={() => setImportCsv(null)}
+          onImported={loadInventory}
+        />
+      )}
     </ThemedView>
+  );
+}
+
+function FileButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled: boolean }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [styles.fileButton, (pressed || disabled) && styles.pressed]}
+    >
+      <ThemedView type="backgroundElement" style={styles.tab}>
+        <ThemedText type="linkPrimary">{label}</ThemedText>
+      </ThemedView>
+    </Pressable>
   );
 }
 
 function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => void }) {
   const price = item.price === null ? "No price" : `$${item.price.toFixed(2)}`;
   const stock =
-    item.status === "pending" ? "Needs approval" : item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock";
+    item.status === "pending"
+      ? "Needs approval"
+      : `${item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock"}${item.low_stock ? " · Low" : ""}`;
   const imageUrl = productImageUrl(item);
 
   return (
@@ -311,6 +400,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: Spacing.two,
     borderRadius: Spacing.three,
+  },
+  fileButton: {
+    flex: 1,
+  },
+  fileButtons: {
+    flexDirection: "row",
+    gap: Spacing.two,
   },
   search: {
     fontSize: 16,
