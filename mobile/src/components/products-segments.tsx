@@ -7,37 +7,47 @@ import { Brand, Radius, Spacing } from '@/constants/theme';
 const SEGMENTS = [
   { name: 'index', label: 'Likes', href: '/products' },
   { name: 'history', label: 'History', href: '/products/history' },
+  { name: 'shopping-list', label: 'Shopping List', href: '/products/shopping-list' },
 ] as const;
 
-// The two halves of the Products tab. Both are real routes, so a segment can be
-// linked to directly and Back still returns to the product that was opened.
-// The switch sits inside the navy header band, like the Home header.
+// Likes, History, and Shopping List share the Products tab. Each segment is its
+// own route, so it can be linked to directly and Back still returns to the
+// product that was opened. The switch sits inside the navy header band, like
+// the Home header. In-store shopping mode hides the switch so the shopper
+// stays focused on the list.
 export function ProductsSegments() {
   const router = useRouter();
   // The address of the screen that is showing, e.g. /products or /products/history
   const pathname = usePathname();
-  const active = pathname.startsWith('/products/history') ? 'history' : 'index';
+  const isInStoreMode = pathname.startsWith('/products/in-store');
+  const active = pathname.startsWith('/products/shopping-list')
+    ? 'shopping-list'
+    : pathname.startsWith('/products/history')
+      ? 'history'
+      : 'index';
 
   return (
     <ScreenHeader title="Products" eyebrow="MCCS · Your products" back={false}>
-      <View style={styles.group}>
-        {SEGMENTS.map((segment) => {
-          const selected = active === segment.name;
-          return (
-            <Pressable
-              key={segment.name}
-              onPress={() => {
-                // replace, so switching segments never grows the stack
-                if (!selected) router.replace(segment.href);
-              }}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              style={[styles.pill, selected && styles.pillSelected]}>
-              <Text style={[styles.label, selected && styles.labelSelected]}>{segment.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {!isInStoreMode && (
+        <View style={styles.group}>
+          {SEGMENTS.map((segment) => {
+            const selected = active === segment.name;
+            return (
+              <Pressable
+                key={segment.name}
+                onPress={() => {
+                  // replace, so switching segments never grows the stack
+                  if (!selected) router.replace(segment.href);
+                }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                style={[styles.pill, selected && styles.pillSelected]}>
+                <Text style={[styles.label, selected && styles.labelSelected]}>{segment.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
     </ScreenHeader>
   );
 }

@@ -22,6 +22,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { AIAnalysisPanel} from '@/components/ai-analysis-panel';
 import { NearbyStores } from '@/components/nearby-stores';
 import { useStore } from '@/store/StoreContext';
+import { AddToShoppingList } from '@/components/add-to-shopping-list';
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
@@ -204,6 +205,9 @@ export default function ShopperProductScreen() {
                 </ThemedText>
               </ThemedView>
             </Pressable>
+
+            {/* Allow customers to add this product to any shopping list. */}
+            <AddToShoppingList productId={product.product_id} />
 
             <ThemedView type="card" style={[styles.facts, { borderColor: theme.border }]}>
               {discontinued ? (
