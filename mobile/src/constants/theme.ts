@@ -14,6 +14,8 @@ export const Colors = {
     backgroundElement: '#F0F0F3',
     backgroundSelected: '#E0E1E6',
     textSecondary: '#60646C',
+    // Links and secondary actions: navy, so they match the MCCS header
+    link: '#0C2340',
   },
   dark: {
     text: '#ffffff',
@@ -21,15 +23,30 @@ export const Colors = {
     backgroundElement: '#212225',
     backgroundSelected: '#2E3135',
     textSecondary: '#B0B4BA',
+    // Navy is too dark to read on black, so dark mode uses a light navy
+    link: '#9DB8E6',
   },
 } as const;
 
 // MCCS brand colors. Navy is the theme color of usmc-mccs.org, red is from
 // the Marine Corps style guide. These stay the same in light and dark mode.
+// See mobile/UI_STANDARDS.md for where each one is used.
 export const Brand = {
   navy: '#0C2340',
   navyLight: '#16325A',
   red: '#940000',
+  // Status colors for good / warning / problem messages
+  success: '#1E7A46',
+  warning: '#B26A00',
+  danger: '#940000',
+} as const;
+
+// Corner rounding, so cards and buttons look the same everywhere
+export const Radius = {
+  small: 8,
+  medium: 14,
+  large: 18,
+  pill: 999,
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
