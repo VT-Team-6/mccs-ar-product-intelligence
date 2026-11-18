@@ -1,16 +1,15 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Keyboard,
-  Platform,
   Pressable,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   getStoreInventory,
@@ -24,6 +23,8 @@ import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
 import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { AppButton } from "@/components/ui/app-button";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -39,7 +40,6 @@ function capitalize(text: string) {
 export default function LowStockSettingsScreen() {
   const params = useLocalSearchParams<{ storeId: string; storeName?: string }>();
   const storeId = Number(params.storeId);
-  const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -141,20 +141,17 @@ export default function LowStockSettingsScreen() {
     }
   };
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/admin/inventory"));
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="linkPrimary">‹ Inventory</ThemedText>
-        </Pressable>
-        <ThemedText type="subtitle">Low stock & buyers</ThemedText>
-        {params.storeName ? (
-          <ThemedText type="small" themeColor="textSecondary">
-            {params.storeName}
-          </ThemedText>
-        ) : null}
+            <ScreenHeader
+        title="Low stock & buyers"
+        eyebrow="Inventory"
+        subtitle={params.storeName || undefined}
+        fallback="/admin/inventory"
+        backLabel="Inventory"
+      />
+      <View style={styles.body}>
 
         <TextInput
           value={search}
@@ -264,19 +261,14 @@ export default function LowStockSettingsScreen() {
           </View>
           {error && <ThemedText type="small" style={styles.error}>{error}</ThemedText>}
           {message && <ThemedText type="small">{message}</ThemedText>}
-          <Pressable
+          <AppButton
+            label={`Apply to ${selected.size} selected`}
             onPress={apply}
-            disabled={saving || selected.size === 0}
-            style={({ pressed }) => (pressed || saving || selected.size === 0) && styles.pressed}
-          >
-            <ThemedView type="backgroundSelected" style={styles.button}>
-              <ThemedText type="smallBold">
-                {saving ? "Saving…" : `Apply to ${selected.size} selected`}
-              </ThemedText>
-            </ThemedView>
-          </Pressable>
+            disabled={selected.size === 0}
+            loading={saving}
+          />
         </ThemedView>
-      </SafeAreaView>
+      </View>
       <KeyboardDoneBar label={typingLevel ? "Low stock at" : null} value={level} field={typingLevel ? levelField : null}
         onShowingChange={setBarShowing}
       />
@@ -287,15 +279,16 @@ export default function LowStockSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
+  // The page content under the navy band, centered on wide screens
+  body: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
-    gap: Spacing.two,
+    width: "100%",
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.two,
   },
   search: {
     fontSize: 16,

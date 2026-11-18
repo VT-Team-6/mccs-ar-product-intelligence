@@ -1,5 +1,13 @@
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Animated, AppState, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -16,11 +24,42 @@ const SHOW_FOR_MS = 4_500;
 
 type Banner = { title: string; text: string; message: Message | null };
 
+// The staff member's unread count, shared by the Manage tab's badge, the
+// Management screen and the banner. refresh() checks again right away, e.g.
+// after a screen marks notifications read.
+const NotificationsContext = createContext<{ unread: number; refresh: () => void }>({
+  unread: 0,
+  refresh: () => {},
+});
+
+export function useNotifications() {
+  return useContext(NotificationsContext);
+}
+
+// Wraps the app: keeps the unread count up to date and shows the banner.
+export function NotificationsProvider({ children }: { children: ReactNode }) {
+  const [unread, setUnread] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = useCallback(() => setRefreshKey((key) => key + 1), []);
+  return (
+    <NotificationsContext.Provider value={{ unread, refresh }}>
+      {children}
+      <NotificationBanner onUnread={setUnread} refreshKey={refreshKey} />
+    </NotificationsContext.Provider>
+  );
+}
+
 // A banner that slides down from the top, like a phone notification, when staff
 // get low-stock alerts, order requests or buyer updates. It shows unread ones
 // right after signing in, then anything new: checked every 20 seconds and when
 // the app comes back from the background. It hides on its own; tap to open.
-export function NotificationBanner() {
+function NotificationBanner({
+  onUnread,
+  refreshKey,
+}: {
+  onUnread: (count: number) => void;
+  refreshKey: number;
+}) {
   const { profile, hasPermission } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -57,6 +96,7 @@ export function NotificationBanner() {
     } catch {
       return; // offline or signed out: try again next time
     }
+    onUnread(result.unread);
     const unread = result.messages.filter((message) => !message.read);
     const newestId = result.messages[0]?.message_id ?? 0;
     const firstCheck = lastSeenId.current === null;
@@ -71,12 +111,13 @@ export function NotificationBanner() {
     } else {
       show({ title: titleFor(fresh[0]), text: `${fresh[0].subject} (+${fresh.length - 1} more)`, message: fresh[0] });
     }
-  }, [show]);
+  }, [show, onUnread]);
 
   // Start when staff sign in (so it shows on every sign-in), stop when they sign out
   useEffect(() => {
     if (!profile || !isStaff) {
       lastSeenId.current = null;
+      onUnread(0);
       return;
     }
     check();
@@ -88,7 +129,12 @@ export function NotificationBanner() {
       clearInterval(timer);
       appState.remove();
     };
-  }, [profile, isStaff, check]);
+  }, [profile, isStaff, check, onUnread]);
+
+  // A screen asked for a fresh count (for example after marking things read)
+  useEffect(() => {
+    if (refreshKey > 0 && profile && isStaff) check();
+  }, [refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -100,9 +146,14 @@ export function NotificationBanner() {
     hide();
     const message = banner.message;
     if (message?.kind === "order_request" && message.request_id !== null) {
-      router.push({ pathname: "/account/request/[id]", params: { id: String(message.request_id) } });
+      router.push({ pathname: "/admin/reorders/[id]", params: { id: String(message.request_id) } });
     } else {
-      router.push("/account/reorders");
+      // Open the store the notification is about
+      router.push(
+        message?.store_id
+          ? { pathname: "/admin/reorders", params: { storeId: String(message.store_id) } }
+          : "/admin/reorders",
+      );
     }
   };
 

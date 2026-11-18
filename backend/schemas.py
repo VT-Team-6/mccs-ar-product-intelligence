@@ -646,6 +646,8 @@ class Message(BaseModel):
 class MessageList(BaseModel):
     messages: list[Message]
     unread: int
+    # Unread notifications per store id, for managers of several stores
+    unread_by_store: dict[int, int] = {}
 
 
 class MarkRead(BaseModel):

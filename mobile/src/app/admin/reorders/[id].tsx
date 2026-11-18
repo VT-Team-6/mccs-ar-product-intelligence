@@ -1,16 +1,15 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   describeSummary,
@@ -21,7 +20,9 @@ import {
 import { useAuth } from "@/auth/AuthContext";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { AppButton } from "@/components/ui/app-button";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 type Item = OrderRequest["items"][number];
@@ -36,11 +37,10 @@ function itemStatus(item: Item): string {
 // One Order Request: the formal message, and each product's status. The buyer
 // ticks products and marks them ordered or unavailable (with a reason); the
 // store's managers see the same screen without the buttons.
-// /account/request/12
+// /admin/reorders/12
 export default function OrderRequestScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const requestId = Number(id);
-  const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { profile } = useAuth();
@@ -106,36 +106,33 @@ export default function OrderRequestScreen() {
     }
   };
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/account/reorders"));
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      <ScreenHeader
+        title="Order Request"
+        eyebrow="Reorders"
+        subtitle={request ? `${request.store_name} · ${new Date(request.created_at).toLocaleString()}` : undefined}
+        fallback="/admin/reorders"
+        backLabel="Reorders"
+      />
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
+            { paddingBottom: insets.bottom + Spacing.three },
           ]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedText type="linkPrimary">‹ Back</ThemedText>
-          </Pressable>
-
           {!request && !error && <ActivityIndicator />}
 
           {request && (
             <>
-              <ThemedText type="subtitle">Order Request</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {`${request.store_name} · ${new Date(request.created_at).toLocaleString()}`}
-              </ThemedText>
               <ThemedView type="backgroundElement" style={styles.status}>
                 <ThemedText type="smallBold">{describeSummary(request.summary)}</ThemedText>
               </ThemedView>
 
-              <ThemedView type="backgroundElement" style={styles.letter}>
+              <ThemedView type="card" style={[styles.letter, { borderColor: theme.border }]}>
                 <ThemedText type="small">{request.message}</ThemedText>
               </ThemedView>
 
@@ -159,14 +156,17 @@ export default function OrderRequestScreen() {
                     onPress={() => canChange && toggle(item.product_id)}
                     disabled={!canChange}
                   >
-                    <ThemedView type={isSelected ? "backgroundSelected" : "backgroundElement"} style={styles.item}>
+                    <ThemedView
+                      type={isSelected ? "backgroundSelected" : "card"}
+                      style={[styles.item, { borderColor: isSelected ? Brand.navy : theme.border }]}
+                    >
                       {canChange && <ThemedText type="small">{isSelected ? "☑" : "☐"}</ThemedText>}
                       <View style={styles.flex}>
                         <ThemedText type="smallBold">{item.name}</ThemedText>
                         <ThemedText
                           type="small"
                           themeColor={item.status === "unavailable" ? undefined : "textSecondary"}
-                          style={item.status === "unavailable" && styles.error}
+                          style={item.status === "unavailable" && { color: theme.danger }}
                         >
                           {itemStatus(item)}
                         </ThemedText>
@@ -179,16 +179,13 @@ export default function OrderRequestScreen() {
 
               {isBuyer && selected.size > 0 && !askingReason && !saving && (
                 <View style={styles.actions}>
-                  <Pressable onPress={() => mark("ordered")} style={({ pressed }) => [styles.flex, pressed && styles.pressed]}>
-                    <ThemedView type="backgroundSelected" style={styles.button}>
-                      <ThemedText type="smallBold">{`Mark ordered (${selected.size})`}</ThemedText>
-                    </ThemedView>
-                  </Pressable>
-                  <Pressable onPress={() => setAskingReason(true)} style={({ pressed }) => [styles.flex, pressed && styles.pressed]}>
-                    <ThemedView type="backgroundElement" style={styles.button}>
-                      <ThemedText type="smallBold">{`Mark unavailable (${selected.size})`}</ThemedText>
-                    </ThemedView>
-                  </Pressable>
+                  <AppButton label={`Mark ordered (${selected.size})`} onPress={() => mark("ordered")} style={styles.flex} />
+                  <AppButton
+                    label={`Unavailable (${selected.size})`}
+                    onPress={() => setAskingReason(true)}
+                    variant="secondary"
+                    style={styles.flex}
+                  />
                 </View>
               )}
 
@@ -205,16 +202,8 @@ export default function OrderRequestScreen() {
                     style={[styles.reason, { color: theme.text, backgroundColor: theme.background }]}
                   />
                   <View style={styles.actions}>
-                    <Pressable onPress={() => mark("unavailable")} style={({ pressed }) => [styles.flex, pressed && styles.pressed]}>
-                      <ThemedView type="backgroundSelected" style={styles.button}>
-                        <ThemedText type="smallBold">Mark unavailable</ThemedText>
-                      </ThemedView>
-                    </Pressable>
-                    <Pressable onPress={() => setAskingReason(false)} style={({ pressed }) => pressed && styles.pressed}>
-                      <ThemedView type="background" style={styles.button}>
-                        <ThemedText type="small">Cancel</ThemedText>
-                      </ThemedView>
-                    </Pressable>
+                    <AppButton label="Mark unavailable" onPress={() => mark("unavailable")} style={styles.flex} />
+                    <AppButton label="Cancel" onPress={() => setAskingReason(false)} variant="secondary" />
                   </View>
                 </ThemedView>
               )}
@@ -223,10 +212,9 @@ export default function OrderRequestScreen() {
             </>
           )}
 
-          {error && <ThemedText type="small" style={styles.error}>{error}</ThemedText>}
+          {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
           {message && <ThemedText type="smallBold">{message}</ThemedText>}
         </ScrollView>
-      </SafeAreaView>
     </ThemedView>
   );
 }
@@ -234,16 +222,14 @@ export default function OrderRequestScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
+  // The page content under the navy band, centered on wide screens
   content: {
+    width: "100%",
+    maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
     gap: Spacing.three,
   },
   flex: {
@@ -257,7 +243,8 @@ const styles = StyleSheet.create({
   },
   letter: {
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   listTop: {
     flexDirection: "row",
@@ -268,17 +255,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   actions: {
     flexDirection: "row",
     gap: Spacing.two,
-  },
-  button: {
-    alignItems: "center",
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
   },
   reasonBox: {
     padding: Spacing.three,
@@ -291,9 +273,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.three,
     textAlignVertical: "top",
-  },
-  error: {
-    color: "#E5484D",
   },
   pressed: {
     opacity: 0.6,

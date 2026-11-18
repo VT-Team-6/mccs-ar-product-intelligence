@@ -1,5 +1,5 @@
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getMessages } from "@/api/reorders";
 import { useAuth } from "@/auth/AuthContext";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -20,7 +19,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 
 export default function AccountScreen() {
-  const { profile, profileLoading, hasPermission, signOut, refreshProfile } =
+  const { profile, profileLoading, signOut, refreshProfile } =
     useAuth();
   const { store, openStoreSelector } = useStore();
   const router = useRouter();
@@ -29,18 +28,6 @@ export default function AccountScreen() {
   // Tracks the "Try again" press, and makes the automatic retry happen once
   const [retrying, setRetrying] = useState(false);
   const attempted = useRef(false);
-  const [unread, setUnread] = useState(0);
-  const isStaff = hasPermission("manage_stock") || hasPermission("manage_inventory");
-
-  // The unread count for the Reorders row, checked each time Account opens
-  useFocusEffect(
-    useCallback(() => {
-      if (!isStaff) return;
-      getMessages()
-        .then((result) => setUnread(result.unread))
-        .catch(() => setUnread(0));
-    }, [isStaff]),
-  );
 
   // Refresh the profile on first load, if we haven't already loaded it. This is important for the case where the user has just signed in and we haven't yet asked the backend who they are.
   useEffect(() => {
@@ -70,55 +57,7 @@ export default function AccountScreen() {
         />
 
         <View style={styles.list}>
-          {/* Admin Access */}
-          {(hasPermission("create_products") ||
-            hasPermission("manage_inventory") ||
-            hasPermission("manage_stock") ||
-            hasPermission("manage_store_admins") ||
-            hasPermission("manage_store_buyers")) && <SectionLabel label="Store staff" />}
-
-          {hasPermission("create_products") && (
-            <Row
-              label="Manage Products"
-              hint={
-                hasPermission("manage_products")
-                  ? "Add, edit and delete products"
-                  : "Add products for your store and print QR codes"
-              }
-              onPress={() => router.push("/admin/products")}
-            />
-          )}
-
-          {(hasPermission("manage_inventory") ||
-            hasPermission("manage_stock")) && (
-            <Row
-              label="Manage Inventory/Stock"
-              hint="Manage the store's products or stock"
-              onPress={() => router.push("/admin/inventory")}
-            />
-          )}
-
-          {isStaff && (
-            <Row
-              label={unread > 0 ? `Reorders (${unread} new)` : "Reorders"}
-              hint={
-                hasPermission("manage_inventory")
-                  ? "Low-stock products and their order status"
-                  : "Order requests from your stores"
-              }
-              onPress={() => router.push("/account/reorders")}
-            />
-          )}
-
-          {(hasPermission("manage_store_admins") ||
-            hasPermission("manage_store_buyers")) && (
-            <Row
-              label="Manage Staff"
-              hint="Add or remove staff"
-              onPress={() => router.push("/admin/staff")}
-            />
-          )}
-
+          {/* Staff tools live in the Manage tab */}
           {profileLoading && <ActivityIndicator />}
           {!profile && !profileLoading && (
             <Pressable
@@ -141,7 +80,7 @@ export default function AccountScreen() {
             </Pressable>
           )}
 
-          <SectionLabel label="Your account" style={styles.groupLabel} />
+          <SectionLabel label="Your account" />
 
           <Row
             label="Preferences"
@@ -210,9 +149,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     gap: Spacing.two,
-  },
-  groupLabel: {
-    paddingTop: Spacing.two,
   },
     row: {
     flexDirection: "row",

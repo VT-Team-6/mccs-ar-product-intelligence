@@ -462,6 +462,17 @@ def list_messages(conn: Connection, user_id: int, limit: int = 50) -> list[dict]
     ).fetchall()
 
 
+def unread_by_store(conn: Connection, user_id: int) -> dict[int, int]:
+    """Unread notifications per store, so a manager of several stores sees which has news."""
+    rows = conn.execute(
+        "SELECT store_id, count(*) AS n FROM messages"
+        " WHERE recipient_user_id = %s AND read_at IS NULL AND store_id IS NOT NULL"
+        " GROUP BY store_id",
+        (user_id,),
+    ).fetchall()
+    return {row["store_id"]: row["n"] for row in rows}
+
+
 def unread_count(conn: Connection, user_id: int) -> int:
     return conn.execute(
         "SELECT count(*) AS n FROM messages WHERE recipient_user_id = %s AND read_at IS NULL",

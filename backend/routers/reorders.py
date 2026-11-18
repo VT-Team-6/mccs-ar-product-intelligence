@@ -170,6 +170,7 @@ def read_messages(user=Depends(auth.require_authenticated_user)) -> dict:
         return {
             "messages": reorders.list_messages(conn, user["user_id"]),
             "unread": reorders.unread_count(conn, user["user_id"]),
+            "unread_by_store": reorders.unread_by_store(conn, user["user_id"]),
         }
 
 

@@ -4,23 +4,23 @@ import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   TextInput,
+  View,
 } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { listProducts, productImageUrl, type Product } from "@/api/products";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { AppButton } from "@/components/ui/app-button";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
-export default function AdminScreen() {
+// Manage Products: every product, searchable, with + Add for a new one.
+export default function ManageProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,46 +68,33 @@ export default function AdminScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        {/* Admin is pushed over the tabs, so it needs a way back to the user view.
-            The tabs are anchored in the root stack, so "/" is always below us. */}
-        <ThemedView style={styles.topBar}>
-          <Pressable
-            onPress={() => router.dismissTo("/account")}
-            hitSlop={12}
-            style={({ pressed }) => pressed && styles.pressed}
-          >
-            <ThemedText type="linkPrimary">‹ Account</ThemedText>
-          </Pressable>
-          <Pressable
+      <ScreenHeader
+        title="Manage Products"
+        eyebrow="Management"
+        fallback="/manage"
+        backLabel="Management"
+      />
+      <View style={styles.body}>
+        <View style={styles.searchRow}>
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search products"
+            placeholderTextColor={theme.textSecondary}
+            autoCapitalize="none"
+            autoCorrect={false}
+            clearButtonMode="while-editing"
+            style={[
+              styles.search,
+              { color: theme.text, backgroundColor: theme.backgroundElement },
+            ]}
+          />
+          <AppButton
+            label="+ Add"
+            size="small"
             onPress={() => router.push("/admin/products/new")}
-            style={({ pressed }) => pressed && styles.pressed}
-          >
-            <ThemedView type="backgroundElement" style={styles.addButton}>
-              <ThemedText type="smallBold" style={styles.addText}>
-                + Add
-              </ThemedText>
-            </ThemedView>
-          </Pressable>
-        </ThemedView>
-
-        <ThemedView style={styles.header}>
-          <ThemedText type="subtitle">Admin</ThemedText>
-        </ThemedView>
-
-        <TextInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search products"
-          placeholderTextColor={theme.textSecondary}
-          autoCapitalize="none"
-          autoCorrect={false}
-          clearButtonMode="while-editing"
-          style={[
-            styles.search,
-            { color: theme.text, backgroundColor: theme.backgroundElement },
-          ]}
-        />
+          />
+        </View>
 
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
         {loading && products.length === 0 && <ActivityIndicator />}
@@ -133,7 +120,7 @@ export default function AdminScreen() {
             ) : null
           }
         />
-      </SafeAreaView>
+      </View>
     </ThemedView>
   );
 }
@@ -144,6 +131,7 @@ function ProductRow({ product }: { product: Product }) {
     .join(" · ");
   const imageUrl = productImageUrl(product);
   const router = useRouter();
+  const theme = useTheme();
 
   // Opens this product's page, e.g. /admin/2
   const openProduct = () =>
@@ -157,7 +145,10 @@ function ProductRow({ product }: { product: Product }) {
       onPress={openProduct}
       style={({ pressed }) => pressed && styles.pressed}
     >
-      <ThemedView type="backgroundElement" style={styles.row}>
+      <ThemedView
+        type="card"
+        style={[styles.row, { borderColor: theme.border }]}
+      >
         {imageUrl ? (
           <Image
             source={{ uri: imageUrl }}
@@ -167,7 +158,7 @@ function ProductRow({ product }: { product: Product }) {
         ) : (
           <ThemedView type="backgroundSelected" style={styles.thumbnail} />
         )}
-        <ThemedView type="backgroundElement" style={styles.rowText}>
+        <ThemedView type="card" style={styles.rowText}>
           <ThemedText type="smallBold">{product.name}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {details}
@@ -186,37 +177,24 @@ function ProductRow({ product }: { product: Product }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
+  // The page content under the navy band, centered on wide screens
+  body: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop:
-      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
-    gap: Spacing.two,
+    width: "100%",
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.two,
   },
-  topBar: {
+  searchRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  addButton: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-  },
-  addText: {
-    color: "#19f189",
+    gap: Spacing.two,
   },
   search: {
+    flex: 1,
     fontSize: 16,
     paddingVertical: Spacing.two + Spacing.half,
     paddingHorizontal: Spacing.three,
@@ -231,7 +209,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   pressed: {
     opacity: 0.6,

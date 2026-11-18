@@ -1,16 +1,15 @@
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { listStores, type Store } from "@/api/inventory";
 import {
@@ -19,6 +18,7 @@ import {
   getMyOrderRequests,
   getReorders,
   getStoreOrderRequests,
+  getMessages,
   markMessagesRead,
   type BuyerItem,
   type OrderRequestListEntry,
@@ -26,27 +26,31 @@ import {
   type ReorderProduct,
 } from "@/api/reorders";
 import { useAuth } from "@/auth/AuthContext";
+import { useNotifications } from "@/components/notification-banner";
+import { StorePicker } from "@/components/store-picker";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { AppButton } from "@/components/ui/app-button";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 type View_ = "product" | "request";
 
 // Status labels and colors, for managers' products and buyers' items
-const RED = "#E5484D";
-const GREEN = "#30A46C";
-const MANAGER_STATUS: Record<string, { label: string; color?: string }> = {
-  open: { label: "Needs reorder", color: RED },
+// Status colors come from the theme, so they're brighter in dark mode
+type Tone = "danger" | "success";
+const MANAGER_STATUS: Record<string, { label: string; tone?: Tone }> = {
+  open: { label: "Needs reorder", tone: "danger" },
   requested: { label: "Requested" },
-  ordered: { label: "Ordered", color: GREEN },
-  unavailable: { label: "Unavailable", color: RED },
+  ordered: { label: "Ordered", tone: "success" },
+  unavailable: { label: "Unavailable", tone: "danger" },
 };
-const BUYER_STATUS: Record<string, { label: string; color?: string }> = {
-  pending: { label: "Pending", color: RED },
-  ordered: { label: "Ordered", color: GREEN },
+const BUYER_STATUS: Record<string, { label: string; tone?: Tone }> = {
+  pending: { label: "Pending", tone: "danger" },
+  ordered: { label: "Ordered", tone: "success" },
   unavailable: { label: "Unavailable" },
-  received: { label: "Received", color: GREEN },
+  received: { label: "Received", tone: "success" },
 };
 
 const buyerItemStatus = (item: BuyerItem) =>
@@ -60,7 +64,7 @@ function when(iso: string): string {
     : date.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
-// Account -> Reorders. Managers see their store's low products, each with its
+// Manage -> Reorders (/admin/reorders). Managers see their store's low products, each with its
 // reorder status, and send them to buyers. Buyers see the order requests sent
 // to them. Both can switch between By product and By request.
 export default function ReordersScreen() {
@@ -69,6 +73,7 @@ export default function ReordersScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { refresh: refreshUnread } = useNotifications();
 
   const [view, setView] = useState<View_>(isManager ? "product" : "request");
   const [filter, setFilter] = useState("all");
@@ -78,7 +83,11 @@ export default function ReordersScreen() {
   // Managers pick one of their stores
   const [stores, setStores] = useState<Store[]>([]);
   const [storeId, setStoreId] = useState<number | null>(null);
-  const [choosingStore, setChoosingStore] = useState(false);
+  // Unread per store, shown in the store dropdown as "(3 new)"
+  const [unreadByStore, setUnreadByStore] = useState<Record<string, number>>({});
+  // A banner can open a particular store: /admin/reorders?storeId=2
+  const params = useLocalSearchParams<{ storeId?: string }>();
+  const askedStore = params.storeId ? Number(params.storeId) : null;
   const store = stores.find((s) => s.store_id === storeId);
 
   const [products, setProducts] = useState<ReorderProduct[]>([]);
@@ -92,14 +101,21 @@ export default function ReordersScreen() {
   useEffect(() => {
     if (!profile || !isManager) return;
     const everyStore = profile.permissions.includes("manage_all_stores");
-    listStores()
-      .then((all) => {
+    Promise.all([listStores(), getMessages().catch(() => null)])
+      .then(([all, notifications]) => {
         const mine = everyStore ? all : all.filter((s) => profile.store_ids.includes(s.store_id));
+        const unreadAt = notifications?.unread_by_store ?? {};
         setStores(mine);
-        setStoreId((previous) => (mine.some((s) => s.store_id === previous) ? previous : mine[0]?.store_id ?? null));
+        setUnreadByStore(unreadAt);
+        // Start on the store the banner pointed to, else one with something new, else the first
+        const has = (id: number | null) => id !== null && mine.some((s) => s.store_id === id);
+        const withNews = mine.find((s) => (unreadAt[s.store_id] ?? 0) > 0)?.store_id ?? null;
+        setStoreId((previous) =>
+          has(askedStore) ? askedStore : has(previous) ? previous : withNews ?? mine[0]?.store_id ?? null,
+        );
       })
       .catch(() => setError("Could not reach the backend. Is it running?"));
-  }, [profile, isManager]);
+  }, [profile, isManager, askedStore]);
 
   const load = useCallback(async () => {
     setError(null);
@@ -114,7 +130,10 @@ export default function ReordersScreen() {
           setRequests(await getStoreOrderRequests(storeId));
         }
         // Seeing the list counts as reading this store's notifications
-        markMessagesRead({ store_id: storeId });
+        markMessagesRead({ store_id: storeId }).then(() => {
+          refreshUnread();
+          setUnreadByStore((previous) => ({ ...previous, [storeId]: 0 }));
+        });
       } else if (view === "request") {
         setRequests(await getMyOrderRequests());
       } else {
@@ -125,7 +144,7 @@ export default function ReordersScreen() {
     } finally {
       setLoading(false);
     }
-  }, [isManager, storeId, view]);
+  }, [isManager, storeId, view, refreshUnread]);
 
   useFocusEffect(
     useCallback(() => {
@@ -147,12 +166,12 @@ export default function ReordersScreen() {
   };
 
   const openRequest = (requestId: number) =>
-    router.push({ pathname: "/account/request/[id]", params: { id: String(requestId) } });
+    router.push({ pathname: "/admin/reorders/[id]", params: { id: String(requestId) } });
 
   const openReorder = () =>
     store &&
     router.push({
-      pathname: "/admin/inventory/reorder",
+      pathname: "/admin/reorders/send",
       params: { storeId: String(store.store_id), storeName: store.name },
     });
 
@@ -191,51 +210,19 @@ export default function ReordersScreen() {
 
   const header = (
     <View style={styles.header}>
-      <Pressable
-        onPress={() => (router.canGoBack() ? router.back() : router.replace("/account"))}
-        hitSlop={12}
-        style={({ pressed }) => pressed && styles.pressed}
-      >
-        <ThemedText type="linkPrimary">‹ Account</ThemedText>
-      </Pressable>
-      <ThemedText type="subtitle">Reorders</ThemedText>
-
-      {isManager && stores.length > 1 && (
-        <ThemedView type="backgroundElement" style={styles.dropdown}>
-          <Pressable onPress={() => setChoosingStore((open) => !open)}>
-            <ThemedText type="small">{`${store?.name ?? "Choose a store"}  ${choosingStore ? "▴" : "▾"}`}</ThemedText>
-          </Pressable>
-          {choosingStore &&
-            stores.map((s) => (
-              <Pressable
-                key={s.store_id}
-                onPress={() => {
-                  setStoreId(s.store_id);
-                  setChoosingStore(false);
-                  setLoading(true);
-                }}
-              >
-                <ThemedText type={s.store_id === storeId ? "smallBold" : "small"}>
-                  {`${s.store_id === storeId ? "✓ " : ""}${s.name}`}
-                </ThemedText>
-              </Pressable>
-            ))}
-        </ThemedView>
+      {isManager && (
+        <StorePicker
+          stores={stores}
+          storeId={storeId}
+          unreadByStore={unreadByStore}
+          onChange={(id) => {
+            setStoreId(id);
+            setLoading(true);
+          }}
+        />
       )}
-      {isManager && stores.length === 1 && store && (
-        <ThemedText type="small" themeColor="textSecondary">
-          {store.name}
-        </ThemedText>
-      )}
-
       {isManager && store && (
-        <Pressable onPress={openReorder} style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedView type="backgroundSelected" style={styles.reorderButton}>
-            <ThemedText type="smallBold">
-              {waiting > 0 ? `Reorder (${waiting} waiting)` : "Reorder"}
-            </ThemedText>
-          </ThemedView>
-        </Pressable>
+        <AppButton label={waiting > 0 ? `Reorder (${waiting} waiting)` : "Reorder"} onPress={openReorder} />
       )}
 
       {/* By product | By request */}
@@ -282,17 +269,25 @@ export default function ReordersScreen() {
     </View>
   );
 
-  const listStyle = [styles.list, { paddingBottom: insets.bottom + BottomTabInset + Spacing.three }];
+  const listStyle = [styles.list, { paddingBottom: insets.bottom + Spacing.three }];
   const empty = (text: string) => (!loading && !error ? <ThemedText themeColor="textSecondary">{text}</ThemedText> : null);
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+      <ScreenHeader
+        title="Reorders"
+        eyebrow="Management"
+        subtitle={isManager ? store?.name : "Order requests sent to you"}
+        fallback="/manage"
+        backLabel="Management"
+      />
+      <View style={styles.body}>
+        {/* Stays in place; only the list below scrolls */}
+        {header}
         {view === "product" && isManager && (
           <FlatList
             data={shownProducts}
             keyExtractor={(p) => String(p.alert_id)}
-            ListHeaderComponent={header}
             contentContainerStyle={listStyle}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -314,7 +309,6 @@ export default function ReordersScreen() {
           <FlatList
             data={shownItems}
             keyExtractor={(item) => `${item.request_id}-${item.product_id}`}
-            ListHeaderComponent={header}
             contentContainerStyle={listStyle}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -329,7 +323,6 @@ export default function ReordersScreen() {
           <FlatList
             data={requests}
             keyExtractor={(request) => String(request.request_id)}
-            ListHeaderComponent={header}
             contentContainerStyle={listStyle}
             refreshing={refreshing}
             onRefresh={refresh}
@@ -339,14 +332,15 @@ export default function ReordersScreen() {
             ListEmptyComponent={empty("No open order requests.")}
           />
         )}
-      </SafeAreaView>
+      </View>
     </ThemedView>
   );
 }
 
-function StatusChip({ status }: { status: { label: string; color?: string } }) {
+function StatusChip({ status }: { status: { label: string; tone?: Tone } }) {
+  const theme = useTheme();
   return (
-    <ThemedText type="smallBold" style={status.color ? { color: status.color } : undefined}>
+    <ThemedText type="smallBold" style={status.tone ? { color: theme[status.tone] } : undefined}>
       {status.label}
     </ThemedText>
   );
@@ -363,9 +357,10 @@ function ManagerProductRow({
   onPress: () => void;
   onOpenRequest: (requestId: number) => void;
 }) {
+  const theme = useTheme();
   return (
     <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundElement" style={styles.row}>
+      <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
         <View style={styles.rowTop}>
           <View style={styles.flex}>
             <ThemedText type="smallBold">{product.name}</ThemedText>
@@ -376,7 +371,7 @@ function ManagerProductRow({
           <StatusChip status={MANAGER_STATUS[product.status]} />
         </View>
         {product.status === "unavailable" && (
-          <ThemedText type="small" style={{ color: RED }}>
+          <ThemedText type="small" style={{ color: theme.danger }}>
             {`Reason: ${product.reason || "none given"}`}
           </ThemedText>
         )}
@@ -414,10 +409,11 @@ function ManagerProductRow({
 }
 
 function BuyerItemRow({ item, onPress }: { item: BuyerItem; onPress: () => void }) {
+  const theme = useTheme();
   const status = buyerItemStatus(item);
   return (
     <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundElement" style={styles.row}>
+      <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
         <View style={styles.rowTop}>
           <View style={styles.flex}>
             <ThemedText type="smallBold">{item.name}</ThemedText>
@@ -446,10 +442,11 @@ function RequestRow({
   forManager: boolean;
   onPress: () => void;
 }) {
+  const theme = useTheme();
   const who = forManager ? `To ${request.buyer_email ?? "a buyer"}` : `From ${request.sent_by_email ?? "a manager"}`;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundElement" style={styles.row}>
+      <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
         <View style={styles.rowTop}>
           {request.unread && <View style={styles.unreadDot} />}
           <View style={styles.flex}>
@@ -471,29 +468,19 @@ function RequestRow({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
+  // The page content under the navy band, centered on wide screens
+  body: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
+    width: "100%",
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
   },
   header: {
     gap: Spacing.two,
+    paddingTop: Spacing.three,
     paddingBottom: Spacing.two,
-  },
-  dropdown: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-    gap: Spacing.two,
-  },
-  reorderButton: {
-    alignItems: "center",
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.three,
   },
   segments: {
     flexDirection: "row",
@@ -527,7 +514,8 @@ const styles = StyleSheet.create({
   },
   row: {
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
     gap: Spacing.one,
   },
   rowTop: {
@@ -547,7 +535,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#3c87f7",
+    backgroundColor: Brand.red,
   },
   pressed: {
     opacity: 0.6,

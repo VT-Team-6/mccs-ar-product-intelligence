@@ -3,14 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 
 import {
@@ -28,6 +26,8 @@ import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
 import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { AppButton } from "@/components/ui/app-button";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
@@ -172,16 +172,19 @@ export default function EditStockScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+            <ScreenHeader
+        title={params.name || `Product ${productId}`}
+        eyebrow="Inventory"
+        subtitle={params.storeName || undefined}
+        fallback="/admin/inventory"
+        backLabel="Inventory"
+      />
+      <View style={styles.body}>
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedText type="linkPrimary">‹ Cancel</ThemedText>
-          </Pressable>
-          <ThemedText type="subtitle">{params.name || `Product ${productId}`}</ThemedText>
 
           {params.image ? (
             <Image source={{ uri: params.image }} style={styles.image} contentFit="contain" />
@@ -297,7 +300,7 @@ export default function EditStockScreen() {
             <Button label="Save changes" onPress={save} />
           )}
         </ScrollView>
-      </SafeAreaView>
+      </View>
       <KeyboardDoneBar
         label={
           typing === "price"
@@ -324,27 +327,24 @@ export default function EditStockScreen() {
   );
 }
 
+// The screen's buttons: the main action in red, the others outlined
 function Button({ label, onPress, quiet = false }: { label: string; onPress: () => void; quiet?: boolean }) {
-  return (
-    <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type={quiet ? "backgroundElement" : "backgroundSelected"} style={styles.button}>
-        <ThemedText type="smallBold">{label}</ThemedText>
-      </ThemedView>
-    </Pressable>
-  );
+  return <AppButton label={label} onPress={onPress} variant={quiet ? "secondary" : "primary"} />;
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
+  // The page content under the navy band, centered on wide screens
+  body: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
+    width: "100%",
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.two,
   },
   content: {
     gap: Spacing.three,

@@ -213,7 +213,12 @@ export type Message = {
   read: boolean;
 };
 
-export async function getMessages(): Promise<{ messages: Message[]; unread: number }> {
+export async function getMessages(): Promise<{
+  messages: Message[];
+  unread: number;
+  // Unread per store id, for managers of several stores
+  unread_by_store: Record<string, number>;
+}> {
   const response = await authenticatedFetch("/api/messages");
   if (!response.ok) throw await problem(response, "Could not load your messages");
   return response.json();

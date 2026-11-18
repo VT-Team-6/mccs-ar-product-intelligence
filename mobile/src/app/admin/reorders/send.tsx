@@ -1,16 +1,15 @@
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Keyboard,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { listStoreBuyers, type StoreBuyer } from "@/api/inventory";
 import {
@@ -23,7 +22,9 @@ import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
 import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { AppButton } from "@/components/ui/app-button";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { MaxContentWidth, Spacing, Radius } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 const WHOLE_NUMBER = /^\d+$/;
@@ -36,12 +37,11 @@ type Typing = { kind: "item"; item: ReorderProduct } | { kind: "bulk"; key: stri
 
 // Low products that can be sent (needs reorder, or unavailable from a buyer),
 // grouped by buyer. Each group is sent to its buyer as one Order Request.
-// Opened from Account -> Reorders. /admin/inventory/reorder?storeId=1&storeName=...
+// Opened from Reorders. /admin/reorders/send?storeId=1&storeName=...
 export default function ReorderScreen() {
   const params = useLocalSearchParams<{ storeId: string; storeName?: string }>();
   const storeId = Number(params.storeId);
   const storeName = params.storeName || "this store";
-  const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -177,28 +177,29 @@ export default function ReorderScreen() {
     }
   };
 
-  const goBack = () =>
-    router.canGoBack() ? router.back() : router.replace("/account/reorders");
   const inputColors = { color: theme.text, backgroundColor: theme.background };
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+            <ScreenHeader
+        title="Reorder"
+        eyebrow="Reorders"
+        subtitle={storeName}
+        fallback="/admin/reorders"
+        backLabel="Reorders"
+      />
+      <View style={styles.body}>
         <ScrollView
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <Pressable onPress={goBack} hitSlop={12} style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedText type="linkPrimary">‹ Reorders</ThemedText>
-          </Pressable>
-          <ThemedText type="subtitle">Reorder</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {`Low-stock products at ${storeName}, grouped by buyer. Each group is sent to its buyer as one Order Request.`}
           </ThemedText>
 
           {loading && <ActivityIndicator />}
-          {error && <ThemedText type="small" style={styles.error}>{error}</ThemedText>}
+          {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
           {message && <ThemedText type="smallBold">{message}</ThemedText>}
           {!loading && groups.length === 0 && (
             <ThemedText themeColor="textSecondary">Nothing needs reordering right now.</ThemedText>
@@ -215,7 +216,7 @@ export default function ReorderScreen() {
               : group.buyer_email;
             const bulkKey = `bulk-${key}`;
             return (
-              <ThemedView key={key} type="backgroundElement" style={styles.group}>
+              <ThemedView key={key} type="card" style={[styles.group, { borderColor: theme.border }]}>
                 <View style={styles.groupTop}>
                   <ThemedText type="smallBold" style={styles.flex}>
                     {noBuyer ? "No buyer assigned" : group.buyer_email}
@@ -282,7 +283,7 @@ export default function ReorderScreen() {
                           {`${item.quantity} left · low at ${item.low_stock_threshold}`}
                         </ThemedText>
                         {item.status === "unavailable" && (
-                          <ThemedText type="small" style={styles.error}>
+                          <ThemedText type="small" style={{ color: theme.danger }}>
                             {`Unavailable from ${item.requested_from ?? "the buyer"}: ${item.reason || "no reason given"}`}
                           </ThemedText>
                         )}
@@ -326,25 +327,17 @@ export default function ReorderScreen() {
                 {busy ? (
                   <ActivityIndicator />
                 ) : (
-                  <Pressable
+                  <AppButton
+                    label={`Send order request (${selected.length})`}
                     onPress={() => send(group)}
                     disabled={selected.length === 0 || (noBuyer && !sendTo)}
-                    style={({ pressed }) =>
-                      (pressed || selected.length === 0 || (noBuyer && !sendTo)) && styles.pressed
-                    }
-                  >
-                    <ThemedView type="backgroundSelected" style={styles.button}>
-                      <ThemedText type="smallBold" numberOfLines={1}>
-                        {`Send order request to ${sendTo ?? "…"} (${selected.length})`}
-                      </ThemedText>
-                    </ThemedView>
-                  </Pressable>
+                  />
                 )}
               </ThemedView>
             );
           })}
         </ScrollView>
-      </SafeAreaView>
+      </View>
       <KeyboardDoneBar
         label={
           typing?.kind === "item"
@@ -370,14 +363,16 @@ export default function ReorderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
+  // The page content under the navy band, centered on wide screens
+  body: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
+    width: "100%",
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.two,
   },
   content: {
     gap: Spacing.three,
@@ -387,8 +382,9 @@ const styles = StyleSheet.create({
   },
   group: {
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
     gap: Spacing.three,
+    borderWidth: 1,
   },
   groupTop: {
     flexDirection: "row",
@@ -434,9 +430,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,
-  },
-  error: {
-    color: "#E5484D",
   },
   pressed: {
     opacity: 0.6,

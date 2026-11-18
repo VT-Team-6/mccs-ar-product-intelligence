@@ -486,3 +486,15 @@ def test_the_buyer_lists_every_product_across_requests(client, db, staff):
 
     assert {(i["product_id"], i["request_id"]) for i in items} == {(1, first), (2, second)}
     assert all(i["status"] == "pending" and i["store_name"] == "MCCS Main Exchange" for i in items)
+
+
+def test_unread_is_counted_per_store(client, db, staff):
+    _as(client, db, "manager-both", "store_admin", [1, 2])
+    _set_stock(client, 1, 4, store_id=1)
+    _set_stock(client, 2, 4, store_id=1)
+    _set_stock(client, 3, 1, store_id=2)
+
+    mine = _notifications(client)
+
+    assert mine["unread"] == 3
+    assert mine["unread_by_store"] == {"1": 2, "2": 1}
