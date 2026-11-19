@@ -139,9 +139,7 @@ def record_interaction(
     store_id: int | None = Query(default=None),
     user=Depends(auth.require_authenticated_user),
 ):
-    """Record a user interaction with a product, stamped with the active store
-    and the price at that store (clients do not send a store; the saved store
-    applies)."""
+    """Record an interaction with the explicit store and price, defaulting to the home store."""
     with get_connection() as conn:
         resolved = store_selection.resolve_store_id(conn, user["user_id"], store_id)
         try:
@@ -154,7 +152,7 @@ def record_interaction(
 
 @router.get("/store", response_model=StoreSelection)
 def read_store(user=Depends(auth.require_authenticated_user)):
-    """The shopper's active store, or null if they have not picked one."""
+    """The account's home store, or null if none is saved."""
     with get_connection() as conn:
         return {
             "store_id": store_selection.get_selected_store(conn, user["user_id"])
@@ -164,11 +162,14 @@ def read_store(user=Depends(auth.require_authenticated_user)):
 @router.put("/store", response_model=StoreSelection)
 def save_store(
     body: StoreSelection,
+    only_if_unset: bool = False,
     user=Depends(auth.require_authenticated_user),
 ):
-    """Save the shopper's active store, clear it on null, or 404 if unknown."""
+    """Save the account's home store, clear it on null, or return 404 if unknown."""
     with get_connection() as conn:
         if body.store_id is None:
+            if only_if_unset:
+                raise HTTPException(422, "Choose a store to save as your home store")
             store_selection.clear_selected_store(conn, user["user_id"])
             return {"store_id": None}
         exists = conn.execute(
@@ -179,8 +180,10 @@ def save_store(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Store {body.store_id} not found",
             )
-        store_selection.save_selected_store(conn, user["user_id"], body.store_id)
-        return {"store_id": body.store_id}
+        saved_id = store_selection.save_selected_store(
+            conn, user["user_id"], body.store_id, only_if_unset=only_if_unset
+        )
+        return {"store_id": saved_id}
 
 
 @router.get("/preferences", response_model=Preferences)

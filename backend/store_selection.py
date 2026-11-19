@@ -4,7 +4,7 @@ Mirrors preferences.py
 
 Resolution order, everywhere:
     1. an explicit ?store_id= query param,
-    2. the signed-in user's saved store,
+    2. the signed-in user's home store,
     3. nothing — the client shows the "select a store" prompt.
 """
 
@@ -20,23 +20,23 @@ def get_selected_store(conn: Connection, user_id: int) -> int | None:
     return row["store_id"] if row else None
 
 
-def save_selected_store(conn: Connection, user_id: int, store_id: int) -> int:
-    """Create or replace the user's store selection and return what was saved.
-
-    DO UPDATE is required: a bare ON CONFLICT (user_id) would silently
-    ignore the new value on a repeat save.
-    """
-    conn.execute(
-        """
+def save_selected_store(
+    conn: Connection, user_id: int, store_id: int, *, only_if_unset: bool = False
+) -> int | None:
+    """Save a home store, optionally keeping any preference already set."""
+    conflict = "DO NOTHING" if only_if_unset else (
+        "DO UPDATE SET store_id = EXCLUDED.store_id, updated_at = CURRENT_TIMESTAMP"
+    )
+    saved = conn.execute(
+        f"""
         INSERT INTO user_store_selection (user_id, store_id)
         VALUES (%s, %s)
-        ON CONFLICT (user_id) DO UPDATE
-            SET store_id = EXCLUDED.store_id,
-                updated_at = CURRENT_TIMESTAMP
+        ON CONFLICT (user_id) {conflict}
+        RETURNING store_id
         """,
         (user_id, store_id),
-    )
-    return store_id
+    ).fetchone()
+    return saved["store_id"] if saved else get_selected_store(conn, user_id)
 
 
 def clear_selected_store(conn: Connection, user_id: int) -> None:

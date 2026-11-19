@@ -18,6 +18,7 @@ from conftest import apply_init_sql
 from main import app
 from preferences import CRITERIA
 from product_features import refresh_recommendation_data
+from services.product_analysis_cache import review_fingerprint
 
 NOTHING_RANKED = {c: 0 for c in CRITERIA}
 PRICE_FIRST = {**NOTHING_RANKED, "price": 1}
@@ -78,6 +79,7 @@ def cognito(monkeypatch):
 def _reset_auth_override():
     yield
     app.dependency_overrides.pop(auth.verify_access_token, None)
+    app.dependency_overrides.pop(auth.optional_user, None)
 
 
 # --- helpers --------------------------------------------------------------
@@ -87,7 +89,9 @@ def _sign_in_as(client, token):
     """Make the next requests look like they carry this verified token."""
     claims = {"token_use": "access", "client_id": auth.COGNITO_CLIENT_ID, "sub": token}
     app.dependency_overrides[auth.verify_access_token] = lambda: {"claims": claims, "token": token}
-    return client.get("/me").json()["user_id"]
+    user_id = client.get("/me").json()["user_id"]
+    app.dependency_overrides[auth.optional_user] = lambda: {"user_id": user_id}
+    return user_id
 
 
 def _product_id(db, name_part):
@@ -110,8 +114,55 @@ def _ids(cards):
 # --- tests ----------------------------------------------------------------
 
 
-def test_requires_sign_in(client):
-    assert _recommend(client, text="boots").status_code == 401
+def test_guest_recommendations_use_selected_store_without_profile(client, db):
+    users_before = db.execute("SELECT count(*) AS total FROM users").fetchone()["total"]
+    impressions_before = db.execute(
+        "SELECT count(*) AS total FROM recommendation_impressions"
+    ).fetchone()["total"]
+
+    response = _recommend(
+        client, product_id=_product_id(db, "Sorel"), ranking=PRICE_FIRST, store_id=1
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["for_you"] is None
+    assert body["best_matches"]
+    for card in body["best_matches"]:
+        assert card["product"]["store_inventory"]["store_id"] == 1
+    assert db.execute("SELECT count(*) AS total FROM users").fetchone()["total"] == users_before
+    assert db.execute(
+        "SELECT count(*) AS total FROM recommendation_impressions"
+    ).fetchone()["total"] == impressions_before
+
+
+def test_recommendations_reject_invalid_token(client):
+    response = client.post(
+        "/api/recommendations",
+        json={"text": "boots"},
+        headers={"Authorization": "Bearer not-a-real-token"},
+    )
+    assert response.status_code == 401
+
+
+def test_guest_can_read_saved_analysis_but_cannot_generate_it(client, db):
+    product_id = _product_id(db, "Sorel")
+    fingerprint, review_count = review_fingerprint(product_id)
+    db.execute(
+        """
+        INSERT INTO product_ai_analyses
+            (product_id, summary, review_fingerprint, review_count, total_review_count)
+        VALUES (%s, %s, %s, %s, %s)
+        """,
+        (product_id, "Saved review summary", fingerprint, review_count, review_count),
+    )
+
+    response = client.get(f"/api/products/{product_id}/analysis")
+
+    assert response.status_code == 200
+    assert response.json()["summary"] == "Saved review summary"
+    assert response.json()["review_count"] == review_count
+    assert client.post(f"/api/admin/products/{product_id}/generate-analysis").status_code == 401
 
 
 def test_product_on_screen_gives_3_matches_with_product_details(client, db):

@@ -214,15 +214,22 @@ def reorder_groups(conn: Connection, store_id: int) -> list[dict]:
     return list(groups.values())
 
 
-def _reorderable(conn: Connection, store_id: int, alert_ids: list[int]) -> dict[int, dict]:
-    """These alerts, which must all be reorderable at this store, or nothing happens."""
+def _claim_reorder_alerts(conn: Connection, store_id: int, alert_ids: list[int]) -> dict[int, dict]:
+    """Claim every requested alert before inserting the order, or roll back."""
+    # Stock changes lock inventory before alerts. Use the same order here,
+    # including when the request will remember its buyer on the inventory rows.
+    inventory_alerts = conn.execute(
+        "SELECT a.alert_id FROM inventory i"
+        " JOIN low_stock_alerts a USING (product_id, store_id)"
+        " WHERE i.store_id = %s AND a.alert_id = ANY(%s)"
+        " ORDER BY i.product_id FOR NO KEY UPDATE OF i",
+        (store_id, alert_ids),
+    ).fetchall()
     rows = conn.execute(
-        "SELECT a.alert_id, a.product_id, p.name, i.quantity"
-        " FROM low_stock_alerts a"
-        " JOIN products p ON p.product_id = a.product_id"
-        " JOIN inventory i ON i.product_id = a.product_id AND i.store_id = a.store_id"
-        " WHERE a.store_id = %s AND a.status = ANY(%s) AND a.alert_id = ANY(%s)",
-        (store_id, list(REORDERABLE), alert_ids),
+        "UPDATE low_stock_alerts SET status = 'requested'"
+        " WHERE alert_id = ANY(%s) AND status = ANY(%s)"
+        " RETURNING alert_id, product_id",
+        ([row["alert_id"] for row in inventory_alerts], list(REORDERABLE)),
     ).fetchall()
     found = {row["alert_id"]: row for row in rows}
     if len(found) != len(set(alert_ids)):
@@ -268,7 +275,7 @@ def send_request(
     stock._require_store(conn, store_id)
     if buyer_user_id not in {b["user_id"] for b in low_stock.list_buyers(conn, store_id, everyone=True)}:
         raise stock.InventoryError("That person isn't a buyer at this store")
-    alerts = _reorderable(conn, store_id, [item["alert_id"] for item in items])
+    alerts = _claim_reorder_alerts(conn, store_id, [item["alert_id"] for item in items])
 
     request_id = conn.execute(
         "INSERT INTO order_requests (store_id, buyer_user_id, sent_by, note)"
@@ -283,10 +290,6 @@ def send_request(
             " VALUES (%s, %s, %s, %s)",
             (request_id, alert["alert_id"], alert["product_id"], item["quantity"]),
         )
-    conn.execute(
-        "UPDATE low_stock_alerts SET status = 'requested' WHERE alert_id = ANY(%s)",
-        (list(alerts),),
-    )
     if remember_buyer:
         conn.execute(
             "UPDATE inventory i SET buyer_user_id = %s"

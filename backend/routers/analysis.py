@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from database import get_connection
 from openai import OpenAIError
 from starlette.concurrency import run_in_threadpool
-from auth import require_authenticated_user, require_permission
+from auth import require_permission
 
 from services.product_analysis_cache import (
     get_saved_analysis,
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["analysis"])
 
 @router.get("/api/products/{product_id}/analysis")
-def get_product_analysis(product_id: int, user=Depends(require_authenticated_user)):
+def get_product_analysis(product_id: int):
 
     with get_connection() as conn:
         product = conn.execute(

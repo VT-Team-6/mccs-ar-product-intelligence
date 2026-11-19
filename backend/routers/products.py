@@ -80,7 +80,10 @@ def _fetch_product(conn, product_id: int, store_id: int | None = None) -> dict:
         )
     return row
 
-@router.get("", response_model=list[Product])
+@router.get(
+    "", response_model=list[Product],
+    dependencies=[Depends(require_permission("create_products"))],
+)
 def list_products() -> list[dict]:
     with get_connection() as conn:
         return conn.execute(
@@ -88,7 +91,10 @@ def list_products() -> list[dict]:
         ).fetchall()
 
 
-@router.get("/{product_id}", response_model=Product)
+@router.get(
+    "/{product_id}", response_model=Product,
+    dependencies=[Depends(require_permission("create_products"))],
+)
 def read_product(product_id: int) -> dict:
     with get_connection() as conn:
         return _fetch_product(conn, product_id)

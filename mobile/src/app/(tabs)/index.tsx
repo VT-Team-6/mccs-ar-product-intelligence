@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Alert, Image, Linking, Platform, Pressable, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useRouter, type Href } from "expo-router";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
 
-import { authenticatedFetch } from "@/api/client";
+import { publicFetch, withStore } from "@/api/client";
 import { API_URL } from "@/api/config";
 import { recordInteraction } from "@/api/me";
 import { checkOffScanned } from "@/api/shopping-lists";
+import { useAuth } from "@/auth/AuthContext";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, Brand, MaxContentWidth, Spacing, type ThemeColor } from "@/constants/theme";
@@ -19,6 +20,7 @@ import { useStore } from "@/store/StoreContext";
 import SignoutButton from "@/components/authentication/SignoutButton";
 
 export default function ScanScreen() {
+  const { user } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,18 +35,20 @@ export default function ScanScreen() {
   // isn't stuck at a disabled Scan button. Closing it is respected.
   const offeredStore = useRef(false);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (storeLoading || offeredStore.current) return;
     offeredStore.current = true;
     if (store === null) openStoreSelector();
-  }, [store, storeLoading, openStoreSelector]);
+  }, [store, storeLoading, openStoreSelector]));
 
   // Prices and stock depend on the store, so scanning or searching needs one first.
   // Returns true (and opens the store list) when no store is chosen yet.
   const needsStore = () => {
     if (store !== null) return false;
     openStoreSelector();
-    Alert.alert("Choose a store first", "Prices and stock depend on the store you're shopping at.");
+    if (!storeLoading) {
+      Alert.alert("Choose a store first", "Prices and stock depend on the store you're shopping at.");
+    }
     return true;
   };
 
@@ -60,9 +64,8 @@ export default function ScanScreen() {
     setIsLoading(true);
 
     try {
-      // Authenticated, so the backend prices the result at the saved store.
-      const response = await authenticatedFetch(
-        `/api/scan?code=${encodeURIComponent(data)}`,
+      const response = await publicFetch(
+        withStore(`/api/scan?code=${encodeURIComponent(data)}`, store?.store_id),
       );
 
       const result = await response.json();
@@ -75,14 +78,11 @@ export default function ScanScreen() {
         return;
       }
 
-      // Opens the shopper product page. "from" makes its Back button return here.
-      // The scan is recorded for the History tab; the product page records the
-      // view itself. Recording never blocks opening the product.
-      recordInteraction(result.product_id, "scanned").catch(() => undefined);
-      // Checks the product off the active shopping list if it's on it. Waited
-      // for, so the product page already shows "Checked off your list". A
-      // failure never stops the product from opening.
-      await checkOffScanned(result.product_id).catch(() => null);
+      if (user) {
+        recordInteraction(result.product_id, "scanned", store?.store_id).catch(() => undefined);
+        // Wait so the product page can show the updated shopping list status.
+        await checkOffScanned(result.product_id).catch(() => null);
+      }
       router.push(`/product/${result.product_id}?from=/` as Href);
     } catch {
       Alert.alert(
@@ -104,7 +104,7 @@ export default function ScanScreen() {
               <ThemedText style={styles.wordmark}>MCCS</ThemedText>
               <ThemedText style={styles.tagline}>PRODUCT INTELLIGENCE</ThemedText>
             </View>
-            <SignoutButton />
+            {user ? <SignoutButton /> : null}
           </View>
 
           {/* The shared store sheet opens on top */}
@@ -114,7 +114,7 @@ export default function ScanScreen() {
           >
             <ThemedText style={styles.storeLabel}>{store ? "Shopping at" : "Store"}</ThemedText>
             <ThemedText style={styles.storeName} numberOfLines={1}>
-              {store ? store.name : "Choose a store"}
+              {store?.name ?? (storeLoading ? "Loading stores…" : "Choose a store")}
             </ThemedText>
             <ThemedText style={styles.storeChevron}>▾</ThemedText>
           </Pressable>

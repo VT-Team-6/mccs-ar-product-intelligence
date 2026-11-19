@@ -1,4 +1,4 @@
-import { authenticatedFetch } from "./client";
+import { authenticatedFetch, publicFetch, withStore } from "./client";
 import type { Product } from "./products";
 import type { Preferences } from "@/preferences/criteria";
 
@@ -33,8 +33,12 @@ export type RecommendationResult = {
   // Only when text was sent
   understood?: UnderstoodRequest | null;
 };
-export async function getRecommendations(request: RecommendationRequest): Promise<RecommendationResult> {
-  const response = await authenticatedFetch("/api/recommendations", {
+export async function getRecommendations(
+  request: RecommendationRequest,
+  { signedIn, storeId }: { signedIn: boolean; storeId?: number },
+): Promise<RecommendationResult> {
+  const fetchRecommendations = signedIn ? authenticatedFetch : publicFetch;
+  const response = await fetchRecommendations(withStore("/api/recommendations", storeId), {
     method: "POST",
     body: JSON.stringify(request),
   });

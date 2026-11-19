@@ -5,12 +5,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
 import {
+  getShopperProduct,
   listProductImages,
   productImageUrl,
   storePriceLine,
   storeStock,
   type Product,
 } from '@/api/products';
+import { useAuth } from '@/auth/AuthContext';
+import { useSignInPrompt } from '@/auth/use-sign-in-prompt';
 import { ProductImageGallery } from '@/components/product-image-gallery';
 import { RecommendationPanel } from '@/components/recommendation-panel';
 import { ThemedText } from '@/components/themed-text';
@@ -34,6 +37,8 @@ export default function ShopperProductScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { store, openStoreSelector } = useStore();
+  const { user } = useAuth();
+  const promptSignIn = useSignInPrompt();
 
   const [product, setProduct] = useState<MyProduct | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,8 +63,11 @@ export default function ShopperProductScreen() {
   // The store is a dependency: switching it refetches so the price follows.
   useEffect(() => {
     let cancelled = false;
-    getMyProduct(Number(id))
-      .then((loaded) => {
+    const productId = Number(id);
+    const request = user
+      ? getMyProduct(productId, store?.store_id)
+      : getShopperProduct(productId, store?.store_id).then((loaded) => ({ ...loaded, is_liked: false }));
+    request.then((loaded) => {
         if (cancelled) return;
         setProduct(loaded);
         setLoadedId(loaded.product_id);
@@ -70,7 +78,7 @@ export default function ShopperProductScreen() {
     return () => {
       cancelled = true;
     };
-  }, [id, store?.store_id]);
+  }, [id, store?.store_id, user]);
 
   // The extra photos are a separate request so the product payload stays the
   // same shape everywhere else in the app. They are loaded alongside the
@@ -97,7 +105,7 @@ export default function ShopperProductScreen() {
   // Records that this product was opened in user history.
   useEffect(() => {
     const productId = Number(id);
-    if (recorded.current || !Number.isInteger(productId)) return;
+    if (!user || recorded.current || !Number.isInteger(productId)) return;
     recorded.current = true;
     const fromSearch = (from ?? '').startsWith('/search');
     // Opens from recommendation cards teach "Recommended for You" what people pick
@@ -108,8 +116,8 @@ export default function ShopperProductScreen() {
           ? 'viewed-from-search'
           : 'viewed';
     // Fire and forget: history must never block showing the product
-    recordInteraction(productId, interaction).catch(() => undefined);
-  }, [id, from, via]);
+    recordInteraction(productId, interaction, store?.store_id).catch(() => undefined);
+  }, [id, from, via, store?.store_id, user]);
 
   // Back goes to the previous page, else the "from" page, else Home (BackButton)
 
@@ -117,15 +125,19 @@ export default function ShopperProductScreen() {
   // If the backend fails, the heart is restored to its previous state.
   const toggleLike = async () => {
     if (!product || savingLike) return;
+    if (!user) {
+      await promptSignIn('Sign in to save products to your likes.');
+      return;
+    }
     const liked = !product.is_liked;
     setProduct({ ...product, is_liked: liked });
     setSavingLike(true);
     setError(null);
     try {
       if (liked) {
-        await likeProduct(product.product_id);
+        await likeProduct(product.product_id, store?.store_id);
       } else {
-        await unlikeProduct(product.product_id);
+        await unlikeProduct(product.product_id, store?.store_id);
       }
     } catch (problem) {
       setProduct((current) => (current ? { ...current, is_liked: !liked } : current));
@@ -211,7 +223,9 @@ export default function ShopperProductScreen() {
 
             {/* Where this product stands on the active list, then a way to add it
                 to any list. */}
-            <ShoppingListStatus productId={product.product_id} refreshKey={listVersion} />
+            {user ? (
+              <ShoppingListStatus productId={product.product_id} refreshKey={listVersion} />
+            ) : null}
             <AddToShoppingList
               productId={product.product_id}
               onAdded={() => setListVersion((version) => version + 1)}

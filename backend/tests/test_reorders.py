@@ -3,6 +3,8 @@
 # buyer marks each product ordered or unavailable, and restocking clears it.
 
 import os
+from concurrent.futures import ThreadPoolExecutor
+from time import monotonic, sleep
 from urllib.parse import quote
 
 import psycopg
@@ -12,6 +14,7 @@ from testcontainers.community.postgres import PostgresContainer
 
 import auth
 import reorders
+from stock import InventoryError
 from conftest import DB_DIR, apply_init_sql
 from main import app
 
@@ -292,6 +295,48 @@ def test_a_product_cannot_be_sent_twice(client, db, staff):
 
     assert client.post(f"{REORDERS}/send", json=send).status_code == 200
     assert client.post(f"{REORDERS}/send", json=send).status_code == 409
+
+    # A mixed second request must leave the fresh alert available.
+    _set_stock(client, 3, 5)
+    assert _send(client, staff, [1, 3]).status_code == 409
+    assert _send(client, staff, [3]).status_code == 200
+
+
+def test_concurrent_sends_can_only_claim_an_alert_once(client, db, db_url, staff):
+    _set_stock(client, 3, 5)
+    alert_id = _product(client, 3)["alert_id"]
+    items = [{"alert_id": alert_id, "quantity": 16}]
+    buyer_id = staff["buyer"]["user_id"]
+
+    def send_again():
+        with psycopg.connect(
+            db_url, row_factory=psycopg.rows.dict_row,
+            application_name="concurrent-reorder", options="-c lock_timeout=10000",
+        ) as conn:
+            reorders.send_request(conn, 1, buyer_id, items, "", staff["other_manager"]["user_id"])
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with psycopg.connect(db_url, row_factory=psycopg.rows.dict_row) as conn:
+            reorders.send_request(conn, 1, buyer_id, items, "", staff["manager"]["user_id"])
+            contender = pool.submit(send_again)
+            deadline = monotonic() + 5
+            while monotonic() < deadline:
+                if db.execute(
+                    "SELECT 1 FROM pg_stat_activity WHERE application_name = 'concurrent-reorder'"
+                    " AND wait_event_type = 'Lock'"
+                ).fetchone():
+                    break
+                sleep(0.01)
+            else:
+                pytest.fail("The second send never reached the lock held by the first send")
+
+        with pytest.raises(InventoryError) as rejected:
+            contender.result(timeout=5)
+        assert rejected.value.status == 409
+
+    assert db.execute(
+        "SELECT count(*) AS count FROM order_request_items WHERE alert_id = %s", (alert_id,)
+    ).fetchone()["count"] == 1
 
 
 def test_only_a_buyer_at_the_store_can_be_sent_to(client, db, staff):

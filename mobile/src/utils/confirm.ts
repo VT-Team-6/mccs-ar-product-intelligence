@@ -6,20 +6,21 @@ export function confirmAction(
   title: string,
   message: string,
   confirmLabel: string,
+  confirmStyle: 'default' | 'destructive' = 'destructive',
 ): Promise<boolean> {
   // Browsers have their own built-in confirmation box
   if (Platform.OS === 'web') {
     return Promise.resolve(window.confirm(`${title}\n\n${message}`));
   }
 
-  // On a phone, show the system alert with Cancel and a red confirm button
+  // On a phone, show the system alert with Cancel and a confirm button.
   return new Promise((resolve) => {
     Alert.alert(
       title,
       message,
       [
         { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-        { text: confirmLabel, style: 'destructive', onPress: () => resolve(true) },
+        { text: confirmLabel, style: confirmStyle, onPress: () => resolve(true) },
       ],
       { cancelable: true, onDismiss: () => resolve(false) },
     );

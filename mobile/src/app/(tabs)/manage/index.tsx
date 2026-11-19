@@ -22,16 +22,17 @@ const ROLE_NAME: Record<string, string> = {
 // The Manage tab: everything staff use, in one place, so Account only holds
 // the person's own settings. Each row shows only for roles that can use it.
 export default function ManagementScreen() {
-  const { profile, hasPermission, refreshProfile, loading, profileLoading } = useAuth();
+  const { user, profile, hasPermission, refreshProfile, loading, profileLoading } = useAuth();
   const { unread, refresh } = useNotifications();
   const insets = useSafeAreaInsets();
 
   // Fresh unread count each time the tab opens
   useFocusEffect(
     useCallback(() => {
+      if (!user) return;
       refresh();
       void refreshProfile({ silent: true });
-    }, [refresh, refreshProfile]),
+    }, [user, refresh, refreshProfile]),
   );
 
   const isManager = hasPermission("manage_inventory");
@@ -46,7 +47,7 @@ export default function ManagementScreen() {
       ? { label: "Update stock counts", hint: "Enter on-hand quantities or import a stock CSV." }
       : { label: "View inventory", hint: "Read-only stock counts and availability at your stores." };
 
-  if (!loading && !profileLoading && !seesStock && !seesSetup) return <Redirect href="/" />;
+  if (!user || (!loading && !profileLoading && !seesStock && !seesSetup)) return <Redirect href="/" />;
 
   return (
     <ThemedView style={styles.container}>

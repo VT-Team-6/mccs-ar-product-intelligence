@@ -33,13 +33,14 @@ class ComparisonRequest(BaseModel):
 @router.post("")
 def get_comparison(
     body: ComparisonRequest,
+    store_id: int | None = None,
     user=Depends(auth.require_authenticated_user),
 ):
     product_ids = body.product_ids
 
     # Product details priced at the shopper's chosen store, plus review counts
     with get_connection() as conn:
-        store_id = store_selection.resolve_store_id(conn, user["user_id"], None)
+        store_id = store_selection.resolve_store_id(conn, user["user_id"], store_id)
         rows = conn.execute(
             product_select(store_id)
             + sql.SQL(" WHERE p.product_id = ANY(%s) AND p.deleted_at IS NULL"),

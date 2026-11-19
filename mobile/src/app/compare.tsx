@@ -1,3 +1,6 @@
+import { useAuth } from '@/auth/AuthContext';
+import { SignInRequired } from '@/components/authentication/SignInRequired';
+
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -26,6 +29,11 @@ const COLUMN_WIDTH = 168;
 
 // Side-by-side comparison, e.g. /compare?ids=3,7
 export default function CompareScreen() {
+  const { user } = useAuth();
+  return user ? <CompareContent /> : <SignInRequired message="Sign in to compare products." title="Compare products" />;
+}
+
+function CompareContent() {
   const router = useRouter();
   const { ids: idsParam } = useLocalSearchParams<{ ids?: string }>();
   const selection = useMemo(() => readSelection(idsParam), [idsParam]);
@@ -43,7 +51,7 @@ export default function CompareScreen() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getComparison(selection.ids)
+    getComparison(selection.ids, store?.store_id)
       .then((found) => {
         if (!cancelled) setData(found);
       })

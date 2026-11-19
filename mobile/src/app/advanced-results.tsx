@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 
 import type { Product } from '@/api/products';
 import { getRecommendations, type Recommendation, type RecommendationResult } from '@/api/recommendations';
+import { useAuth } from '@/auth/AuthContext';
 import { ProductCard } from '@/components/product-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -28,6 +29,8 @@ export default function AdvancedResultsScreen() {
   const ranking = useMemo(() => rankingFromParam(rankParam), [rankParam]);
   // Reprice the cards when the shopper switches stores.
   const { store } = useStore();
+  const { user } = useAuth();
+  const signedIn = !!user;
   const theme = useTheme();
 
   const [result, setResult] = useState<RecommendationResult | null>(null);
@@ -53,7 +56,7 @@ export default function AdvancedResultsScreen() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getRecommendations({ text: query, ranking })
+    getRecommendations({ text: query, ranking }, { signedIn, storeId: store?.store_id })
       .then((found) => {
         if (!cancelled) setResult(found);
       })
@@ -73,7 +76,7 @@ export default function AdvancedResultsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [query, ranking, attempt, store?.store_id]);
+  }, [query, ranking, attempt, signedIn, store?.store_id]);
 
   const thisPage = `/advanced-results?q=${encodeURIComponent(query)}&rank=${encodeURIComponent(rankParam)}`;
 

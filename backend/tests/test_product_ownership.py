@@ -89,6 +89,20 @@ def _inventory(db, product_id):
     ).fetchall()
 
 
+@pytest.mark.parametrize("path", ["/api/admin/products", "/api/admin/products/1"])
+def test_admin_catalog_requires_a_product_manager(client, db, path):
+    assert client.get(path).status_code == 401
+    assert client.get("/api/products/1").status_code == 200
+
+    for role in ("user", "store_clerk", "store_buyer"):
+        _sign_in_as(client, db, role, [1])
+        assert client.get(path).status_code == 403
+
+    for role in ("store_admin", "system_admin"):
+        _sign_in_as(client, db, role, [1])
+        assert client.get(path).status_code == 200
+
+
 # --- creating -------------------------------------------------------------
 
 

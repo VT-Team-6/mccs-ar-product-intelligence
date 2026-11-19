@@ -1,3 +1,6 @@
+import { useAuth } from '@/auth/AuthContext';
+import { SignInRequired } from '@/components/authentication/SignInRequired';
+
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -46,6 +49,11 @@ type LoadedLikes = {
 // Likes is the user's current saved collection, so unlike removes the card here
 // but leaves the earlier interaction in History.
 export default function LikesScreen() {
+  const { user } = useAuth();
+  return user ? <LikesContent /> : <SignInRequired message="Sign in to see your likes." />;
+}
+
+function LikesContent() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -89,7 +97,7 @@ export default function LikesScreen() {
   // the user's most recent likes first, so we don't need to sort them here.
   useEffect(() => {
     let cancelled = false;
-    listLikedProducts({ query, sort, limit: PAGE_SIZE })
+    listLikedProducts({ query, sort, limit: PAGE_SIZE, storeId: store?.store_id })
       .then((loaded) => {
         if (cancelled) return;
         setPage({
@@ -106,7 +114,7 @@ export default function LikesScreen() {
     return () => {
       cancelled = true;
     };
-  }, [requestKey, query, sort]);
+  }, [requestKey, query, sort, store?.store_id]);
 
   // Switching store changes the prices on every row, and must also cancel any
   // price sort: the backend rejects sort=price with no store and would answer
@@ -135,6 +143,7 @@ export default function LikesScreen() {
         sort,
         limit: PAGE_SIZE,
         cursor: nextCursor,
+        storeId: store?.store_id,
       });
       // Check the request key to ensure this response is for the current request, not a stale one
       setPage((current) =>
@@ -173,7 +182,7 @@ export default function LikesScreen() {
     undoTimer.current = setTimeout(() => setUndoItem(null), 6000);
 
     try {
-      await unlikeProduct(product.product_id);
+      await unlikeProduct(product.product_id, store?.store_id);
     } catch (problem) {
       setUndoItem(null);
       setPage((current) =>
@@ -195,7 +204,7 @@ export default function LikesScreen() {
       current ? { ...current, items: [item, ...current.items] } : current,
     );
     try {
-      await likeProduct(item.product_id);
+      await likeProduct(item.product_id, store?.store_id);
     } catch (problem) {
       setPage((current) =>
         current

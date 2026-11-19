@@ -1,3 +1,6 @@
+import { useAuth } from '@/auth/AuthContext';
+import { SignInRequired } from '@/components/authentication/SignInRequired';
+
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -34,6 +37,7 @@ import {
   Spacing,
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useStore } from '@/store/StoreContext';
 import {
   searchProducts,
   type Product,
@@ -44,6 +48,12 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { addShoppingListItem } from '@/api/shopping-lists';
 
 export default function ShoppingListScreen() {
+  const { user } = useAuth();
+  return user ? <ShoppingListContent /> : <SignInRequired message="Sign in to see your shopping lists." />;
+}
+
+function ShoppingListContent() {
+  const { store } = useStore();
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -208,7 +218,7 @@ export default function ShoppingListScreen() {
     setSearchLoading(true);
     setSearchError(null);
 
-    searchProducts(searchQuery)
+    searchProducts(searchQuery, store?.store_id)
       .then((products) => {
         if (!cancelled) {
           setSearchResults(products);
@@ -233,7 +243,7 @@ export default function ShoppingListScreen() {
     return () => {
       cancelled = true;
     };
-  }, [searchQuery, current?.shopping_list_id]);
+  }, [searchQuery, current?.shopping_list_id, store?.store_id]);
 
   // Add a result directly to the currently selected shopping list.
   const addSearchResult = async (productId: number) => {

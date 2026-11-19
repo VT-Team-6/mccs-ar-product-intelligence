@@ -38,7 +38,7 @@ export default function SearchResultsScreen() {
     }
     let cancelled = false;
     setLoading(true);
-    searchProducts(query)
+    searchProducts(query, store?.store_id)
       .then((found) => {
         if (!cancelled) setResults(found);
       })

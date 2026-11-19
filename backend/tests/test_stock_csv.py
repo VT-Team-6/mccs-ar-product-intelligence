@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from testcontainers.community.postgres import PostgresContainer
 
 import auth
+import stock_csv
 from conftest import DB_DIR, apply_init_sql
 from main import app
 
@@ -213,6 +214,26 @@ def test_a_file_without_the_columns_is_rejected(client, db):
 
 
 # --- import ---------------------------------------------------------------
+
+
+def test_import_locks_active_rows_until_it_has_saved_the_count(client, db, db_url, monkeypatch):
+    _sign_in_as(client, db, "store_clerk", [1])
+    preview = stock_csv.preview
+
+    def check_lock(*args, **kwargs):
+        result = preview(*args, **kwargs)
+        with psycopg.connect(db_url) as competing_write:
+            with pytest.raises(psycopg.errors.LockNotAvailable):
+                competing_write.execute(
+                    "SELECT 1 FROM inventory WHERE product_id = 1 AND store_id = 1"
+                    " FOR NO KEY UPDATE NOWAIT"
+                )
+        return result
+
+    monkeypatch.setattr(stock_csv, "preview", check_lock)
+    response = client.post(IMPORT, json={"store_id": 1, "csv": "product_id,stock\n1,4\n"})
+    assert response.status_code == 200
+    assert _quantity(db, 1) == 4
 
 
 def test_import_updates_stock_and_logs_each_change(client, db):

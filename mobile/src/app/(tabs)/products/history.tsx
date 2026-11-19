@@ -1,3 +1,6 @@
+import { useAuth } from '@/auth/AuthContext';
+import { SignInRequired } from '@/components/authentication/SignInRequired';
+
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -59,6 +62,11 @@ type LoadedHistory = {
 // History is an activity feed: the same product can appear many times, each
 // entry saying how the user got to it and when.
 export default function HistoryScreen() {
+  const { user } = useAuth();
+  return user ? <HistoryContent /> : <SignInRequired message="Sign in to see your history." />;
+}
+
+function HistoryContent() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -95,7 +103,7 @@ export default function HistoryScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    listProductHistory({ query, limit: PAGE_SIZE })
+    listProductHistory({ query, limit: PAGE_SIZE, storeId: store?.store_id })
       .then((loaded) => {
         if (cancelled) return;
         setPage({
@@ -112,13 +120,13 @@ export default function HistoryScreen() {
     return () => {
       cancelled = true;
     };
-  }, [requestKey, query]);
+  }, [requestKey, query, store?.store_id]);
 
   const loadMore = async () => {
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true);
     try {
-      const more = await listProductHistory({ query, limit: PAGE_SIZE, cursor: nextCursor });
+      const more = await listProductHistory({ query, limit: PAGE_SIZE, cursor: nextCursor, storeId: store?.store_id });
       setPage((current) =>
         current && current.key === requestKey
           ? {
@@ -171,9 +179,9 @@ export default function HistoryScreen() {
     );
     try {
       if (wasLiked) {
-        await unlikeProduct(productId);
+        await unlikeProduct(productId, store?.store_id);
       } else {
-        await likeProduct(productId);
+        await likeProduct(productId, store?.store_id);
       }
     } catch (problem) {
       setPage((current) =>

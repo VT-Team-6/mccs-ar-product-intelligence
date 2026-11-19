@@ -113,7 +113,7 @@ export function AIAnalysisPanel({ productId }: Props) {
         </View>
       ) : !analysis || !totalReviews ? (
         <ThemedText themeColor="textSecondary">
-          No customer reviews are available for analysis.
+          {analysis?.message ?? 'No customer reviews are available for analysis.'}
         </ThemedText>
       ) : (
         <View style={styles.content}>

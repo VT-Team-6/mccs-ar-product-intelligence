@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react
 
 import type { Product } from '@/api/products';
 import { getRecommendations, type Recommendation, type RecommendationResult } from '@/api/recommendations';
+import { useAuth } from '@/auth/AuthContext';
 import { ProductCard } from '@/components/product-card';
 import { RankPicker } from '@/components/rank-picker';
 import { ThemedText } from '@/components/themed-text';
@@ -32,6 +33,7 @@ type Props = {
 export function RecommendationPanel({ productId, category, textRequired = false, onOpenProduct, onStepChange }: Props) {
   const theme = useTheme();
   const { store } = useStore();
+  const { user } = useAuth();
   const [ranking, setRanking] = useState<Preferences>(DEFAULT_PREFERENCES);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,7 @@ export function RecommendationPanel({ productId, category, textRequired = false,
         product_id: productId,
         text: trimmed === '' ? undefined : trimmed,
         ranking,
-      });
+      }, { signedIn: !!user, storeId: store?.store_id });
       setResult(loaded);
       setResultStoreId(storeId);
       onStepChange?.();

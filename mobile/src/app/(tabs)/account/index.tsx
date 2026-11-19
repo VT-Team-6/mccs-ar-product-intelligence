@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth/AuthContext";
+import { useSignInPrompt } from "@/auth/use-sign-in-prompt";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ScreenHeader } from "@/components/ui/screen-header";
@@ -19,9 +20,9 @@ import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 
 export default function AccountScreen() {
-  const { profile, profileLoading, signOut, refreshProfile } =
-    useAuth();
-  const { store, openStoreSelector } = useStore();
+  const { user, profile, profileLoading, signOut, refreshProfile, showSignIn } = useAuth();
+  const { store, homeStore, loading: storeLoading, openStoreSelector } = useStore();
+  const promptSignIn = useSignInPrompt();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -31,15 +32,23 @@ export default function AccountScreen() {
 
   // Refresh the profile on first load, if we haven't already loaded it. This is important for the case where the user has just signed in and we haven't yet asked the backend who they are.
   useEffect(() => {
-    if (profile || profileLoading || attempted.current) return;
+    if (!user || profile || profileLoading || attempted.current) return;
     attempted.current = true;
     refreshProfile();
-  }, [profile, profileLoading, refreshProfile]);
+  }, [user, profile, profileLoading, refreshProfile]);
 
   const retry = async () => {
     setRetrying(true);
     await refreshProfile();
     setRetrying(false);
+  };
+
+  const openPreferences = () => {
+    if (user) {
+      router.push("/account/preferences");
+    } else {
+      void promptSignIn("Sign in to view and save your preferences.");
+    }
   };
 
   return (
@@ -52,14 +61,14 @@ export default function AccountScreen() {
         <ScreenHeader
           title="Account"
           eyebrow="MCCS"
-          subtitle={profile?.email ?? undefined}
+          subtitle={user ? profile?.email : "Browsing as a guest"}
           back={false}
         />
 
         <View style={styles.list}>
           {/* Staff tools live in the Manage tab */}
-          {profileLoading && <ActivityIndicator />}
-          {!profile && !profileLoading && (
+          {user && profileLoading ? <ActivityIndicator /> : null}
+          {user && !profile && !profileLoading ? (
             <Pressable
               onPress={retry}
               disabled={retrying}
@@ -78,25 +87,33 @@ export default function AccountScreen() {
                 {retrying && <ActivityIndicator />}
               </ThemedView>
             </Pressable>
-          )}
+          ) : null}
 
           <SectionLabel label="Your account" />
 
           <Row
             label="Preferences"
             hint="Manage your preferences"
-            onPress={() => router.push("/account/preferences")}
+            onPress={openPreferences}
           />
 
-          {/* The only surface that offers clearing, since clearing is never
-              what a shopper tapping a price prompt meant. */}
           <Row
-            label="Store"
-            hint={store ? store.name : "Choose the store you shop at"}
-            onPress={() => openStoreSelector({ allowClear: true })}
+            label="Shopping store"
+            hint={store?.name ?? (storeLoading ? "Loading stores…" : "Choose where you are shopping")}
+            onPress={() => openStoreSelector()}
           />
-
-          <Row label="Sign out" onPress={signOut} danger />
+          {user ? (
+            <>
+              <Row
+                label="Home store"
+                hint={homeStore?.name ?? (storeLoading ? "Loading home store…" : "Choose the default for your account")}
+                onPress={() => openStoreSelector({ home: true, allowClear: true })}
+              />
+              <Row label="Sign out" onPress={signOut} danger />
+            </>
+          ) : (
+            <Row label="Sign in" onPress={showSignIn} />
+          )}
         </View>
       </ScrollView>
     </ThemedView>
@@ -119,10 +136,11 @@ function Row({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
       style={({ pressed }) => pressed && styles.pressed}
     >
       <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
-        <ThemedView type="card" style={styles.rowText}>
+        <View style={styles.rowText}>
           <ThemedText type="smallBold" style={danger && styles.danger}>
             {label}
           </ThemedText>
@@ -131,7 +149,7 @@ function Row({
               {hint}
             </ThemedText>
           )}
-        </ThemedView>
+        </View>
         <ThemedText themeColor="link" style={styles.chevron}>›</ThemedText>
       </ThemedView>
     </Pressable>
