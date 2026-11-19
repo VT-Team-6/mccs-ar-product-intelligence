@@ -23,7 +23,7 @@ import {
 } from '@/api/reviews';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { confirmAction } from '@/utils/confirm';
 
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   listingMain: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.two },
   listingText: { flex: 1, gap: Spacing.half },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: '#8B939C', alignItems: 'center', justifyContent: 'center' },
-  checked: { backgroundColor: '#198754', borderColor: '#198754' },
+  checked: { backgroundColor: Brand.success, borderColor: Brand.success },
   checkmark: { color: '#ffffff' },
   listingActions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.three },
   listingLink: { alignSelf: 'flex-start', paddingVertical: Spacing.half },
@@ -446,6 +446,6 @@ const styles = StyleSheet.create({
   compactButton: { paddingHorizontal: Spacing.two },
   buttonText: { textAlign: 'center' },
   dimmed: { opacity: 0.5 },
-  error: { color: '#E5484D' },
+  error: { color: Brand.danger },
   result: { gap: Spacing.three, paddingVertical: Spacing.four },
 });

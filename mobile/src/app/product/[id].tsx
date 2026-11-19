@@ -156,8 +156,12 @@ export default function ShopperProductScreen() {
   };
 
   // Opens a recommended product on its own details page. Back returns here, results intact.
+  // "from" keeps Back working after a web refresh too (see UI_STANDARDS.md).
   const openProduct = (picked: Product) => {
-    router.push(`/product/${picked.product_id}?via=recommendation` as Href);
+    const here = `/product/${id}`;
+    router.push(
+      `/product/${picked.product_id}?from=${encodeURIComponent(here)}&via=recommendation` as Href,
+    );
   };
 
   return (
