@@ -17,6 +17,7 @@ import { BottomTabInset, Brand, MaxContentWidth, Spacing, type ThemeColor } from
 import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 import SignoutButton from "@/components/authentication/SignoutButton";
+import { ShoppingListShortcut } from "@/components/shopping-list-shortcut";
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -139,6 +140,9 @@ export default function ScanScreen() {
             </ThemedText>
           </View>
         </View>
+
+        {/* Straight into shopping mode, or make a list first */}
+        <ShoppingListShortcut />
 
         {/* Camera */}
         <View style={styles.cameraContainer}>
