@@ -19,7 +19,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 
 export default function AccountScreen() {
-  const { profile, profileLoading, hasPermission, signOut, refreshProfile } =
+  const { profile, profileLoading, signOut, refreshProfile } =
     useAuth();
   const { store, openStoreSelector } = useStore();
   const router = useRouter();
@@ -57,43 +57,7 @@ export default function AccountScreen() {
         />
 
         <View style={styles.list}>
-          {/* Admin Access */}
-          {(hasPermission("create_products") ||
-            hasPermission("manage_inventory") ||
-            hasPermission("manage_stock") ||
-            hasPermission("manage_store_admins") ||
-            hasPermission("manage_store_buyers")) && <SectionLabel label="Store staff" />}
-
-          {hasPermission("create_products") && (
-            <Row
-              label="Manage Products"
-              hint={
-                hasPermission("manage_products")
-                  ? "Add, edit and delete products"
-                  : "Add products for your store and print QR codes"
-              }
-              onPress={() => router.push("/admin/products")}
-            />
-          )}
-
-          {(hasPermission("manage_inventory") ||
-            hasPermission("manage_stock")) && (
-            <Row
-              label="Manage Inventory/Stock"
-              hint="Manage the store's products or stock"
-              onPress={() => router.push("/admin/inventory")}
-            />
-          )}
-
-          {(hasPermission("manage_store_admins") ||
-            hasPermission("manage_store_buyers")) && (
-            <Row
-              label="Manage Staff"
-              hint="Add or remove staff"
-              onPress={() => router.push("/admin/staff")}
-            />
-          )}
-
+          {/* Staff tools live in the Manage tab */}
           {profileLoading && <ActivityIndicator />}
           {!profile && !profileLoading && (
             <Pressable
@@ -116,7 +80,7 @@ export default function AccountScreen() {
             </Pressable>
           )}
 
-          <SectionLabel label="Your account" style={styles.groupLabel} />
+          <SectionLabel label="Your account" />
 
           <Row
             label="Preferences"
@@ -185,9 +149,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     gap: Spacing.two,
-  },
-  groupLabel: {
-    paddingTop: Spacing.two,
   },
     row: {
     flexDirection: "row",

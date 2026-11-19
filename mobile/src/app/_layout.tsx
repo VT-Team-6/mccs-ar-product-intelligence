@@ -5,6 +5,7 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useColorScheme } from "react-native";
 
+import { NotificationsProvider } from "@/components/notification-banner";
 import { AuthProvider } from "../auth/AuthContext";
 import AuthenticatedApp from "../auth/AuthenticatedApp";
 import { StoreProvider } from "../store/StoreContext";
@@ -24,7 +25,10 @@ export default function TabLayout() {
             splash overlay stays outside it: it does not need the store. */}
         <StoreProvider>
           <AuthenticatedApp>
-            <Stack screenOptions={{ headerShown: false }} />
+            {/* Unread count for the Manage tab, and the banner on top of every screen */}
+            <NotificationsProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </NotificationsProvider>
           </AuthenticatedApp>
         </StoreProvider>
       </AuthProvider>

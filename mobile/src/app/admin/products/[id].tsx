@@ -7,8 +7,8 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth/AuthContext";
 import {
@@ -29,6 +29,7 @@ import { QrCodeModal } from "@/components/qr-code-modal";
 import { SendToStoresModal } from "@/components/send-to-stores-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { confirmAction } from "@/utils/confirm";
 
@@ -192,14 +193,9 @@ export default function ProductScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <Pressable
-          onPress={goBack}
-          hitSlop={12}
-          style={({ pressed }) => pressed && styles.pressed}
-        >
-          <ThemedText type="linkPrimary">‹ Back</ThemedText>
-        </Pressable>
+      {/* The product's name is shown below, so the header stays short */}
+      <ScreenHeader title="Product details" eyebrow="Manage Products" fallback="/admin/products" />
+      <View style={styles.safeArea}>
 
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
         {!product && !error && <ActivityIndicator />}
@@ -350,7 +346,7 @@ export default function ProductScreen() {
             </ThemedView>
           </ScrollView>
         )}
-      </SafeAreaView>
+      </View>
 
       {product && (
         <QrCodeModal
@@ -427,15 +423,13 @@ function Fact({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
+    width: "100%",
+    alignSelf: "center",
     paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop:
-      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop: Spacing.three,
     // No tab bar underneath: admin is pushed over the tabs
     paddingBottom: Spacing.three,
     gap: Spacing.two,

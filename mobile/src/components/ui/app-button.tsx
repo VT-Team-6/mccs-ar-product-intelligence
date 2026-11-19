@@ -11,6 +11,8 @@ import { useTheme } from '@/hooks/use-theme';
 // secondary: navy outline, for the other actions next to it
 // danger:    red outline, for actions that remove something
 type Variant = 'primary' | 'secondary' | 'danger';
+// small: a compact button for toolbars, the height of a filter tab
+type Size = 'regular' | 'small';
 
 export function AppButton({
   label,
@@ -18,6 +20,7 @@ export function AppButton({
   variant = 'primary',
   disabled = false,
   loading = false,
+  size = 'regular',
   style,
 }: {
   label: string;
@@ -26,6 +29,7 @@ export function AppButton({
   disabled?: boolean;
   // Shows a spinner and blocks presses while something is in progress
   loading?: boolean;
+  size?: Size;
   style?: StyleProp<ViewStyle>;
 }) {
   const theme = useTheme();
@@ -42,6 +46,7 @@ export function AppButton({
       accessibilityState={{ disabled: inactive, busy: loading }}
       style={({ pressed }) => [
         styles.button,
+        size === 'small' && styles.small,
         filled
           ? { backgroundColor: Brand.red }
           : { backgroundColor: theme.background, borderColor: outline, borderWidth: 2 },
@@ -52,7 +57,9 @@ export function AppButton({
       {loading ? (
         <ActivityIndicator color={textColor} />
       ) : (
-        <ThemedText style={[styles.label, { color: textColor }]}>{label}</ThemedText>
+        <ThemedText style={[styles.label, size === 'small' && styles.smallLabel, { color: textColor }]}>
+          {label}
+        </ThemedText>
       )}
     </Pressable>
   );
@@ -65,6 +72,16 @@ const styles = StyleSheet.create({
     borderRadius: Radius.medium,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  small: {
+    minHeight: 36,
+    paddingHorizontal: 12,
+    borderRadius: Radius.small,
+  },
+  smallLabel: {
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: 700,
   },
   label: {
     fontSize: 16,

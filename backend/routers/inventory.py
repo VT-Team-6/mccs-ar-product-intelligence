@@ -4,10 +4,15 @@ Reads are completely public, and the public routes are in their own routers so t
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 
 from auth import require_permission
 import stock
+import stock_csv
+import low_stock
+import reorders
 from database import get_connection
+from product_access import can_manage_store
 from schemas import (
     InventoryApproval,
     InventoryBatch,
@@ -15,8 +20,13 @@ from schemas import (
     InventoryRecord,
     InventoryStatus,
     InventoryWrite,
+    LowStockSettings,
     ProductStock,
     PushedEntry,
+    StockImport,
+    StockImportResult,
+    StaffStoreStock,
+    StoreBuyer,
     StoreStock,
 )
 
@@ -77,7 +87,7 @@ def read_store_stock(
 
 @writer_router.get(
     "",
-    response_model=StoreStock,
+    response_model=StaffStoreStock,
     dependencies=[Depends(require_permission("manage_stock"))],
 )
 def read_store_inventory(
@@ -108,6 +118,95 @@ def read_store_inventory(
     }
 
 
+def _require_store_access(user: dict, store_id: int) -> None:
+    if not can_manage_store(user, store_id):
+        raise HTTPException(403, "You don't manage this store")
+
+
+@writer_router.get("/buyers", response_model=list[StoreBuyer])
+def read_store_buyers(
+    store_id: int = Query(gt=0),
+    user=Depends(require_permission("manage_inventory")),
+) -> list[dict]:
+    """The store buyers at this store, who can be picked as a product's buyer."""
+    _require_store_access(user, store_id)
+    with get_connection() as conn:
+        try:
+            return low_stock.list_buyers(conn, store_id)
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+
+
+@writer_router.put("/low-stock-settings")
+def update_low_stock_settings(
+    body: LowStockSettings,
+    user=Depends(require_permission("manage_inventory")),
+) -> dict:
+    """Set the low-stock level and/or buyer on one or many of a store's products."""
+    _require_store_access(user, body.store_id)
+    with get_connection() as conn:
+        try:
+            updated = low_stock.update_settings(
+                conn,
+                body.store_id,
+                body.product_ids,
+                low_stock_threshold=body.low_stock_threshold,
+                buyer_user_id=body.buyer_user_id,
+                clear_buyer=body.clear_buyer,
+            )
+            reorders.check_stock(conn, body.store_id, body.product_ids)
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+    return {"updated": updated}
+
+
+@writer_router.get("/stock.csv")
+def export_stock_csv(
+    store_id: int = Query(gt=0),
+    user=Depends(require_permission("manage_stock")),
+) -> Response:
+    """The store's products and stock as a CSV, ready to fill in and import."""
+    _require_store_access(user, store_id)
+    with get_connection() as conn:
+        try:
+            text = stock_csv.export_csv(conn, store_id)
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+    return Response(
+        content=text,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="stock-store-{store_id}.csv"'},
+    )
+
+
+@writer_router.post("/stock-import/preview", response_model=StockImportResult)
+def preview_stock_import(
+    body: StockImport,
+    user=Depends(require_permission("manage_stock")),
+) -> dict:
+    """What importing the file would change. Nothing is saved."""
+    _require_store_access(user, body.store_id)
+    with get_connection() as conn:
+        try:
+            return stock_csv.preview(conn, body.store_id, body.csv)
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+
+
+@writer_router.post("/stock-import", response_model=StockImportResult)
+def apply_stock_import(
+    body: StockImport,
+    user=Depends(require_permission("manage_stock")),
+) -> dict:
+    """Save every stock change in the file, or none if any row has a problem."""
+    _require_store_access(user, body.store_id)
+    with get_connection() as conn:
+        try:
+            return stock_csv.apply(conn, body.store_id, body.csv, user["user_id"])
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+
+
 @writer_router.put("/{product_id}/{store_id}", response_model=InventoryRecord)
 def replace_stock(
     product_id: int,
@@ -122,7 +221,7 @@ def replace_stock(
     """
     with get_connection() as conn:
         try:
-            return stock.upsert_record(
+            record = stock.upsert_record(
                 conn,
                 product_id,
                 store_id,
@@ -131,6 +230,8 @@ def replace_stock(
                 status=body.status,
                 actor_user_id=user["user_id"],
             )
+            reorders.check_stock(conn, store_id, [product_id])
+            return record
         except stock.InventoryError as error:
             raise _http_error(error) from error
 
@@ -143,13 +244,19 @@ def replace_stock_batch(
     """Apply many product+store rows, or none of them."""
     with get_connection() as conn:
         try:
-            return stock.upsert_many(
+            records = stock.upsert_many(
                 conn,
                 [
                     {**entry.model_dump(), "actor_user_id": user["user_id"]}
                     for entry in body.items
                 ],
             )
+            by_store: dict[int, list[int]] = {}
+            for entry in body.items:
+                by_store.setdefault(entry.store_id, []).append(entry.product_id)
+            for store_id, product_ids in by_store.items():
+                reorders.check_stock(conn, store_id, product_ids)
+            return records
         except stock.InventoryError as error:
             raise _http_error(error) from error
 
@@ -182,7 +289,7 @@ def approve_pushed_product(
     """Approve a pending entry, with the price the store is setting."""
     with get_connection() as conn:
         try:
-            return stock.approve(
+            record = stock.approve(
                 conn,
                 product_id,
                 store_id,
@@ -190,6 +297,8 @@ def approve_pushed_product(
                 quantity=body.quantity,
                 price=body.price,
             )
+            reorders.check_stock(conn, store_id, [product_id])
+            return record
         except stock.InventoryError as error:
             raise _http_error(error) from error
 

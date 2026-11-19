@@ -19,6 +19,9 @@ export const Colors = {
     // Cards: white with a thin border, like the MCCS store site
     card: '#ffffff',
     border: '#E3E6EC',
+    // Status text: problems in red, good news in green
+    danger: '#B3261E',
+    success: '#1E7A46',
   },
   dark: {
     text: '#ffffff',
@@ -30,6 +33,9 @@ export const Colors = {
     link: '#9DB8E6',
     card: '#16181B',
     border: '#2E3135',
+    // Brighter in dark mode so they stay readable on black
+    danger: '#FF6B6B',
+    success: '#4ADE80',
   },
 } as const;
 

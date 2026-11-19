@@ -132,10 +132,13 @@ def list_store_stock(
         params = (*params, values["id"])
 
     rows = conn.execute(
-        "SELECT i.product_id, p.name AS product_name, p.brand, p.image_url, i.store_id,"
-        " i.quantity, i.price, i.status, i.updated_at,"
-        " (i.quantity > 0 AND i.status = 'active') AS in_stock"
+        "SELECT i.product_id, p.name AS product_name, p.brand, p.image_url, p.category,"
+        " i.store_id, i.quantity, i.price, i.status, i.updated_at,"
+        " (i.quantity > 0 AND i.status = 'active') AS in_stock,"
+        " i.low_stock_threshold, i.buyer_user_id, b.email AS buyer_email,"
+        " (i.status = 'active' AND i.quantity <= i.low_stock_threshold) AS low_stock"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"
+        " LEFT JOIN users b ON b.user_id = i.buyer_user_id"
         f" WHERE i.store_id = %s AND i.status = %s{where}"
         " ORDER BY i.product_id LIMIT %s",
         (*params, limit + 1),
@@ -245,7 +248,29 @@ def upsert_record(
              product_id, store_id),
         )
 
-    return _get_record(conn, product_id, store_id)
+    record = _get_record(conn, product_id, store_id)
+    old_quantity = existing["quantity"] if existing else None
+    if quantity is not None and quantity != old_quantity:
+        log_change(conn, product_id, store_id, old_quantity, quantity, "manual", actor_user_id)
+    return record
+
+
+def log_change(
+    conn: Connection,
+    product_id: int,
+    store_id: int,
+    old_quantity: int | None,
+    new_quantity: int,
+    source: str,
+    user_id: int | None,
+) -> None:
+    """Record one stock change in stock_changes."""
+    conn.execute(
+        "INSERT INTO stock_changes"
+        " (product_id, store_id, old_quantity, new_quantity, source, changed_by)"
+        " VALUES (%s, %s, %s, %s, %s, %s)",
+        (product_id, store_id, old_quantity, new_quantity, source, user_id),
+    )
 
 
 def upsert_many(conn: Connection, entries: list[dict]) -> list[dict]:

@@ -2,16 +2,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   StyleSheet,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import { getProduct, updateProduct, type Product } from "@/api/products";
 import { ProductForm } from "@/components/product-form";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 
 export default function EditProductScreen() {
@@ -43,17 +43,8 @@ export default function EditProductScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <Pressable
-          onPress={goBack}
-          hitSlop={12}
-          style={({ pressed }) => pressed && styles.pressed}
-        >
-          <ThemedText type="linkPrimary">‹ Cancel</ThemedText>
-        </Pressable>
-        <ThemedText type="subtitle" style={styles.title}>
-          Edit product
-        </ThemedText>
+      <ScreenHeader title="Edit product" eyebrow="Manage Products" fallback="/admin/products" />
+      <View style={styles.safeArea}>
 
         {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
         {!product && !error && <ActivityIndicator />}
@@ -69,7 +60,7 @@ export default function EditProductScreen() {
             }}
           />
         )}
-      </SafeAreaView>
+      </View>
     </ThemedView>
   );
 }
@@ -77,15 +68,13 @@ export default function EditProductScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
+    width: "100%",
+    alignSelf: "center",
     paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop:
-      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop: Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },

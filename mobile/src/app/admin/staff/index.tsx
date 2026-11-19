@@ -11,6 +11,7 @@ import {
 } from "@/api/staff";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmAction } from "@/utils/confirm";
@@ -159,20 +160,12 @@ export default function StaffManagement() {
 
   return (
     <ThemedView style={styles.root}>
-      <SafeAreaView style={styles.safe}>
-        <View style={[styles.topBar, { borderBottomColor: theme.backgroundSelected }]}>
-          <Action label="‹ Account" variant="ghost" onPress={() => router.canGoBack() ? router.back() : router.replace("/account")} />
-          <Pressable accessibilityRole="button" accessibilityLabel="Refresh stores and staff"
-            accessibilityState={{ disabled: optionsLoading || listLoading, busy: optionsLoading || listLoading }}
-            disabled={optionsLoading || listLoading} onPress={refresh} hitSlop={4}
-            style={({ pressed }) => [styles.iconButton, { backgroundColor: theme.backgroundElement }, pressed && styles.dim]}>
-            {optionsLoading || listLoading ? <ActivityIndicator size="small" color={theme.text} /> :
-              <SymbolView name={{ ios: "arrow.clockwise", android: "refresh", web: "refresh" }} size={21} tintColor={theme.text} />}
-          </Pressable>
-        </View>
+      <View style={styles.fullWidth}>
+        <ScreenHeader title="Manage staff" eyebrow="Management" fallback="/manage" backLabel="Management" />
+      </View>
+      <View style={styles.safe}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.section}>
-            <ThemedText type="subtitle" style={styles.title}>Manage staff</ThemedText>
             <ThemedText themeColor="textSecondary" type="small">Choose a store to view staff or give someone access.</ThemedText>
           </View>
           {optionsLoading ? <ActivityIndicator /> : optionsError ? (
@@ -182,13 +175,23 @@ export default function StaffManagement() {
             </View>
           ) : !store ? <ThemedText>No stores are available for you to manage.</ThemedText> : (
             <>
-              <Pressable accessibilityRole="button" accessibilityLabel={`Managing ${store.name}. Choose a store`}
-                accessibilityState={{ expanded: choosingStore }} onPress={() => setChoosingStore(true)}
-                style={({ pressed }) => [styles.storeBar, { backgroundColor: theme.backgroundElement }, pressed && styles.dim]}>
-                <ThemedText type="small" themeColor="textSecondary">Managing</ThemedText>
-                <ThemedText type="smallBold" style={styles.grow} numberOfLines={1}>{store.name}</ThemedText>
-                <ThemedText themeColor="textSecondary">▾</ThemedText>
-              </Pressable>
+              {/* Store dropdown with Refresh beside it, together as wide as the tabs below */}
+              <View style={styles.storeRow}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Managing ${store.name}. Choose a store`}
+                  accessibilityState={{ expanded: choosingStore }} onPress={() => setChoosingStore(true)}
+                  style={({ pressed }) => [styles.storeBar, styles.grow, { backgroundColor: theme.backgroundElement }, pressed && styles.dim]}>
+                  <ThemedText type="small" themeColor="textSecondary">Managing</ThemedText>
+                  <ThemedText type="smallBold" style={styles.grow} numberOfLines={1}>{store.name}</ThemedText>
+                  <ThemedText themeColor="textSecondary">▾</ThemedText>
+                </Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel="Refresh stores and staff"
+                  accessibilityState={{ disabled: optionsLoading || listLoading, busy: optionsLoading || listLoading }}
+                  disabled={optionsLoading || listLoading} onPress={refresh} hitSlop={4}
+                  style={({ pressed }) => [styles.refreshButton, { backgroundColor: theme.backgroundElement }, pressed && styles.dim]}>
+                  {optionsLoading || listLoading ? <ActivityIndicator size="small" color={theme.text} /> :
+                    <SymbolView name={{ ios: "arrow.clockwise", android: "refresh", web: "refresh" }} size={21} tintColor={theme.text} />}
+                </Pressable>
+              </View>
               <View style={[styles.tabs, { backgroundColor: theme.backgroundElement }]}>
                 {(["staff", "add"] as const).map((tab) => (
                   <Pressable key={tab} accessibilityRole="tab" accessibilityState={{ selected: mode === tab }}
@@ -259,7 +262,7 @@ export default function StaffManagement() {
             </>
           )}
         </ScrollView>
-      </SafeAreaView>
+      </View>
       <Modal visible={choosingStore} transparent animationType="fade" onRequestClose={() => setChoosingStore(false)}>
         <View style={styles.backdrop}>
           <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close store selection" onPress={() => setChoosingStore(false)} />
@@ -335,7 +338,8 @@ export default function StaffManagement() {
 const styles = StyleSheet.create({
   root: { flex: 1, alignItems: "center" },
   safe: { flex: 1, width: "100%", maxWidth: MaxContentWidth },
-  topBar: { minHeight: 64, paddingHorizontal: Spacing.three, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: StyleSheet.hairlineWidth },
+  fullWidth: { width: "100%" },
+  storeRow: { flexDirection: "row", alignItems: "stretch", gap: Spacing.two },
   title: { fontSize: 28, lineHeight: 34 },
   content: { padding: Spacing.four, paddingBottom: Spacing.five, gap: Spacing.three },
   section: { gap: Spacing.two },
@@ -346,6 +350,8 @@ const styles = StyleSheet.create({
   input: { borderRadius: 10, padding: Spacing.three, fontSize: 16 },
   grow: { flex: 1, minWidth: 0 },
   iconButton: { width: 44, height: 44, alignItems: "center", justifyContent: "center", borderRadius: 12 },
+  // Refresh beside the store dropdown, as tall as it
+  refreshButton: { width: 52, minHeight: 52, alignItems: "center", justifyContent: "center", borderRadius: Spacing.three },
   storeBar: { minHeight: 52, flexDirection: "row", alignItems: "center", gap: Spacing.two, borderRadius: Spacing.three, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
   tabs: { flexDirection: "row", padding: 4, borderRadius: 12, gap: 4 },
   tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", borderRadius: 9, paddingHorizontal: Spacing.two },

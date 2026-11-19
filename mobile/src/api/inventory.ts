@@ -27,6 +27,12 @@ export type StoreStockEntry = {
   in_stock: boolean;
   status: InventoryStatus;
   updated_at: string;
+  // Only in the staff inventory list
+  category?: string | null;
+  low_stock_threshold?: number;
+  low_stock?: boolean;
+  buyer_user_id?: number | null;
+  buyer_email?: string | null;
 };
 
 type StoreStockPage = {
@@ -176,4 +182,80 @@ export async function removeEntry(productId: number, storeId: number) {
   });
   if (!response.ok) throw await problem(response, "Could not remove the product");
   return response.json();
+}
+// --- End-of-day stock CSV ----------------------------------------------------
+
+// The store's products and current stock as CSV text, ready to fill in
+export async function exportStockCsv(storeId: number): Promise<string> {
+  const response = await authenticatedFetch(`/api/admin/inventory/stock.csv?store_id=${storeId}`);
+  if (!response.ok) throw await problem(response, "Could not export the stock");
+  return response.text();
+}
+
+export type StockImportChange = {
+  product_id: number;
+  name: string;
+  brand: string | null;
+  old_quantity: number;
+  new_quantity: number;
+};
+
+export type StockImportResult = {
+  store_id: number;
+  changes: StockImportChange[];
+  unchanged: number;
+  errors: { row: number; message: string }[];
+  // Products this import takes to their low-stock level or below
+  low_after: number;
+};
+
+// What importing the file would change. Nothing is saved.
+export async function previewStockImport(storeId: number, csv: string): Promise<StockImportResult> {
+  const response = await authenticatedFetch("/api/admin/inventory/stock-import/preview", {
+    method: "POST",
+    body: JSON.stringify({ store_id: storeId, csv }),
+  });
+  if (!response.ok) throw await problem(response, "Could not read the file");
+  return response.json();
+}
+
+// Saves every change in the file, or nothing if any row has a problem
+export async function applyStockImport(storeId: number, csv: string): Promise<StockImportResult> {
+  const response = await authenticatedFetch("/api/admin/inventory/stock-import", {
+    method: "POST",
+    body: JSON.stringify({ store_id: storeId, csv }),
+  });
+  if (!response.ok) throw await problem(response, "Could not import the stock");
+  return response.json();
+}
+
+// --- Low-stock levels and buyers ---------------------------------------------
+
+export type StoreBuyer = { user_id: number; email: string };
+
+// The store buyers who can be picked as a product's buyer at this store
+export async function listStoreBuyers(storeId: number): Promise<StoreBuyer[]> {
+  const response = await authenticatedFetch(`/api/admin/inventory/buyers?store_id=${storeId}`);
+  if (!response.ok) throw await problem(response, "Could not load the buyers");
+  return response.json();
+}
+
+export type LowStockChange = {
+  low_stock_threshold?: number;
+  buyer_user_id?: number;
+  clear_buyer?: boolean;
+};
+
+// Sets the low-stock level and/or buyer on one or many products at a store
+export async function updateLowStockSettings(
+  storeId: number,
+  productIds: number[],
+  change: LowStockChange,
+): Promise<number> {
+  const response = await authenticatedFetch("/api/admin/inventory/low-stock-settings", {
+    method: "PUT",
+    body: JSON.stringify({ store_id: storeId, product_ids: productIds, ...change }),
+  });
+  if (!response.ok) throw await problem(response, "Could not save the changes");
+  return (await response.json()).updated;
 }

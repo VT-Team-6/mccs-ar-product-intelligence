@@ -6,7 +6,8 @@ import { BackButton } from '@/components/ui/back-button';
 import { Brand, MaxContentWidth, Spacing } from '@/constants/theme';
 
 // The navy band at the top of every screen, the same look as the Home header:
-// Back, a small label above the title, the title in white, then a red stripe.
+// a round Back button left of the title, a small label above the title, the
+// title in white, then a red stripe.
 // It spans the full width, so put it outside the screen's padded content.
 export function ScreenHeader({
   title,
@@ -41,11 +42,15 @@ export function ScreenHeader({
           { paddingTop: Platform.OS === 'web' ? Spacing.six : insets.top + Spacing.three },
         ]}>
         <View style={styles.inner}>
-          {back && <BackButton from={from} fallback={fallback} label={backLabel} onDark />}
-          <View style={styles.titleBlock}>
-            {eyebrow && <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>}
-            <Text style={styles.title}>{title}</Text>
-            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          <View style={styles.titleRow}>
+            {back && <BackButton from={from} fallback={fallback} label={backLabel} iconOnly />}
+            <View style={styles.titleBlock}>
+              {eyebrow && <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>}
+              <Text style={styles.title} numberOfLines={2}>
+                {title}
+              </Text>
+              {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            </View>
           </View>
           {children}
         </View>
@@ -68,7 +73,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     gap: Spacing.two,
   },
+  // Back sits left of the title, centered on it
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
   titleBlock: {
+    flex: 1,
     gap: Spacing.half,
   },
   eyebrow: {
