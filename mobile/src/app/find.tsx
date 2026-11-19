@@ -6,6 +6,7 @@ import {
   FlatList,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
   LayoutAnimation,
   Platform,
   Pressable,
@@ -25,10 +26,10 @@ import {
 } from "@/api/me";
 import { searchProducts, type Product } from "@/api/products";
 import { useAuth } from "@/auth/AuthContext";
+import { AskChestyButton } from "@/components/ask-chesty-button";
 import { ProductCard } from "@/components/product-card";
 import { RecentlyViewed } from "@/components/recently-viewed";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
 import { BackButton } from "@/components/ui/back-button";
 import { SEARCH_BAR_HEIGHT, SEARCH_BAR_TOP } from "@/constants/search";
 import { Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
@@ -163,8 +164,8 @@ export default function FindScreen() {
 
   const shownRecent = showAll ? recent : recent.slice(0, SHORT_LIST);
 
-  // Ask Chesty floats just above the keyboard, over the list, with no bar
-  // behind it. With the keyboard down it sits above the home indicator.
+  // Android moves the results area with KeyboardAvoidingView. iOS keeps the
+  // floating button in sync with the keyboard's own animation and height.
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -188,10 +189,17 @@ export default function FindScreen() {
       hidden.remove();
     };
   }, []);
-  const askBottom = (keyboardHeight > 0 ? keyboardHeight : insets.bottom) + Spacing.two;
+  const android = Platform.OS === "android";
+  const bottomInset = keyboardHeight > 0 ? (android ? 0 : keyboardHeight) : insets.bottom;
+  const askBottom = bottomInset + Spacing.two;
+  const listBottomPadding = { paddingBottom: askBottom + ASK_ROOM };
 
   return (
-    <ThemedView style={styles.screen}>
+    <KeyboardAvoidingView
+      style={[styles.screen, { backgroundColor: theme.background }]}
+      behavior={android ? "padding" : undefined}
+      enabled={android}
+    >
       {/* The search bar on navy, in the spot Home's bar slides up to */}
       <View style={[styles.top, { paddingTop: insets.top + SEARCH_BAR_TOP }]}>
         <View style={[styles.topRow, styles.column]}>
@@ -228,47 +236,47 @@ export default function FindScreen() {
                 tintColor={theme.danger}
               />
             </Pressable>
-            <ChestyButton onPress={() => router.push("/advanced-search" as Href)} />
+            <AskChestyButton onPress={() => router.push("/advanced-search" as Href)} />
           </View>
         </View>
       </View>
       <View style={styles.stripe} />
 
-      {query !== "" ? (
-        <FlatList
-          data={results}
-          keyExtractor={(product) => String(product.product_id)}
-          renderItem={({ item }) => <ProductCard product={item} onPress={() => openProduct(item)} />}
-          // Full width, so the scroll bar sits at the screen's edge
-          style={styles.screen}
-          contentContainerStyle={[styles.results, styles.column, { paddingBottom: insets.bottom + Spacing.three }]}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          ListHeaderComponent={
-            !loading && !error && results.length > 0 ? (
-              <ThemedText themeColor="textSecondary">{`Results for "${query}"`}</ThemedText>
-            ) : null
-          }
-          ListEmptyComponent={
-            loading ? (
-              <ActivityIndicator size="large" style={styles.loading} />
-            ) : error ? (
-              <View style={styles.message}>
-                <ThemedText themeColor="textSecondary">{error}</ThemedText>
-                <Pressable onPress={() => setAttempt((count) => count + 1)} hitSlop={8}>
-                  <ThemedText type="linkPrimary">Try again</ThemedText>
-                </Pressable>
-              </View>
-            ) : (
-              <ThemedText themeColor="textSecondary">{`No products match "${query}".`}</ThemedText>
-            )
-          }
-        />
-      ) : (
-        <View style={styles.screen}>
+      <View style={styles.screen}>
+        {query !== "" ? (
+          <FlatList
+            data={results}
+            keyExtractor={(product) => String(product.product_id)}
+            renderItem={({ item }) => <ProductCard product={item} onPress={() => openProduct(item)} />}
+            // Full width, so the scroll bar sits at the screen's edge
+            style={styles.screen}
+            contentContainerStyle={[styles.results, styles.column, listBottomPadding]}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            ListHeaderComponent={
+              !loading && !error && results.length > 0 ? (
+                <ThemedText themeColor="textSecondary">{`Results for "${query}"`}</ThemedText>
+              ) : null
+            }
+            ListEmptyComponent={
+              loading ? (
+                <ActivityIndicator size="large" style={styles.loading} />
+              ) : error ? (
+                <View style={styles.message}>
+                  <ThemedText themeColor="textSecondary">{error}</ThemedText>
+                  <Pressable onPress={() => setAttempt((count) => count + 1)} hitSlop={8}>
+                    <ThemedText type="linkPrimary">Try again</ThemedText>
+                  </Pressable>
+                </View>
+              ) : (
+                <ThemedText themeColor="textSecondary">{`No products match "${query}".`}</ThemedText>
+              )
+            }
+          />
+        ) : (
           <ScrollView
             style={styles.screen}
-            contentContainerStyle={[styles.body, styles.column, { paddingBottom: askBottom + ASK_ROOM }]}
+            contentContainerStyle={[styles.body, styles.column, listBottomPadding]}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
@@ -319,28 +327,32 @@ export default function FindScreen() {
             )}
 
           </ScrollView>
+        )}
 
-          {/* Ask Chesty opens advanced search. Floats over the list (the list
-              shows around it) and stays right above the keyboard */}
-          <View pointerEvents="box-none" style={[styles.askBar, { bottom: askBottom }]}>
-            <Pressable
-              onPress={() => router.push("/advanced-search" as Href)}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.askWrap, pressed && styles.pressed]}
-            >
-              <View style={[styles.ask, { borderColor: theme.danger, backgroundColor: theme.card }]}>
-                <View style={styles.askFace}>
-                  <Image source={require("@/assets/images/chesty.png")} style={styles.askImage} resizeMode="contain" />
-                </View>
-                <ThemedText type="smallBold" themeColor="danger" style={styles.askText}>
-                  Ask Chesty
-                </ThemedText>
+        <View pointerEvents="box-none" style={[styles.askBar, { bottom: askBottom }]}>
+          <Pressable
+            onPress={() => router.push("/advanced-search" as Href)}
+            accessibilityRole="button"
+            accessibilityLabel="Ask Chesty"
+            style={({ pressed }) => [styles.askWrap, pressed && styles.pressed]}
+          >
+            <View style={[styles.ask, { borderColor: theme.danger, backgroundColor: theme.card }]}>
+              <View style={styles.askFace}>
+                <Image source={require("@/assets/images/chesty.png")} style={styles.askImage} resizeMode="contain" />
               </View>
-            </Pressable>
-          </View>
+              <ThemedText
+                type="smallBold"
+                themeColor="danger"
+                numberOfLines={1}
+                style={[styles.askText, android && styles.askTextAndroid]}
+              >
+                {"Ask\u00a0Chesty"}
+              </ThemedText>
+            </View>
+          </Pressable>
         </View>
-      )}
-    </ThemedView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -350,21 +362,6 @@ function searchErrorMessage(problem: unknown): string {
   if (problem instanceof TypeError) return "Couldn't reach the product server. Check your connection and try again.";
   if (problem instanceof Error) return problem.message;
   return "Couldn't search products.";
-}
-
-// Chesty's face in a small navy circle, the same button as on Home
-function ChestyButton({ onPress }: { onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Ask Chesty"
-      hitSlop={6}
-      style={({ pressed }) => [styles.chesty, pressed && styles.pressed]}
-    >
-      <Image source={require("@/assets/images/chesty.png")} style={styles.chestyImage} resizeMode="contain" />
-    </Pressable>
-  );
 }
 
 const styles = StyleSheet.create({
@@ -412,20 +409,6 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: "center",
     justifyContent: "center",
-  },
-  chesty: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: Brand.navy,
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  chestyImage: {
-    width: 34,
-    height: 34,
-    marginTop: 6,
   },
   results: {
     paddingHorizontal: Spacing.four,
@@ -480,6 +463,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: "center",
+    zIndex: 1,
   },
   askWrap: {
     alignSelf: "center",
@@ -510,6 +494,10 @@ const styles = StyleSheet.create({
   },
   askText: {
     fontSize: 17,
+    flexShrink: 0,
+  },
+  askTextAndroid: {
+    minWidth: 96,
   },
   pressed: {
     opacity: 0.6,

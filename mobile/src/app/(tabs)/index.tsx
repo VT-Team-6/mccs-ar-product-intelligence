@@ -7,9 +7,10 @@ import {
 import { useFocusEffect, useRouter, type Href } from "expo-router";
 import { SymbolView } from "expo-symbols";
 
+import { AskChestyButton } from "@/components/ask-chesty-button";
 import { ThemedText } from "@/components/themed-text";
 import { SEARCH_BAR_HEIGHT, SEARCH_BAR_TOP } from "@/constants/search";
-import { BottomTabInset, Brand, MaxContentWidth, Spacing, type ThemeColor } from "@/constants/theme";
+import { Brand, MaxContentWidth, Spacing, type ThemeColor } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 import SignoutButton from "@/components/authentication/SignoutButton";
@@ -62,19 +63,21 @@ export default function HomeScreen() {
   const dockTop = useRef(0);
   const opening = useRef(false);
 
-  // The bar sits a small gap above the tab bar, like Target's. On iOS the
-  // native tab bar is already part of the bottom safe area inset, so the inset
-  // alone reaches the tab bar's top edge. Android's inset doesn't include it.
   // Recently viewed photos fill the space above the search bar: larger on tall
   // phones, the regular size on short ones
   const { height: screenHeight } = useWindowDimensions();
   const viewedSize = Math.round(Math.min(180, Math.max(96, screenHeight - 664)));
 
-  const dockBottom =
-    Platform.OS === "ios" ? insets.bottom + DOCK_GAP : insets.bottom + BottomTabInset + DOCK_GAP;
+  // Android Native Tabs already inset this screen above the tab bar.
+  const android = Platform.OS === "android";
+  const dockBottom = DOCK_GAP + (android ? 0 : insets.bottom);
 
   const openSearch = () => {
     if (opening.current || needsStore()) return;
+    if (android) {
+      router.navigate("/find" as Href);
+      return;
+    }
     opening.current = true;
     Animated.parallel([
       Animated.timing(dockY, {
@@ -90,10 +93,43 @@ export default function HomeScreen() {
   // Back on Home: the bar returns to its place at the bottom
   useFocusEffect(
     useCallback(() => {
+      if (android) return;
       dockY.setValue(0);
       cover.setValue(0);
       opening.current = false;
-    }, [dockY, cover]),
+    }, [android, dockY, cover]),
+  );
+
+  const searchBar = (
+    <View style={[styles.searchBar, styles.centered]}>
+      <Pressable
+        onPress={openSearch}
+        accessibilityRole="search"
+        accessibilityLabel="Search products"
+        style={({ pressed }) => [styles.searchField, pressed && { opacity: 0.7 }]}
+      >
+        <SymbolView
+          name={{ ios: "magnifyingglass", android: "search", web: "search" }}
+          size={20}
+          tintColor={theme.textSecondary}
+        />
+        <ThemedText style={styles.searchPlaceholder}>Search products</ThemedText>
+      </Pressable>
+      <Pressable
+        onPress={() => go("/scan" as Href)}
+        accessibilityRole="button"
+        accessibilityLabel="Scan a QR code"
+        hitSlop={6}
+        style={({ pressed }) => [styles.searchIcon, pressed && { opacity: 0.6 }]}
+      >
+        <SymbolView
+          name={{ ios: "qrcode.viewfinder", android: "qr_code_scanner", web: "qr_code_scanner" }}
+          size={24}
+          tintColor={theme.danger}
+        />
+      </Pressable>
+      <AskChestyButton onPress={() => go("/advanced-search" as Href)} />
+    </View>
   );
 
   return (
@@ -150,65 +186,27 @@ export default function HomeScreen() {
 
       </View>
 
-      {/* Fades in behind the bar as it slides up to open search */}
-      <Animated.View
-        pointerEvents="none"
-        style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, opacity: cover }]}
-      />
-
-      {/* Search bar pinned just above the tab bar */}
-      <Animated.View
-        onLayout={(event) => {
-          dockTop.current = event.nativeEvent.layout.y;
-        }}
-        style={[
-          styles.searchDock,
-          { bottom: dockBottom, transform: [{ translateY: dockY }] },
-        ]}
-        pointerEvents="box-none"
-      >
-        <View style={[styles.searchBar, styles.centered]}>
-          <Pressable
-            onPress={openSearch}
-            accessibilityRole="search"
-            accessibilityLabel="Search products"
-            style={({ pressed }) => [styles.searchField, pressed && { opacity: 0.7 }]}
-          >
-            <SymbolView
-              name={{ ios: "magnifyingglass", android: "search", web: "search" }}
-              size={20}
-              tintColor={theme.textSecondary}
-            />
-            <ThemedText style={styles.searchPlaceholder}>Search products</ThemedText>
-          </Pressable>
-          <Pressable
-            onPress={() => go("/scan" as Href)}
-            accessibilityRole="button"
-            accessibilityLabel="Scan a QR code"
-            hitSlop={6}
-            style={({ pressed }) => [styles.searchIcon, pressed && { opacity: 0.6 }]}
-          >
-            <SymbolView
-              name={{ ios: "qrcode.viewfinder", android: "qr_code_scanner", web: "qr_code_scanner" }}
-              size={24}
-              tintColor={theme.danger}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => go("/advanced-search" as Href)}
-            accessibilityRole="button"
-            accessibilityLabel="Ask Chesty"
-            hitSlop={6}
-            style={({ pressed }) => [styles.chestyButton, pressed && { opacity: 0.6 }]}
-          >
-            <Image
-              source={require("@/assets/images/chesty.png")}
-              style={styles.chestyButtonImage}
-              resizeMode="contain"
-            />
-          </Pressable>
+      {android ? (
+        <View style={[styles.searchDock, { bottom: dockBottom }]} pointerEvents="box-none">
+          {searchBar}
         </View>
-      </Animated.View>
+      ) : (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, opacity: cover }]}
+          />
+          <Animated.View
+            onLayout={(event) => {
+              dockTop.current = event.nativeEvent.layout.y;
+            }}
+            style={[styles.searchDock, { bottom: dockBottom, transform: [{ translateY: dockY }] }]}
+            pointerEvents="box-none"
+          >
+            {searchBar}
+          </Animated.View>
+        </>
+      )}
     </View>
   );
 }
@@ -366,21 +364,6 @@ function createStyles(theme: Record<ThemeColor, string>) {
       height: 40,
       alignItems: "center",
       justifyContent: "center",
-    },
-    // Chesty's face in a small navy circle opens Ask Chesty
-    chestyButton: {
-      width: 38,
-      height: 38,
-      borderRadius: 19,
-      backgroundColor: Brand.navy,
-      alignItems: "center",
-      justifyContent: "center",
-      overflow: "hidden",
-    },
-    chestyButtonImage: {
-      width: 34,
-      height: 34,
-      marginTop: 6,
     },
   });
 }
