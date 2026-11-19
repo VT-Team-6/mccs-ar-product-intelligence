@@ -28,6 +28,10 @@ export default function TabLayout() {
             {/* Unread count for the Manage tab, and the banner on top of every screen */}
             <NotificationsProvider>
               <Stack screenOptions={{ headerShown: false }}>
+                {/* Listed first so the app opens on the tabs (Home). The first
+                    screen listed is the one the Stack starts on, and without
+                    this it was the scanner, so signing in opened it. */}
+                <Stack.Screen name="(tabs)" />
                 {/* The QR scanner covers the whole screen and slides up from the bottom */}
                 <Stack.Screen name="scan" options={{ presentation: "fullScreenModal", animation: "slide_from_bottom" }} />
                 {/* Search fades in under the Home bar that just slid to the top */}
