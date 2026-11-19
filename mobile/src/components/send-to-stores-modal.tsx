@@ -149,7 +149,7 @@ export function SendToStoresModal({ product, visible, onClose }: Props) {
             )}
 
             {error && (
-              <ThemedText type="small" style={styles.error}>
+              <ThemedText type="small" themeColor="danger" style={styles.error}>
                 {error}
               </ThemedText>
             )}
@@ -216,7 +216,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   error: {
-    color: "#E5484D",
   },
   button: {
     alignSelf: "stretch",

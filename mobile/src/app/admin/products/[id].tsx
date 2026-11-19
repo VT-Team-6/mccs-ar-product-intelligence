@@ -258,7 +258,7 @@ export default function ProductScreen() {
                 </ThemedText>
               )}
               {reviewError && (
-                <ThemedText type="small" style={styles.reviewError}>
+                <ThemedText type="small" themeColor="danger" style={styles.reviewError}>
                   {reviewError}
                 </ThemedText>
               )}
@@ -401,7 +401,7 @@ function ActionButton({
       <ThemedView type="backgroundElement" style={styles.actionView}>
         <ThemedText
           type="smallBold"
-          style={destructive && styles.destructiveText}
+          themeColor={destructive ? "danger" : undefined}
         >
           {label}
         </ThemedText>
@@ -449,7 +449,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   reviewError: {
-    color: "#E5484D",
   },
   // The row of buttons under the description. It scrolls with the rest of the page.
   // Wraps to two rows when there are more buttons than fit
@@ -468,9 +467,6 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
   },
   // Red text for buttons that remove something
-  destructiveText: {
-    color: "#E5484D",
-  },
   content: {
     gap: Spacing.three,
     paddingBottom: Spacing.four,

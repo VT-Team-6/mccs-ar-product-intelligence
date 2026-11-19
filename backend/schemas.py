@@ -674,3 +674,16 @@ class MarkRead(BaseModel):
     message_ids: list[int] | None = None
     request_id: int | None = None
     store_id: int | None = None
+
+
+# --- Recent searches -----------------------------------------------------------
+
+
+class RecentSearch(BaseModel):
+    search_id: int
+    query: str
+    searched_at: datetime
+
+
+class RecentSearchCreate(BaseModel):
+    query: str = Field(min_length=1, max_length=200)

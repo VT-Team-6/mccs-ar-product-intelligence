@@ -22,7 +22,7 @@ _PRODUCT_COLUMNS = (
     "p.description, p.image_url, p.created_at, p.updated_at"
 )
 _PRODUCT_KEYS = (
-    "product_id", "name", "brand", "product_type",
+    "product_id", "name", "brand", "product_type", "category",
     "rating", "description", "image_url", "created_at", "updated_at", "store_inventory",
 )
 

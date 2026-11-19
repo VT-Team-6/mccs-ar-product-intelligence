@@ -123,7 +123,7 @@ function Row({
     >
       <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
         <ThemedView type="card" style={styles.rowText}>
-          <ThemedText type="smallBold" style={danger && styles.danger}>
+          <ThemedText type="smallBold" themeColor={danger ? "danger" : undefined} style={danger && styles.danger}>
             {label}
           </ThemedText>
           {hint && (
@@ -167,7 +167,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   danger: {
-    color: Brand.red,
   },
   pressed: {
     opacity: 0.6,

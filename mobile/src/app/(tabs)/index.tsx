@@ -1,28 +1,29 @@
-import { useEffect, useRef, useState } from "react";
-import { Alert, Image, Linking, Platform, Pressable, StyleSheet, View } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { useCallback, useEffect, useRef } from "react";
+import { Alert, Animated, Easing, Image, Platform, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useRouter, type Href } from "expo-router";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { SymbolView } from "expo-symbols";
 
-import { authenticatedFetch } from "@/api/client";
-import { API_URL } from "@/api/config";
-import { recordInteraction } from "@/api/me";
-import { checkOffScanned } from "@/api/shopping-lists";
+import { AskChestyButton } from "@/components/ask-chesty-button";
 import { ThemedText } from "@/components/themed-text";
-import { ThemedView } from "@/components/themed-view";
-import { BottomTabInset, Brand, MaxContentWidth, Spacing, type ThemeColor } from "@/constants/theme";
+import { SEARCH_BAR_HEIGHT, SEARCH_BAR_TOP } from "@/constants/search";
+import { Brand, MaxContentWidth, Spacing, type ThemeColor } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 import SignoutButton from "@/components/authentication/SignoutButton";
 import { ShoppingListShortcut } from "@/components/shopping-list-shortcut";
+import { RecentlyViewed } from "@/components/recently-viewed";
 
-export default function ScanScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [isScanning, setIsScanning] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+// The space between the search bar and the tab bar
+const DOCK_GAP = 10;
+
+// Home: the header with the store picker, Chesty's tip, the shopping list
+// shortcut, and a search bar pinned above the tab bar. The bar opens search,
+// the QR scanner, or Ask Chesty (advanced search).
+export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -49,54 +50,90 @@ export default function ScanScreen() {
     return true;
   };
 
-  const handleBarcodeScanned = async ({ data }: { data: string }) => {
-    console.log("Scanned QR:", data);
-    console.log("API URL:", API_URL);
-
-    if (!isScanning || isLoading) {
-      return;
-    }
-
-    setIsScanning(false);
-    setIsLoading(true);
-
-    try {
-      // Authenticated, so the backend prices the result at the saved store.
-      const response = await authenticatedFetch(
-        `/api/scan?code=${encodeURIComponent(data)}`,
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        Alert.alert(
-          "Product not found",
-          result.detail ?? "This QR code could not be recognized.",
-        );
-        return;
-      }
-
-      // Opens the shopper product page. "from" makes its Back button return here.
-      // The scan is recorded for the History tab; the product page records the
-      // view itself. Recording never blocks opening the product.
-      recordInteraction(result.product_id, "scanned").catch(() => undefined);
-      // Checks the product off the active shopping list if it's on it. Waited
-      // for, so the product page already shows "Checked off your list". A
-      // failure never stops the product from opening.
-      await checkOffScanned(result.product_id).catch(() => null);
-      router.push(`/product/${result.product_id}?from=/` as Href);
-    } catch {
-      Alert.alert(
-        "Connection error",
-        "Unable to connect to the product server.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+  // Opens one of the search bar's destinations, once a store is chosen
+  const go = (href: Href) => {
+    if (!needsStore()) router.push(href);
   };
 
+  // Opening search: the bar slides from the bottom up to where the search
+  // screen's bar sits, while the page fades behind it, then the search screen
+  // appears underneath. Looks like one bar moving to the top.
+  const dockY = useRef(new Animated.Value(0)).current;
+  const cover = useRef(new Animated.Value(0)).current;
+  const dockTop = useRef(0);
+  const opening = useRef(false);
+
+  // Recently viewed photos fill the space above the search bar: larger on tall
+  // phones, the regular size on short ones
+  const { height: screenHeight } = useWindowDimensions();
+  const viewedSize = Math.round(Math.min(180, Math.max(96, screenHeight - 664)));
+
+  // Android Native Tabs already inset this screen above the tab bar.
+  const android = Platform.OS === "android";
+  const dockBottom = DOCK_GAP + (android ? 0 : insets.bottom);
+
+  const openSearch = () => {
+    if (opening.current || needsStore()) return;
+    if (android) {
+      router.navigate("/find" as Href);
+      return;
+    }
+    opening.current = true;
+    Animated.parallel([
+      Animated.timing(dockY, {
+        toValue: insets.top + SEARCH_BAR_TOP - dockTop.current,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(cover, { toValue: 1, duration: 220, useNativeDriver: true }),
+    ]).start(() => router.push("/find" as Href));
+  };
+
+  // Back on Home: the bar returns to its place at the bottom
+  useFocusEffect(
+    useCallback(() => {
+      if (android) return;
+      dockY.setValue(0);
+      cover.setValue(0);
+      opening.current = false;
+    }, [android, dockY, cover]),
+  );
+
+  const searchBar = (
+    <View style={[styles.searchBar, styles.centered]}>
+      <Pressable
+        onPress={openSearch}
+        accessibilityRole="search"
+        accessibilityLabel="Search products"
+        style={({ pressed }) => [styles.searchField, pressed && { opacity: 0.7 }]}
+      >
+        <SymbolView
+          name={{ ios: "magnifyingglass", android: "search", web: "search" }}
+          size={20}
+          tintColor={theme.textSecondary}
+        />
+        <ThemedText style={styles.searchPlaceholder}>Search products</ThemedText>
+      </Pressable>
+      <Pressable
+        onPress={() => go("/scan" as Href)}
+        accessibilityRole="button"
+        accessibilityLabel="Scan a QR code"
+        hitSlop={6}
+        style={({ pressed }) => [styles.searchIcon, pressed && { opacity: 0.6 }]}
+      >
+        <SymbolView
+          name={{ ios: "qrcode.viewfinder", android: "qr_code_scanner", web: "qr_code_scanner" }}
+          size={24}
+          tintColor={theme.danger}
+        />
+      </Pressable>
+      <AskChestyButton onPress={() => go("/advanced-search" as Href)} />
+    </View>
+  );
+
   return (
-    <ThemedView style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Navy header, edge to edge, under the status bar */}
       <View style={styles.header}>
         <SafeAreaView edges={["top"]} style={styles.centered}>
@@ -136,7 +173,7 @@ export default function ScanScreen() {
           <View style={styles.chestyText}>
             <ThemedText style={styles.chestyTitle}>Hey, I'm Chesty!</ThemedText>
             <ThemedText style={styles.chestyTip}>
-              Scan a shelf tag and I'll show you prices, reviews and better picks for you.
+              Scan a product's QR code or search below, and I'll show you prices, reviews and better picks.
             </ThemedText>
           </View>
         </View>
@@ -144,112 +181,33 @@ export default function ScanScreen() {
         {/* Straight into shopping mode, or make a list first */}
         <ShoppingListShortcut />
 
-        {/* Camera */}
-        <View style={styles.cameraContainer}>
-          {!permission ? (
-            <View style={styles.permissionPlaceholder}>
-              <ThemedText style={styles.permissionText}>
-                Loading camera...
-              </ThemedText>
-            </View>
-          ) : permission.granted ? (
-            <CameraView
-              style={styles.camera}
-              facing="back"
-              barcodeScannerSettings={{
-                barcodeTypes: ["qr"],
-              }}
-              onBarcodeScanned={handleBarcodeScanned}
-            />
-          ) : permission.canAskAgain ? (
-            <View style={styles.permissionPlaceholder}>
-              <ThemedText style={styles.permissionTitle}>
-                Camera access required
-              </ThemedText>
+        {/* Pick up where they left off (signed in, once something's been viewed) */}
+        <RecentlyViewed from="/" limit={7} size={viewedSize} />
 
-              <ThemedText style={styles.permissionDescription}>
-                Allow camera access so you can scan product QR codes.
-              </ThemedText>
+      </View>
 
-              <Pressable
-                style={styles.permissionButton}
-                onPress={requestPermission}
-              >
-                <ThemedText style={styles.permissionButtonText}>
-                  Enable camera
-                </ThemedText>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.permissionPlaceholder}>
-              <ThemedText style={styles.permissionTitle}>
-                Camera permission denied
-              </ThemedText>
-
-              <ThemedText style={styles.permissionDescription}>
-                Camera access is disabled. Enable it in your device settings
-                to scan products.
-              </ThemedText>
-
-              <Pressable
-                style={styles.permissionButton}
-                onPress={() => Linking.openSettings()}
-              >
-                <ThemedText style={styles.permissionButtonText}>
-                  Open settings
-                </ThemedText>
-              </Pressable>
-            </View>
-          )}
+      {android ? (
+        <View style={[styles.searchDock, { bottom: dockBottom }]} pointerEvents="box-none">
+          {searchBar}
         </View>
-
-        <ThemedText style={styles.scanHint}>
-          Align the QR code within the frame
-        </ThemedText>
-      </View>
-
-      {/* Actions */}
-      <View
-        style={[
-          styles.actions,
-          styles.centered,
-          { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
-        ]}
-      >
-        <Pressable
-          style={({ pressed }) => [styles.primaryButton, pressed && { opacity: 0.85 }]}
-          onPress={() => !needsStore() && setIsScanning(true)}
-          disabled={isLoading}
-        >
-          <ThemedText style={styles.primaryButtonText}>
-            {isLoading
-              ? "Finding product..."
-              : isScanning
-                ? "Scanning..."
-                : "Scan product"}
-          </ThemedText>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [styles.secondaryButton, pressed && { opacity: 0.7 }]}
-          onPress={() => !needsStore() && router.push("/search")}
-        >
-          <ThemedText style={styles.secondaryButtonText}>
-            Enter product manually
-          </ThemedText>
-        </Pressable>
-
-        <Pressable
-          onPress={() => !needsStore() && router.push("/advanced-search" as Href)}
-          style={({ pressed }) => pressed && { opacity: 0.6 }}
-        >
-          <ThemedText style={styles.advancedLink}>
-            Not sure what you need?{" "}
-            <ThemedText style={styles.advancedLinkStrong}>Try advanced search</ThemedText>
-          </ThemedText>
-        </Pressable>
-      </View>
-    </ThemedView>
+      ) : (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { backgroundColor: theme.background, opacity: cover }]}
+          />
+          <Animated.View
+            onLayout={(event) => {
+              dockTop.current = event.nativeEvent.layout.y;
+            }}
+            style={[styles.searchDock, { bottom: dockBottom, transform: [{ translateY: dockY }] }]}
+            pointerEvents="box-none"
+          >
+            {searchBar}
+          </Animated.View>
+        </>
+      )}
+    </View>
   );
 }
 
@@ -366,116 +324,46 @@ function createStyles(theme: Record<ThemeColor, string>) {
       color: theme.textSecondary,
     },
 
-    cameraContainer: {
+    // The search bar floats above the tab bar, like a shopping app's
+    searchDock: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      paddingHorizontal: Spacing.three,
+    },
+    searchBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: Spacing.two,
+      paddingLeft: Spacing.three,
+      paddingRight: Spacing.two,
+      minHeight: SEARCH_BAR_HEIGHT,
+      borderRadius: SEARCH_BAR_HEIGHT / 2,
+      borderWidth: 1,
+      borderColor: theme.border,
+      backgroundColor: theme.card,
+      shadowColor: "#000",
+      shadowOpacity: 0.12,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
+    },
+    searchField: {
       flex: 1,
-      backgroundColor: Brand.navy,
-      borderRadius: 18,
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      overflow: "hidden",
+      gap: Spacing.two,
+      paddingVertical: Spacing.three,
     },
-
-    camera: {
-      width: "100%",
-      height: "100%",
-    },
-
-    permissionPlaceholder: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 12,
-      padding: Spacing.three,
-    },
-
-    permissionText: {
-      fontSize: 13,
-      color: "#ffffff",
-    },
-
-    permissionTitle: {
+    searchPlaceholder: {
       fontSize: 16,
-      fontWeight: "700",
-      textAlign: "center",
-      color: "#ffffff",
-    },
-
-    permissionDescription: {
-      fontSize: 13,
-      textAlign: "center",
-      maxWidth: 260,
-      lineHeight: 19,
-      color: "rgba(255,255,255,0.8)",
-    },
-
-    permissionButton: {
-      backgroundColor: Brand.red,
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      borderRadius: 10,
-    },
-
-    permissionButtonText: {
-      color: "#ffffff",
-      fontSize: 14,
-      fontWeight: "700",
-    },
-
-    scanHint: {
-      fontSize: 12,
-      textAlign: "center",
-      color: theme.textSecondary,
-      marginTop: -Spacing.two,
-    },
-
-    actions: {
-      paddingHorizontal: Spacing.four,
-      paddingTop: Spacing.two,
-      gap: 10,
-    },
-
-    primaryButton: {
-      height: 52,
-      backgroundColor: Brand.red,
-      borderRadius: 14,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    primaryButtonText: {
-      color: "#ffffff",
-      fontSize: 16,
-      fontWeight: "800",
-    },
-
-    secondaryButton: {
-      height: 50,
-      backgroundColor: theme.background,
-      borderWidth: 2,
-      borderColor: Brand.navy,
-      borderRadius: 14,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-
-    secondaryButtonText: {
-      fontSize: 15,
-      fontWeight: "700",
-      color: theme.text,
-    },
-
-    advancedLink: {
-      fontSize: 13,
-      textAlign: "center",
       color: theme.textSecondary,
     },
-
-    advancedLinkStrong: {
-      fontSize: 13,
-      fontWeight: "700",
-      color: theme.text,
-      textDecorationLine: "underline",
-      textDecorationColor: Brand.red,
+    searchIcon: {
+      width: 40,
+      height: 40,
+      alignItems: "center",
+      justifyContent: "center",
     },
   });
 }

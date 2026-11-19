@@ -3,8 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-
-const ERROR_RED = '#E5484D';
+import { useTheme } from '@/hooks/use-theme';
 
 type NoticeProps = {
   kind: 'success' | 'error';
@@ -17,16 +16,19 @@ type NoticeProps = {
 // for a success when it is an error.
 export function FeedbackNotice({ kind, message, onDismiss }: NoticeProps) {
   const isError = kind === 'error';
+  // The theme's red, brighter in dark mode so errors stay readable
+  const theme = useTheme();
   return (
     <ThemedView
       type="backgroundElement"
-      style={[styles.notice, isError && styles.errorNotice]}
+      style={[styles.notice, isError && { borderLeftColor: theme.danger }]}
       accessibilityRole={isError ? 'alert' : 'text'}
       accessibilityLiveRegion="polite"
     >
       <ThemedText
         type="small"
-        style={[styles.noticeText, isError && styles.errorText]}
+        themeColor={isError ? 'danger' : undefined}
+        style={styles.noticeText}
       >
         {isError ? message : `✓ ${message}`}
       </ThemedText>
@@ -76,14 +78,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: 'transparent',
   },
-  errorNotice: {
-    borderLeftColor: ERROR_RED,
-  },
   noticeText: {
     flex: 1,
-  },
-  errorText: {
-    color: ERROR_RED,
   },
   progress: {
     flexDirection: 'row',

@@ -26,8 +26,10 @@ export async function getComparison(
   });
 
   if (!response.ok) {
+    // The backend explains refusals, e.g. products from different categories
+    const body = await response.json().catch(() => ({}));
     throw new Error(
-      `Could not load comparison (${response.status}).`
+      typeof body.detail === "string" ? body.detail : `Could not load comparison (${response.status}).`
     );
   }
 

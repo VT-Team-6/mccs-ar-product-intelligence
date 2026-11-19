@@ -247,7 +247,8 @@ export default function InventoryScreen() {
           keyExtractor={(item) => `${item.store_id}-${item.product_id}`}
           refreshing={refreshing}
           onRefresh={refresh}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + Spacing.three }]}
+          style={styles.edgeToEdge}
+          contentContainerStyle={[[styles.list, { paddingBottom: insets.bottom + Spacing.three }], styles.edgePadding]}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => <StockRow item={item} onPress={() => openItem(item)} />}
           ListEmptyComponent={
@@ -321,6 +322,14 @@ function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => voi
 }
 
 const styles = StyleSheet.create({
+  // Lists reach the screen edges so the scroll bar sits at the edge, while
+  // their content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
+  },
   container: {
     flex: 1,
   },
