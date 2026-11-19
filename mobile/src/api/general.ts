@@ -1,17 +1,18 @@
 import { authenticatedFetch } from "./client";
 import { API_URL } from "./config";
 
-export type Role = "user" | "store_buyer" | "store_admin" | "system_admin";
-export type StaffRole = "store_buyer" | "store_admin";
+export type Role = "user" | "store_clerk" | "store_buyer" | "store_admin" | "system_admin";
+export type StaffRole = "store_clerk" | "store_buyer" | "store_admin";
 
 export type Permission =
+  | "view_inventory"
   | "manage_stock"
   | "manage_inventory"
   | "manage_products"
   | "create_products"
   | "aggregate_reviews"
   | "manage_all_stores"
-  | "manage_store_buyers"
+  | "manage_store_staff"
   | "manage_store_admins";
 
 export type User = {

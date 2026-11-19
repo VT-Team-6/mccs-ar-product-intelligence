@@ -29,6 +29,7 @@ def db_url():
             assert conn.execute("SELECT role FROM users").fetchone()[0] == "user"
             conn.execute((DB_DIR / "migrations/007-global-staff-roles.sql").read_text())
             assert conn.execute("SELECT role FROM users").fetchone()[0] == "store_admin"
+            conn.execute((DB_DIR / "migrations/020-clerk-role.sql").read_text())
         yield url
 
 
@@ -124,11 +125,11 @@ def test_list_and_options_are_store_scoped(setup):
     _, client, _ = setup
     response = client.get("/api/admin/staff?store_id=1")
     assert response.status_code == 200
-    assert response.json()["assignments"] == [
-        {"user_id": 2, "email": "target@test.com", "store_id": 1, "role": "store_buyer"}
+    assert response.json()["users"] == [
+        {"user_id": 2, "email": "target@test.com", "role": "store_buyer"}
     ]
     options = client.get("/api/admin/staff/options").json()["stores"]
-    assert [(s["store_id"], s["allowed_roles"]) for s in options] == [(1, ["store_buyer"])]
+    assert [(s["store_id"], s["allowed_roles"]) for s in options] == [(1, ["store_clerk", "store_buyer"])]
 
 
 def test_self_and_system_admin_changes_are_denied(setup):
@@ -162,3 +163,61 @@ def test_global_role_change_outside_store_scope_is_denied(setup):
     conn.execute("UPDATE users SET role='user' WHERE user_id=2")
     assert client.put("/api/admin/staff/2/stores/1", json={"role": "store_buyer"}).status_code == 403
     assert conn.execute("SELECT role FROM users WHERE user_id=2").fetchone()[0] == "user"
+
+
+def test_manager_can_assign_and_remove_clerk(setup):
+    conn, client, _ = setup
+    conn.execute("DELETE FROM user_stores WHERE user_id=2 AND store_id=2")
+    response = client.put("/api/admin/staff/2/stores/1", json={"role": "store_clerk"})
+    assert response.status_code == 200
+    assert response.json() == {"user_id": 2, "email": "target@test.com", "store_id": 1, "role": "store_clerk"}
+    assert target_assignments(conn) == [(1, "store_clerk")]
+    response = client.delete("/api/admin/staff/2/stores/1")
+    assert response.status_code == 200
+    assert response.json()["role"] == "user"
+
+
+def test_global_buyer_to_clerk_change_requires_all_store_access(setup):
+    conn, client, _ = setup
+    assert client.put("/api/admin/staff/2/stores/1", json={"role": "store_clerk"}).status_code == 403
+    assert target_assignments(conn) == [(1, "store_buyer"), (2, "store_buyer")]
+    conn.execute("INSERT INTO user_stores (user_id,store_id) VALUES (1,2)")
+    assert client.put("/api/admin/staff/2/stores/1", json={"role": "store_clerk"}).status_code == 200
+    assert target_assignments(conn) == [(1, "store_clerk"), (2, "store_clerk")]
+
+
+@pytest.mark.parametrize("role", ["store_clerk", "store_buyer", "user"])
+def test_non_managers_cannot_manage_staff(setup, role):
+    conn, client, _ = setup
+    conn.execute("UPDATE users SET role=%s WHERE user_id=1", (role,))
+    assert client.get("/api/admin/staff/options").status_code == 403
+    assert client.get("/api/admin/staff?store_id=1").status_code == 403
+    assert client.put("/api/admin/staff/2/stores/1", json={"role": "store_buyer"}).status_code == 403
+    assert client.delete("/api/admin/staff/2/stores/1").status_code == 403
+
+
+def test_missing_store_and_duplicate_assignment(setup):
+    conn, client, app = setup
+    app.dependency_overrides[auth.verify_access_token] = lambda: {
+        "claims": {"sub": "system"}, "token": "unused",
+    }
+    assert client.put("/api/admin/staff/2/stores/999", json={"role": "store_buyer"}).status_code == 404
+    for _ in range(2):
+        assert client.put("/api/admin/staff/2/stores/1", json={"role": "store_buyer"}).status_code == 200
+    assert target_assignments(conn) == [(1, "store_buyer"), (2, "store_buyer")]
+
+
+def test_candidates_and_listing_include_clerks(setup):
+    conn, client, _ = setup
+    conn.execute("UPDATE users SET role='store_clerk' WHERE user_id=2")
+    assert client.get("/api/admin/staff?store_id=1").json()["users"][0]["role"] == "store_clerk"
+    conn.execute("DELETE FROM user_stores WHERE user_id=2 AND store_id=1")
+    assert client.get("/api/admin/staff/candidates?store_id=1&q=target").json()["users"][0]["role"] == "store_clerk"
+
+
+def test_manager_can_promote_unassigned_shopper(setup):
+    conn, client, _ = setup
+    conn.execute("DELETE FROM user_stores WHERE user_id=2")
+    conn.execute("UPDATE users SET role='user' WHERE user_id=2")
+    assert client.put("/api/admin/staff/2/stores/1", json={"role": "store_buyer"}).status_code == 200
+    assert target_assignments(conn) == [(1, "store_buyer")]

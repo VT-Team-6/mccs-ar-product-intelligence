@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import { SymbolView } from "expo-symbols";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
@@ -17,7 +16,12 @@ import { useTheme } from "@/hooks/use-theme";
 import { confirmAction } from "@/utils/confirm";
 
 const PAGE_SIZE = 20;
-const roleLabel = (role: StaffRole) => role === "store_admin" ? "Store admin" : "Store buyer";
+const roleLabel = (role: StaffRole) => ({ store_admin: "Store manager", store_buyer: "Buyer", store_clerk: "Clerk" })[role];
+const roleDescription: Record<StaffRole, string> = {
+  store_clerk: "View inventory and update stock counts at assigned stores.",
+  store_buyer: "View inventory and respond to order requests at assigned stores.",
+  store_admin: "Manage inventory, orders, and staff at assigned stores.",
+};
 const messageOf = (error: unknown) => error instanceof Error ? error.message : "Please try again.";
 type Editor = { person: StaffPerson; store: StaffStore; currentRole: StaffRole | null };
 
@@ -41,7 +45,6 @@ function Action({ label, onPress, disabled = false, selected = false, variant = 
 }
 
 export default function StaffManagement() {
-  const router = useRouter();
   const theme = useTheme();
   const [stores, setStores] = useState<StaffStore[]>([]);
   const [storeId, setStoreId] = useState<number | null>(null);
@@ -117,7 +120,7 @@ export default function StaffManagement() {
     if (!store || store.allowed_roles.length === 0) return;
     const currentRole = "store_id" in person ? person.role : null;
     setEditor({ person, store, currentRole });
-    const existingRole = person.role === "store_buyer" || person.role === "store_admin" ? person.role : null;
+    const existingRole = person.role === "store_clerk" || person.role === "store_buyer" || person.role === "store_admin" ? person.role : null;
     setRole(existingRole && store.allowed_roles.includes(existingRole) ? existingRole : store.allowed_roles[0]);
     setSaveError(null);
   }
@@ -246,7 +249,7 @@ export default function StaffManagement() {
                     <View style={[styles.grow, styles.section]}>
                       <ThemedText type="smallBold">{person.email}</ThemedText>
                       <ThemedText themeColor="textSecondary" type="small">
-                        {person.role === "store_buyer" || person.role === "store_admin" ? roleLabel(person.role) : "Shopper"}
+                        {person.role === "store_clerk" || person.role === "store_buyer" || person.role === "store_admin" ? roleLabel(person.role) : "Shopper"}
                       </ThemedText>
                     </View>
                     <SymbolView name={{ ios: "chevron.right", android: "chevron_right", web: "chevron_right" }} size={18} tintColor={theme.textSecondary} />
@@ -309,6 +312,7 @@ export default function StaffManagement() {
               <ThemedText>{editor?.person.email}</ThemedText>
               <ThemedText themeColor="textSecondary">{editor?.store.name}</ThemedText>
               {editor?.currentRole && <ThemedText type="small">Current role: {roleLabel(editor.currentRole)}</ThemedText>}
+              <ThemedText type="small">Roles apply to all assigned stores. Adding or removing this store preserves other store assignments.</ThemedText>
               <ThemedText type="smallBold">{editor?.store.allowed_roles.length === 1 ? "Assign as" : "Choose a role"}</ThemedText>
               {editor?.store.allowed_roles.map((choice) => (
                 <Pressable key={choice} accessibilityRole="radio" accessibilityState={{ checked: role === choice, disabled: saving }}
@@ -316,7 +320,7 @@ export default function StaffManagement() {
                   style={[styles.card, { backgroundColor: role === choice ? theme.backgroundSelected : theme.backgroundElement }]}>
                   <ThemedText type="smallBold">{role === choice ? "●" : "○"} {roleLabel(choice)}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    {choice === "store_buyer" ? "Manage stock at assigned stores." : "Manage inventory, stock, and buyers at assigned stores."}
+                    {roleDescription[choice]}
                   </ThemedText>
                 </Pressable>
               ))}

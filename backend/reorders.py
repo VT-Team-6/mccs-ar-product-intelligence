@@ -27,6 +27,13 @@ MESSAGE_LINES = 25
 # Statuses a manager can send in an order request
 REORDERABLE = ("open", "unavailable")
 
+# Always evaluate the buyer's current role and assignment, not just the saved ID.
+_BUYER_ELIGIBLE = """EXISTS (
+    SELECT 1 FROM users buyer JOIN user_stores us ON us.user_id = buyer.user_id
+    WHERE buyer.user_id = r.buyer_user_id AND buyer.role = 'store_buyer'
+      AND us.store_id = r.store_id
+)"""
+
 
 def _store(conn: Connection, store_id: int) -> dict:
     row = conn.execute(
@@ -149,13 +156,15 @@ def _notify_low(conn: Connection, store_id: int, went_low: list[dict]) -> None:
 _PRODUCTS_SQL = """
     SELECT a.alert_id, a.product_id, p.name, p.brand, i.quantity, i.low_stock_threshold,
            a.status, a.created_at,
-           i.buyer_user_id, pb.email AS buyer_email,
+           pb.user_id AS buyer_user_id, pb.email AS buyer_email,
            r.request_id, ri.quantity AS requested_quantity, ri.reason, ri.updated_at,
            r.created_at AS requested_at, rb.email AS requested_from
       FROM low_stock_alerts a
       JOIN inventory i ON i.product_id = a.product_id AND i.store_id = a.store_id
       JOIN products p ON p.product_id = a.product_id
-      LEFT JOIN users pb ON pb.user_id = i.buyer_user_id
+      LEFT JOIN users pb ON pb.user_id = i.buyer_user_id AND pb.role = 'store_buyer'
+                         AND EXISTS (SELECT 1 FROM user_stores us
+                                     WHERE us.user_id = pb.user_id AND us.store_id = i.store_id)
       LEFT JOIN LATERAL (
             SELECT * FROM order_request_items x
              WHERE x.alert_id = a.alert_id
@@ -254,7 +263,7 @@ def send_request(
 ) -> dict:
     """Send these products to one buyer as a single order request.
 
-    remember_buyer saves this buyer on any of the products that have none.
+    remember_buyer fills in missing or ineligible default buyers.
     """
     stock._require_store(conn, store_id)
     if buyer_user_id not in {b["user_id"] for b in low_stock.list_buyers(conn, store_id, everyone=True)}:
@@ -280,8 +289,11 @@ def send_request(
     )
     if remember_buyer:
         conn.execute(
-            "UPDATE inventory SET buyer_user_id = %s"
-            " WHERE store_id = %s AND buyer_user_id IS NULL AND product_id = ANY(%s)",
+            "UPDATE inventory i SET buyer_user_id = %s"
+            " WHERE i.store_id = %s AND i.product_id = ANY(%s)"
+            " AND NOT EXISTS (SELECT 1 FROM users b JOIN user_stores us USING (user_id)"
+            "                 WHERE b.user_id = i.buyer_user_id AND b.role = 'store_buyer'"
+            "                   AND us.store_id = i.store_id)",
             (buyer_user_id, store_id, [a["product_id"] for a in alerts.values()]),
         )
 
@@ -297,9 +309,11 @@ def send_request(
 def _items(conn: Connection, request_id: int, store_id: int) -> list[dict]:
     return conn.execute(
         "SELECT ri.product_id, p.name, p.brand, ri.quantity, ri.status, ri.reason, ri.updated_at,"
+        " ri.updated_by, actor.email AS updated_by_email,"
         " i.quantity AS current_quantity, a.status = 'resolved' AS restocked"
         " FROM order_request_items ri"
         " JOIN products p ON p.product_id = ri.product_id"
+        " LEFT JOIN users actor ON actor.user_id = ri.updated_by"
         " JOIN low_stock_alerts a ON a.alert_id = ri.alert_id"
         " LEFT JOIN inventory i ON i.product_id = ri.product_id AND i.store_id = %s"
         " WHERE ri.request_id = %s ORDER BY lower(p.name)",
@@ -329,7 +343,8 @@ def summarize(items: list[dict]) -> dict:
 def get_request(conn: Connection, request_id: int) -> dict | None:
     request = conn.execute(
         "SELECT r.request_id, r.store_id, s.name AS store_name, s.address AS store_address,"
-        " r.buyer_user_id, b.email AS buyer_email, m.email AS sent_by_email, r.note, r.created_at"
+        " r.buyer_user_id, b.email AS buyer_email, m.email AS sent_by_email, r.note, r.created_at,"
+        f" {_BUYER_ELIGIBLE} AS buyer_is_eligible"
         " FROM order_requests r JOIN stores s ON s.store_id = r.store_id"
         " LEFT JOIN users b ON b.user_id = r.buyer_user_id"
         " LEFT JOIN users m ON m.user_id = r.sent_by"
@@ -340,6 +355,15 @@ def get_request(conn: Connection, request_id: int) -> dict | None:
         return None
     request["items"] = _items(conn, request_id, request["store_id"])
     request["summary"] = summarize(request["items"])
+    request["needs_reassignment"] = request["summary"]["pending"] > 0 and not request["buyer_is_eligible"]
+    request["reassignments"] = conn.execute(
+        "SELECT previous.email AS from_buyer_email, next_buyer.email AS to_buyer_email,"
+        " actor.email AS changed_by_email, h.created_at FROM order_request_reassignments h"
+        " LEFT JOIN users previous ON previous.user_id = h.from_buyer_id"
+        " LEFT JOIN users next_buyer ON next_buyer.user_id = h.to_buyer_id"
+        " LEFT JOIN users actor ON actor.user_id = h.changed_by"
+        " WHERE h.request_id = %s ORDER BY h.reassignment_id", (request_id,),
+    ).fetchall()
     request["message"] = formal_message(
         {"name": request["store_name"], "address": request["store_address"]},
         request["items"],
@@ -364,19 +388,21 @@ def list_requests(
     where, param = ("r.store_id = %s", store_id) if store_id is not None else ("r.buyer_user_id = %s", user_id)
     requests = conn.execute(
         "SELECT r.request_id, r.store_id, s.name AS store_name, m.email AS sent_by_email,"
-        " b.email AS buyer_email, r.created_at,"
+        f" b.email AS buyer_email, r.created_at, {_BUYER_ELIGIBLE} AS buyer_is_eligible,"
         " EXISTS (SELECT 1 FROM messages n WHERE n.request_id = r.request_id"
         "         AND n.recipient_user_id = %s AND n.read_at IS NULL) AS unread"
         " FROM order_requests r JOIN stores s ON s.store_id = r.store_id"
         " LEFT JOIN users m ON m.user_id = r.sent_by"
         " LEFT JOIN users b ON b.user_id = r.buyer_user_id"
-        f" WHERE {where} ORDER BY r.created_at DESC, r.request_id DESC",
+        f" WHERE {where}" + (f" AND {_BUYER_ELIGIBLE}" if store_id is None else "")
+        + " ORDER BY r.created_at DESC, r.request_id DESC",
         (user_id, param),
     ).fetchall()
     result = []
     for request in requests:
         items = _items(conn, request["request_id"], request["store_id"])
         request["summary"] = summarize(items)
+        request["needs_reassignment"] = request["summary"]["pending"] > 0 and not request["buyer_is_eligible"]
         request["product_count"] = len(items)
         if include_finished or not request["summary"]["finished"]:
             result.append(request)
@@ -400,7 +426,7 @@ def list_items_for_buyer(conn: Connection, user_id: int) -> list[dict]:
 
 def update_items(
     conn: Connection,
-    request_id: int,
+    request: dict,
     product_ids: list[int],
     status: str,
     reason: str,
@@ -411,18 +437,25 @@ def update_items(
     The products' reorder status follows, unless a product has since been sent
     in a newer request. Every manager of the store is notified.
     """
-    request = get_request(conn, request_id)
+    request_id = request["request_id"]
     in_request = {item["product_id"]: item for item in request["items"]}
     missing = [p for p in product_ids if p not in in_request]
     if missing:
         raise stock.InventoryError(f"Not in this order request: product {missing[0]}", status=404)
+    if "manage_all_stores" not in user["permissions"]:
+        for product_id in product_ids:
+            item = in_request[product_id]
+            if item["restocked"]:
+                raise stock.InventoryError("This item has already been received", status=409)
+            if item["status"] != "pending" and item["updated_by"] != user["user_id"]:
+                raise stock.InventoryError("A replacement buyer cannot change another buyer's completed work", status=409)
     if status == "unavailable" and not reason.strip():
         raise stock.InventoryError("Say why these products are unavailable")
 
     conn.execute(
-        "UPDATE order_request_items SET status = %s, reason = %s, updated_at = CURRENT_TIMESTAMP"
+        "UPDATE order_request_items SET status = %s, reason = %s, updated_at = CURRENT_TIMESTAMP, updated_by = %s"
         " WHERE request_id = %s AND product_id = ANY(%s)",
-        (status, reason.strip() if status == "unavailable" else "", request_id, product_ids),
+        (status, reason.strip() if status == "unavailable" else "", user["user_id"], request_id, product_ids),
     )
     # The product's status follows its latest request only
     conn.execute(
@@ -449,15 +482,48 @@ def update_items(
     return get_request(conn, request_id)
 
 
+def reassign_request(conn: Connection, request: dict, buyer_user_id: int, actor_id: int) -> dict:
+    """Move pending work to a current store buyer, retaining all responses and history."""
+    request_id = request["request_id"]
+    if request["summary"]["pending"] == 0:
+        raise stock.InventoryError("This request has no items awaiting buyer action", status=409)
+    if buyer_user_id not in {b["user_id"] for b in low_stock.list_buyers(conn, request["store_id"], everyone=True)}:
+        raise stock.InventoryError("That person isn't a buyer at this store")
+    if buyer_user_id == request["buyer_user_id"]:
+        return request
+    conn.execute(
+        "INSERT INTO order_request_reassignments (request_id, from_buyer_id, to_buyer_id, changed_by)"
+        " VALUES (%s, %s, %s, %s)",
+        (request_id, request["buyer_user_id"], buyer_user_id, actor_id),
+    )
+    conn.execute("UPDATE order_requests SET buyer_user_id = %s WHERE request_id = %s", (buyer_user_id, request_id))
+    _notify(conn, [buyer_user_id], request["store_id"], "order_request",
+            f"Order Request reassigned to you — {request['store_name']}", request_id=request_id)
+    return get_request(conn, request_id)
+
+
 # --- notifications ---------------------------------------------------------
+
+_VISIBLE_MESSAGES = """FROM messages n JOIN users u ON u.user_id = n.recipient_user_id
+    WHERE u.user_id = %s AND CASE n.kind
+        WHEN 'order_request' THEN EXISTS (
+            SELECT 1 FROM order_requests r
+            WHERE r.request_id = n.request_id AND r.buyer_user_id = u.user_id
+              AND r.store_id = n.store_id AND """ + _BUYER_ELIGIBLE + """
+        )
+        ELSE (u.role = 'system_admin' AND n.kind = 'order_update') OR
+            (u.role = 'store_admin' AND EXISTS (
+                SELECT 1 FROM user_stores us
+                WHERE us.user_id = u.user_id AND us.store_id = n.store_id
+            ))
+    END"""
 
 
 def list_messages(conn: Connection, user_id: int, limit: int = 50) -> list[dict]:
     return conn.execute(
-        "SELECT message_id, kind, subject, body, store_id, request_id, created_at,"
-        " read_at IS NOT NULL AS read"
-        " FROM messages WHERE recipient_user_id = %s"
-        " ORDER BY created_at DESC, message_id DESC LIMIT %s",
+        "SELECT n.message_id, n.kind, n.subject, n.body, n.store_id, n.request_id, n.created_at,"
+        " n.read_at IS NOT NULL AS read " + _VISIBLE_MESSAGES
+        + " ORDER BY n.created_at DESC, n.message_id DESC LIMIT %s",
         (user_id, limit),
     ).fetchall()
 
@@ -465,9 +531,8 @@ def list_messages(conn: Connection, user_id: int, limit: int = 50) -> list[dict]
 def unread_by_store(conn: Connection, user_id: int) -> dict[int, int]:
     """Unread notifications per store, so a manager of several stores sees which has news."""
     rows = conn.execute(
-        "SELECT store_id, count(*) AS n FROM messages"
-        " WHERE recipient_user_id = %s AND read_at IS NULL AND store_id IS NOT NULL"
-        " GROUP BY store_id",
+        "SELECT n.store_id, count(*) AS n " + _VISIBLE_MESSAGES
+        + " AND n.read_at IS NULL AND n.store_id IS NOT NULL GROUP BY n.store_id",
         (user_id,),
     ).fetchall()
     return {row["store_id"]: row["n"] for row in rows}
@@ -475,7 +540,7 @@ def unread_by_store(conn: Connection, user_id: int) -> dict[int, int]:
 
 def unread_count(conn: Connection, user_id: int) -> int:
     return conn.execute(
-        "SELECT count(*) AS n FROM messages WHERE recipient_user_id = %s AND read_at IS NULL",
+        "SELECT count(*) AS n " + _VISIBLE_MESSAGES + " AND n.read_at IS NULL",
         (user_id,),
     ).fetchone()["n"]
 
@@ -488,19 +553,21 @@ def mark_read(
     store_id: int | None = None,
 ) -> int:
     """Mark the user's notifications read: these ids, one request's, one store's, or all."""
-    where, params = ["recipient_user_id = %s", "read_at IS NULL"], [user_id]
+    filters, params = [], [user_id]
     if message_ids is not None:
-        where.append("message_id = ANY(%s)")
+        filters.append("n.message_id = ANY(%s)")
         params.append(message_ids)
     if request_id is not None:
-        where.append("request_id = %s")
+        filters.append("n.request_id = %s")
         params.append(request_id)
     if store_id is not None:
-        where.append("store_id = %s")
+        filters.append("n.store_id = %s")
         params.append(store_id)
-    rows = conn.execute(
-        f"UPDATE messages SET read_at = CURRENT_TIMESTAMP WHERE {' AND '.join(where)}"
-        " RETURNING message_id",
+    visible = "SELECT n.message_id " + _VISIBLE_MESSAGES
+    if filters:
+        visible += " AND " + " AND ".join(filters)
+    return conn.execute(
+        "UPDATE messages SET read_at = CURRENT_TIMESTAMP"
+        f" WHERE read_at IS NULL AND message_id IN ({visible})",
         params,
-    ).fetchall()
-    return len(rows)
+    ).rowcount

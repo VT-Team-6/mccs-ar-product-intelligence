@@ -123,9 +123,10 @@ export default function ReordersScreen() {
       if (isManager) {
         if (storeId === null) return;
         if (view === "product") {
-          const result = await getReorders(storeId);
+          const [result, storeRequests] = await Promise.all([getReorders(storeId), getStoreOrderRequests(storeId)]);
           setProducts(result.products);
           setCounts(result.counts);
+          setRequests(storeRequests);
         } else {
           setRequests(await getStoreOrderRequests(storeId));
         }
@@ -207,6 +208,7 @@ export default function ReordersScreen() {
     (item) => (filter === "all" || buyerItemStatus(item) === filter) && matches(item.name, item.brand),
   );
   const waiting = counts ? counts.open + counts.unavailable : 0;
+  const needsReassignment = requests.filter((request) => request.needs_reassignment).length;
 
   const header = (
     <View style={styles.header}>
@@ -223,6 +225,9 @@ export default function ReordersScreen() {
       )}
       {isManager && store && (
         <AppButton label={waiting > 0 ? `Reorder (${waiting} waiting)` : "Reorder"} onPress={openReorder} />
+      )}
+      {isManager && needsReassignment > 0 && (
+        <AppButton label={`${needsReassignment} request(s) need buyer reassignment`} onPress={() => switchView("request")} />
       )}
 
       {/* By product | By request */}
@@ -275,7 +280,7 @@ export default function ReordersScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScreenHeader
-        title="Reorders"
+        title={isManager ? "Reorders" : "Order requests"}
         eyebrow="Management"
         subtitle={isManager ? store?.name : "Order requests sent to you"}
         fallback="/manage"
@@ -460,6 +465,9 @@ function RequestRow({
           {request.unread && !forManager && <ThemedText type="smallBold">New</ThemedText>}
         </View>
         <ThemedText type="small">{describeSummary(request.summary)}</ThemedText>
+        {forManager && request.needs_reassignment && (
+          <ThemedText type="smallBold" style={{ color: theme.danger }}>Needs reassignment</ThemedText>
+        )}
       </ThemedView>
     </Pressable>
   );

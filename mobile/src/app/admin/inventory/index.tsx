@@ -39,6 +39,8 @@ const TABS: { status: InventoryStatus; label: string }[] = [
 
 export default function InventoryScreen() {
   const { profile, hasPermission } = useAuth();
+  const canManageInventory = hasPermission("manage_inventory");
+  const canUpdateStock = hasPermission("manage_stock");
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -167,9 +169,9 @@ export default function InventoryScreen() {
 
   return (
     <ThemedView style={styles.container}>
-            <ScreenHeader
-        title="Inventory"
-        eyebrow="Management"
+      <ScreenHeader
+        title={canManageInventory ? "Manage inventory" : canUpdateStock ? "Stock counts" : "View inventory"}
+        eyebrow={canUpdateStock ? "Management" : "Read only"}
         subtitle={store?.name}
         fallback="/manage"
         backLabel="Management"
@@ -178,7 +180,7 @@ export default function InventoryScreen() {
         {/* The store's name is in the header; this only switches stores */}
         <StorePicker stores={stores} storeId={storeId} onChange={setStoreId} />
         {!store && !loading && !error && (
-          <ThemedText themeColor="textSecondary">You aren't assigned to any stores yet.</ThemedText>
+          <ThemedText themeColor="textSecondary">You have no store assignments yet.</ThemedText>
         )}
 
         <View style={styles.tabs}>
@@ -200,13 +202,13 @@ export default function InventoryScreen() {
           ))}
         </View>
 
-        {store && status === "active" && (
+        {store && status === "active" && canUpdateStock && (
           <View style={styles.fileButtons}>
             <FileButton label="Export stock" onPress={exportStock} disabled={fileBusy} />
             <FileButton label="Import stock" onPress={importStock} disabled={fileBusy} />
           </View>
         )}
-        {store && status === "active" && hasPermission("manage_inventory") && (
+        {store && status === "active" && canManageInventory && (
           <View style={styles.fileButtons}>
             <FileButton
               label="Low stock & buyers"

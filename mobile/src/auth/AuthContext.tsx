@@ -6,6 +6,7 @@ import {
 } from "aws-amplify/auth";
 
 import { Hub } from "aws-amplify/utils";
+import { AppState } from "react-native";
 import { getUser, type Permission, type User } from "../api/general";
 
 import {
@@ -26,7 +27,7 @@ type AuthContextType = {
   /** The signed-in user's row from our backend, once it has loaded. */
   profile: User | null;
   /** Asks the backend again, for screens that need to recover from a transient failure. */
-  refreshProfile: () => Promise<void>;
+  refreshProfile: (options?: { silent?: boolean }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<SignInOutput>;
   signOut: () => Promise<void>;
 };
@@ -133,10 +134,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Refresh the profile on first load, if we haven't already loaded it. 
   // This is important for the case where the user has just signed in and we haven't yet asked the backend who they are.
-  const refreshProfile = useCallback(async () => {
+  const refreshProfile = useCallback(async (options?: { silent?: boolean }) => {
     const version = sessionVersion.current;
     const request = ++profileRequest.current;
-    setProfileLoading(true);
+    if (!options?.silent) setProfileLoading(true);
     try {
       const loaded = await loadProfileWithRetry();
       if (version === sessionVersion.current && request === profileRequest.current) {
@@ -146,6 +147,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (request === profileRequest.current) setProfileLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void refreshProfile({ silent: true });
+    });
+    return () => subscription.remove();
+  }, [user, refreshProfile]);
 
   function hasPermission(permission: Permission): boolean {
     return profile?.permissions.includes(permission) ?? false;

@@ -10,7 +10,7 @@ import { useAuth } from "@/auth/AuthContext";
 export default function AdminInventoryLayout() {
   const { loading, profileLoading, hasPermission } = useAuth();
   if (loading || profileLoading) return <ActivityIndicator />;
-  if (!hasPermission("manage_stock") && !hasPermission("manage_inventory"))
+  if (!hasPermission("view_inventory"))
     return <Redirect href="/" />;
   return <Slot />;
 }

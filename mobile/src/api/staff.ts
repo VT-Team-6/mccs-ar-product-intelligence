@@ -48,5 +48,5 @@ export function setStaffRole(userId: number, storeId: number, role: StaffRole) {
 }
 
 export function removeStaffRole(userId: number, storeId: number) {
-  return request<StaffAssignment>(`/${userId}/stores/${storeId}`, { method: "DELETE" });
+  return request<StaffPerson>(`/${userId}/stores/${storeId}`, { method: "DELETE" });
 }

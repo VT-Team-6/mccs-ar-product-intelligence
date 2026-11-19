@@ -43,10 +43,6 @@ export default function AddProductScreen() {
       .catch(() => setMyStores([]));
   }, [forStore, profile, shoppingAt?.store_id]);
 
-  // Goes back to the list. If there's nothing to go back to, opens the list directly.
-  const goBack = () =>
-    router.canGoBack() ? router.back() : router.replace("/admin/products");
-
   function finishReviewSetup() {
     if (!createdProduct) return;
     setReviewSetupVisible(false);
@@ -64,6 +60,11 @@ export default function AddProductScreen() {
       forStore ? { ...values, store_id: storeId } : values,
     );
     setCreatedProduct(created);
+
+    if (!hasPermission("aggregate_reviews")) {
+      router.replace({ pathname: "/admin/products/[id]", params: { id: String(created.product_id) } });
+      return;
+    }
 
     // The product already exists: a review-source error must not re-submit the form.
     try {
@@ -122,7 +123,7 @@ export default function AddProductScreen() {
         <ProductForm submitLabel="Add product" onSubmit={handleCreate} />
       </View>
 
-      {createdProduct && (
+      {createdProduct && hasPermission("aggregate_reviews") && (
         <ReviewSourceSelector
           visible={reviewSetupVisible}
           productId={createdProduct.product_id}

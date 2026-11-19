@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { Redirect, useFocusEffect, useRouter, type Href } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,24 +22,31 @@ const ROLE_NAME: Record<string, string> = {
 // The Manage tab: everything staff use, in one place, so Account only holds
 // the person's own settings. Each row shows only for roles that can use it.
 export default function ManagementScreen() {
-  const { profile, hasPermission } = useAuth();
+  const { profile, hasPermission, refreshProfile, loading, profileLoading } = useAuth();
   const { unread, refresh } = useNotifications();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   // Fresh unread count each time the tab opens
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh]),
+      void refreshProfile({ silent: true });
+    }, [refresh, refreshProfile]),
   );
 
   const isManager = hasPermission("manage_inventory");
-  const seesSetup =
-    hasPermission("create_products") ||
-    hasPermission("manage_store_admins") ||
-    hasPermission("manage_store_buyers");
-  const seesStock = isManager || hasPermission("manage_stock");
+  const canManageStoreManagers = hasPermission("manage_store_admins");
+  const canManageStaff = canManageStoreManagers || hasPermission("manage_store_staff");
+  const seesSetup = hasPermission("create_products") || canManageStaff;
+  const seesStock = hasPermission("view_inventory");
+  const seesOrders = isManager || profile?.role === "store_buyer";
+  const inventoryRow = isManager
+    ? { label: "Manage inventory", hint: "Update stock, prices, low-stock levels, and buyer assignments." }
+    : hasPermission("manage_stock")
+      ? { label: "Update stock counts", hint: "Enter on-hand quantities or import a stock CSV." }
+      : { label: "View inventory", hint: "Read-only stock counts and availability at your stores." };
+
+  if (!loading && !profileLoading && !seesStock && !seesSetup) return <Redirect href="/" />;
 
   return (
     <ThemedView style={styles.container}>
@@ -59,36 +66,36 @@ export default function ManagementScreen() {
               label="Manage Products"
               hint={
                 hasPermission("manage_products")
-                  ? "Add, edit and delete products"
-                  : "Add products for your store and print QR codes"
+                  ? "Add, edit, and delete products."
+                  : "Add and edit products owned by your stores."
               }
               href="/admin/products"
             />
           )}
 
-          {(hasPermission("manage_store_admins") || hasPermission("manage_store_buyers")) && (
-            <Row label="Manage Staff" hint="Add or remove staff" href="/admin/staff" />
-          )}
-
-          {seesStock && (
-            <SectionLabel label="Stock and orders" style={seesSetup ? styles.groupLabel : undefined} />
-          )}
-
-          {seesStock && (
+          {canManageStaff && (
             <Row
-              label="Manage Inventory/Stock"
-              hint="Stock counts, end-of-day CSV, low-stock levels and buyers"
-              href="/admin/inventory"
+              label="Manage staff"
+              hint={canManageStoreManagers ? "Assign store managers, buyers, and clerks." : "Assign buyers and clerks at your stores."}
+              href="/admin/staff"
             />
           )}
 
           {seesStock && (
+            <SectionLabel label={seesOrders ? "Stock and orders" : "Stock"} style={seesSetup ? styles.groupLabel : undefined} />
+          )}
+
+          {seesStock && (
+            <Row {...inventoryRow} href="/admin/inventory" />
+          )}
+
+          {seesOrders && (
             <Row
-              label="Reorders"
+              label={isManager ? "Reorders" : "Order requests"}
               hint={
                 isManager
-                  ? "Low-stock products and their order status"
-                  : "Order requests from your stores"
+                  ? "Review low stock and send order requests."
+                  : "View and respond to requests assigned to you."
               }
               badge={unread}
               href="/admin/reorders"

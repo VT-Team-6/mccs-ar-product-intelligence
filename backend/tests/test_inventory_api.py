@@ -119,10 +119,15 @@ def _sign_in_as_admin(client, db, token="stock-admin") -> dict:
     return client.get("/me").json()
 
 
-def _sign_in_as(client, db, role, token=None) -> dict:
+def _sign_in_as(client, db, role, token=None, store_ids=(1,)) -> dict:
     """Sign in as a specific role."""
     user = _sign_in(client, token or f"stock-{role}")
     db.execute("UPDATE users SET role = %s WHERE user_id = %s", (role, user["user_id"]))
+    for store_id in store_ids:
+        db.execute(
+            "INSERT INTO user_stores (user_id, store_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (user["user_id"], store_id),
+        )
     return client.get("/me").json()
 
 
@@ -704,89 +709,146 @@ def test_writes_refuse_non_admins(client, db):
 # the roles that happen to hold it, and only breaks for the rest.
 
 
-def test_single_write_is_allowed_for_store_buyer(client, db):
-    # The single-row PUT is the same job as the batch PUT, so holding
-    # manage_stock must be enough. Guarding it with manage_products locked
-    # every store role out of it.
-    _sign_in_as(client, db, "store_buyer")
-
+@pytest.mark.parametrize("role", ["store_clerk", "store_admin", "system_admin"])
+def test_stock_writers_can_update_assigned_store(client, db, role):
+    _sign_in_as(client, db, role)
     response = client.put("/api/admin/inventory/1/1", json={"quantity": 7})
-
     assert response.status_code == 200
     assert response.json()["quantity"] == 7
 
 
-def test_single_write_is_allowed_for_store_admin(client, db):
-    _sign_in_as(client, db, "store_admin")
+@pytest.mark.parametrize("role", ["store_clerk", "store_buyer", "store_admin", "system_admin"])
+def test_staff_can_read_assigned_inventory(client, db, role):
+    _sign_in_as(client, db, role)
+    response = client.get("/api/admin/inventory?store_id=1")
+    assert response.status_code == 200
+    assert response.json()["items"]
 
-    assert (
-        client.put("/api/admin/inventory/1/1", json={"quantity": 7}).status_code == 200
-    )
+
+@pytest.mark.parametrize("role", ["store_clerk", "store_buyer", "store_admin"])
+def test_staff_cannot_read_unassigned_inventory(client, db, role):
+    _sign_in_as(client, db, role)
+    assert client.get("/api/admin/inventory?store_id=2").status_code == 403
 
 
-def test_store_buyer_cannot_approve_a_pushed_product(client, db):
-    # Deciding what the store sells is store_admin work, not buyer work.
-    _sign_in_as(client, db, "store_buyer")
-    product_id = _new_product(client, db)
-    client.post(
-        "/api/admin/inventory/push",
-        json={"product_ids": [product_id], "store_ids": [1]},
-    )
+@pytest.mark.parametrize("role", ["user", "store_buyer"])
+def test_read_only_roles_cannot_write_stock(client, db, role):
+    _sign_in_as(client, db, role)
+    assert client.put("/api/admin/inventory/1/1", json={"quantity": 7}).status_code == 403
+    assert db.execute("SELECT quantity FROM inventory WHERE product_id=1 AND store_id=1").fetchone()["quantity"] == 12
 
-    response = client.post(
-        f"/api/admin/inventory/{product_id}/1/approve", json={"price": 5.0}
-    )
 
+@pytest.mark.parametrize("body", [
+    {"quantity": 7, "price": 1},
+    {"quantity": 7, "price": None},
+    {"quantity": 7, "status": "active"},
+    {"quantity": 7, "status": None},
+])
+@pytest.mark.parametrize("batch", [False, True])
+def test_clerk_cannot_change_protected_fields(client, db, body, batch):
+    _sign_in_as(client, db, "store_clerk")
+    if batch:
+        response = client.put("/api/admin/inventory", json={"items": [{"product_id": 1, "store_id": 1, **body}]})
+    else:
+        response = client.put("/api/admin/inventory/1/1", json=body)
     assert response.status_code == 403
+    assert db.execute("SELECT quantity FROM inventory WHERE product_id=1 AND store_id=1").fetchone()["quantity"] == 12
 
 
-def test_store_admin_can_approve_a_pushed_product(client, db):
+@pytest.mark.parametrize("role", ["store_clerk", "store_admin"])
+def test_stock_write_refuses_unassigned_store(client, db, role):
+    _sign_in_as(client, db, role)
+    assert client.put("/api/admin/inventory/3/2", json={"quantity": 1}).status_code == 403
+    assert db.execute("SELECT quantity FROM inventory WHERE product_id=3 AND store_id=2").fetchone()["quantity"] == 14
+
+
+@pytest.mark.parametrize("role", ["store_clerk", "store_admin"])
+def test_mixed_store_batch_is_rejected_without_partial_writes(client, db, role):
+    _sign_in_as(client, db, role)
+    response = client.put("/api/admin/inventory", json={"items": [
+        {"product_id": 1, "store_id": 1, "quantity": 1},
+        {"product_id": 3, "store_id": 2, "quantity": 1},
+    ]})
+    assert response.status_code == 403
+    assert db.execute("SELECT quantity FROM inventory WHERE product_id=1 AND store_id=1").fetchone()["quantity"] == 12
+    assert db.execute("SELECT count(*) AS n FROM stock_changes").fetchone()["n"] == 0
+
+
+@pytest.mark.parametrize("role", ["store_clerk", "store_buyer", "user"])
+def test_non_managers_cannot_push_approve_or_remove(client, db, role):
+    _sign_in_as(client, db, role)
+    assert client.post("/api/admin/inventory/push", json={"product_ids": [1], "store_ids": [1]}).status_code == 403
+    assert client.post("/api/admin/inventory/1/1/approve", json={"price": 5}).status_code == 403
+    assert client.delete("/api/admin/inventory/1/1").status_code == 403
+
+
+def test_manager_cannot_approve_remove_or_push_to_another_store(client, db):
+    _sign_in_as(client, db, "store_admin")
+    assert client.post("/api/admin/inventory/3/2/approve", json={"price": 5}).status_code == 403
+    assert client.delete("/api/admin/inventory/3/2").status_code == 403
+    product_id = _new_product(client, db)
+    response = client.post("/api/admin/inventory/push", json={"product_ids": [product_id], "store_ids": [1, 2]})
+    assert response.status_code == 403
+    assert db.execute("SELECT count(*) AS n FROM inventory WHERE product_id=%s", (product_id,)).fetchone()["n"] == 0
+
+
+def test_manager_can_manage_own_store_inventory(client, db):
     _sign_in_as(client, db, "store_admin")
     product_id = _new_product(client, db)
-    client.post(
-        "/api/admin/inventory/push",
-        json={"product_ids": [product_id], "store_ids": [1]},
-    )
-
-    response = client.post(
-        f"/api/admin/inventory/{product_id}/1/approve", json={"price": 5.0}
-    )
-
+    assert client.post("/api/admin/inventory/push", json={"product_ids": [product_id], "store_ids": [1]}).status_code == 200
+    response = client.post(f"/api/admin/inventory/{product_id}/1/approve", json={"price": 5})
     assert response.status_code == 200
     assert response.json()["status"] == "active"
+    assert client.put(f"/api/admin/inventory/{product_id}/1", json={"price": 6}).status_code == 200
+    assert client.delete(f"/api/admin/inventory/{product_id}/1").status_code == 200
 
 
-def test_store_buyer_can_push_a_product(client, db):
-    # The push route never reads the user, so it is guarded by the decorator
-    # rather than a parameter; a missing Depends there would not fail loudly.
-    _sign_in_as(client, db, "store_buyer")
+def test_clerk_cannot_create_or_modify_pending_inventory(client, db):
+    _sign_in_as(client, db, "store_clerk")
     product_id = _new_product(client, db)
+    assert client.put(f"/api/admin/inventory/{product_id}/1", json={"quantity": 1}).status_code == 403
+    db.execute("INSERT INTO inventory (product_id,store_id,status,quantity) VALUES (%s,1,'pending',0)", (product_id,))
+    assert client.put(f"/api/admin/inventory/{product_id}/1", json={"quantity": 1}).status_code == 403
 
-    response = client.post(
-        "/api/admin/inventory/push",
-        json={"product_ids": [product_id], "store_ids": [1]},
-    )
 
+def test_app_admin_can_manage_unassigned_store(client, db):
+    _sign_in_as_admin(client, db)
+    assert client.get("/api/admin/inventory?store_id=2").status_code == 200
+    assert client.put("/api/admin/inventory/3/2", json={"quantity": 9, "price": 5}).status_code == 200
+    assert client.delete("/api/admin/inventory/3/2").status_code == 200
+
+
+def test_clerk_can_batch_update_quantities(client, db):
+    _sign_in_as(client, db, "store_clerk")
+    response = client.put("/api/admin/inventory", json={"items": [
+        {"product_id": 1, "store_id": 1, "quantity": 7},
+        {"product_id": 2, "store_id": 1, "quantity": 8},
+    ]})
     assert response.status_code == 200
-    assert response.json()[0]["status"] == "pending"
+    assert [entry["quantity"] for entry in response.json()] == [7, 8]
 
 
-def test_store_buyer_can_delete_an_entry(client, db):
-    _sign_in_as(client, db, "store_buyer")
-
-    assert client.delete("/api/admin/inventory/1/1").status_code == 200
-
-    remaining = client.get("/api/products/1/stock").json()["stores"]
-    assert [store["store_id"] for store in remaining] == [2]
-
-
-def test_read_only_role_cannot_push(client, db):
-    _sign_in_as(client, db, "user")
-    product_id = _new_product(client, db)
-
-    response = client.post(
-        "/api/admin/inventory/push",
-        json={"product_ids": [product_id], "store_ids": [1]},
-    )
-
+def test_protected_field_in_later_batch_entry_saves_nothing(client, db):
+    _sign_in_as(client, db, "store_clerk")
+    response = client.put("/api/admin/inventory", json={"items": [
+        {"product_id": 1, "store_id": 1, "quantity": 1},
+        {"product_id": 2, "store_id": 1, "quantity": 1, "price": 1},
+    ]})
     assert response.status_code == 403
+    assert db.execute("SELECT quantity FROM inventory WHERE product_id=1 AND store_id=1").fetchone()["quantity"] == 12
+    assert db.execute("SELECT count(*) AS n FROM stock_changes").fetchone()["n"] == 0
+
+
+def test_assignment_removal_revokes_inventory_access_on_next_request(client, db):
+    user = _sign_in_as(client, db, "store_clerk")
+    assert client.get("/api/admin/inventory?store_id=1").status_code == 200
+    db.execute("DELETE FROM user_stores WHERE user_id=%s", (user["user_id"],))
+    assert client.get("/api/admin/inventory?store_id=1").status_code == 403
+    assert client.put("/api/admin/inventory/1/1", json={"quantity": 1}).status_code == 403
+
+
+def test_demotion_to_buyer_revokes_quantity_updates_on_next_request(client, db):
+    user = _sign_in_as(client, db, "store_clerk")
+    db.execute("UPDATE users SET role='store_buyer' WHERE user_id=%s", (user["user_id"],))
+    assert client.get("/api/admin/inventory?store_id=1").status_code == 200
+    assert client.put("/api/admin/inventory/1/1", json={"quantity": 1}).status_code == 403

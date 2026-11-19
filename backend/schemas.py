@@ -462,12 +462,13 @@ class PushedEntry(BaseModel):
 
 UserRole = Literal[
     "user",
+    "store_clerk",
     "store_buyer",
     "store_admin",
     "system_admin",
 ]
 
-AssignableStaffRole = Literal["store_buyer", "store_admin"]
+AssignableStaffRole = Literal["store_clerk", "store_buyer", "store_admin"]
 
 class StaffAccessUpdate(BaseModel):
     role: AssignableStaffRole
@@ -577,6 +578,18 @@ class OrderRequestUpdate(BaseModel):
     reason: str = Field(default="", max_length=500)
 
 
+class OrderRequestReassign(BaseModel):
+    buyer_user_id: int = Field(gt=0)
+    model_config = ConfigDict(extra="forbid")
+
+
+class OrderRequestReassignment(BaseModel):
+    from_buyer_email: str | None
+    to_buyer_email: str | None
+    changed_by_email: str | None
+    created_at: datetime
+
+
 class OrderRequestSummary(BaseModel):
     pending: int
     ordered: int
@@ -595,6 +608,8 @@ class OrderRequestItem(BaseModel):
     updated_at: datetime | None
     current_quantity: int | None
     restocked: bool
+    updated_by: int | None
+    updated_by_email: str | None
 
 
 class OrderRequest(BaseModel):
@@ -610,6 +625,8 @@ class OrderRequest(BaseModel):
     message: str
     summary: OrderRequestSummary
     items: list[OrderRequestItem]
+    needs_reassignment: bool
+    reassignments: list[OrderRequestReassignment]
 
 
 class OrderRequestListEntry(BaseModel):
@@ -622,6 +639,7 @@ class OrderRequestListEntry(BaseModel):
     unread: bool
     product_count: int
     summary: OrderRequestSummary
+    needs_reassignment: bool
 
 
 class BuyerItem(OrderRequestItem):

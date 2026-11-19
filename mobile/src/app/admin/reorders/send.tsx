@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { Redirect, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -19,6 +19,8 @@ import {
   type ReorderProduct,
 } from "@/api/reorders";
 import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
+import { useAuth } from "@/auth/AuthContext";
+import { canAccessStore } from "@/auth/store-access";
 import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -41,7 +43,14 @@ type Typing = { kind: "item"; item: ReorderProduct } | { kind: "bulk"; key: stri
 export default function ReorderScreen() {
   const params = useLocalSearchParams<{ storeId: string; storeName?: string }>();
   const storeId = Number(params.storeId);
-  const storeName = params.storeName || "this store";
+  const { profile, hasPermission } = useAuth();
+  if (!hasPermission("manage_inventory") || !canAccessStore(profile, storeId)) {
+    return <Redirect href="/admin/reorders" />;
+  }
+  return <SendOrderForm storeId={storeId} storeName={params.storeName || "this store"} />;
+}
+
+function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: string }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
