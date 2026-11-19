@@ -19,6 +19,9 @@ class AddShoppingListItem(BaseModel):
 class UpdateShoppingListItem(BaseModel):
     is_completed: bool
 
+class ScannedProduct(BaseModel):
+    product_id: int = Field(gt=0)
+
 def _http_error(error: shopping_lists.ShoppingListError):
     return HTTPException(
         status_code=error.status,
@@ -46,6 +49,30 @@ def create_list(
             )
         except shopping_lists.ShoppingListError as error:
             raise _http_error(error) from error
+
+# The two /active routes come before /{list_id}, so "active" is never read as a list id.
+
+@router.post("/active/scan")
+def check_off_scanned(
+    body: ScannedProduct,
+    user=Depends(auth.require_authenticated_user),
+):
+    """After a scan, check the product off the active list if it is on it."""
+    with get_connection() as conn:
+        return shopping_lists.check_off_scanned(
+            conn, user["user_id"], body.product_id
+        )
+
+@router.get("/active/products/{product_id}")
+def read_active_status(
+    product_id: int,
+    user=Depends(auth.require_authenticated_user),
+):
+    """Whether a product is on the active list, and if it's checked off."""
+    with get_connection() as conn:
+        return shopping_lists.active_list_status(
+            conn, user["user_id"], product_id
+        )
 
 @router.get("/{list_id}")
 def read_list(

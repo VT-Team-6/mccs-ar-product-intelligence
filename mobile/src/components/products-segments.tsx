@@ -27,7 +27,10 @@ export function ProductsSegments() {
       : 'index';
 
   return (
-    <ScreenHeader title="Products" eyebrow="MCCS · Your products" back={false}>
+    <ScreenHeader
+      title={isInStoreMode ? 'In-store shopping' : 'Products'}
+      eyebrow={isInStoreMode ? 'MCCS · Shopping mode' : 'MCCS · Your products'}
+      back={false}>
       {!isInStoreMode && (
         <View style={styles.group}>
           {SEGMENTS.map((segment) => {

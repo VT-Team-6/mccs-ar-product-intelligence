@@ -1,7 +1,10 @@
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,7 +15,9 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
+import { authenticatedFetch } from '@/api/client';
 import {
+  checkOffScanned,
   getShoppingList,
   listShoppingLists,
   setShoppingListItemCompleted,
@@ -22,13 +27,31 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { AppButton } from '@/components/ui/app-button';
+import { SectionLabel } from '@/components/ui/section-label';
 import {
   BottomTabInset,
+  Brand,
   MaxContentWidth,
+  Radius,
   Spacing,
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
+// What the last scan did, shown as a banner above the list
+type ScanNotice = {
+  tone: 'success' | 'info' | 'problem';
+  text: string;
+};
+
+const NOTICE_COLORS = {
+  success: Brand.success,
+  info: Brand.navy,
+  problem: Brand.danger,
+} as const;
+
+// In-store shopping mode: the active list, with a scanner. Scanning a product
+// that is on the list checks it off right here, without leaving the list.
 export default function InStoreShoppingScreen() {
   const router = useRouter();
   const theme = useTheme();
@@ -38,6 +61,14 @@ export default function InStoreShoppingScreen() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Scanner state
+  const [permission, requestPermission] = useCameraPermissions();
+  const [scanning, setScanning] = useState(false);
+  const [notice, setNotice] = useState<ScanNotice | null>(null);
+  // The camera reports the same code many times a second. This stops a
+  // second scan from starting while the first one is still being handled.
+  const handlingScan = useRef(false);
 
   const loadActiveList = useCallback(async () => {
     setLoading(true);
@@ -101,6 +132,57 @@ export default function InStoreShoppingScreen() {
     }
   };
 
+  const startScanning = async () => {
+    setNotice(null);
+    if (!permission?.granted) {
+      const answer = await requestPermission();
+      if (!answer.granted) {
+        setNotice({
+          tone: 'problem',
+          text: 'Camera access is off. Allow it to scan, or check items off by tapping them.',
+        });
+        return;
+      }
+    }
+    handlingScan.current = false;
+    setScanning(true);
+  };
+
+  // A QR code was read: find the product, then check it off the active list.
+  const handleScanned = async ({ data }: { data: string }) => {
+    if (handlingScan.current) return;
+    handlingScan.current = true;
+    setScanning(false);
+    setBusy(true);
+
+    try {
+      // The same lookup the Home scanner uses
+      const response = await authenticatedFetch(
+        `/api/scan?code=${encodeURIComponent(data)}`,
+      );
+      const product = await response.json();
+      if (!response.ok) {
+        setNotice({
+          tone: 'problem',
+          text: product.detail ?? 'That QR code is not an MCCS product.',
+        });
+        return;
+      }
+
+      const result = await checkOffScanned(product.product_id);
+      if (result.list) setList(result.list);
+      setNotice(scanNotice(result.status, product.name));
+    } catch {
+      setNotice({
+        tone: 'problem',
+        text: 'Could not reach the server. Try again, or tap the item to check it off.',
+      });
+    } finally {
+      setBusy(false);
+      handlingScan.current = false;
+    }
+  };
+
   const remaining =
     list?.items.filter((item) => !item.is_completed) ?? [];
 
@@ -122,9 +204,10 @@ export default function InStoreShoppingScreen() {
       accessibilityRole="checkbox"
       accessibilityState={{ checked: item.is_completed }}
       accessibilityLabel={`${item.is_completed ? 'Uncheck' : 'Complete'} ${item.name}`}
-      style={[
+      style={({ pressed }) => [
         styles.item,
-        { backgroundColor: theme.backgroundElement },
+        { backgroundColor: theme.card, borderColor: theme.border },
+        pressed && styles.pressed,
       ]}
     >
       <View
@@ -132,10 +215,10 @@ export default function InStoreShoppingScreen() {
           styles.checkbox,
           {
             borderColor: item.is_completed
-              ? '#23865c'
+              ? Brand.success
               : theme.textSecondary,
             backgroundColor: item.is_completed
-              ? '#23865c'
+              ? Brand.success
               : 'transparent',
           },
         ]}
@@ -182,39 +265,12 @@ export default function InStoreShoppingScreen() {
             },
           ]}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerText}>
-              <ThemedText type="subtitle">
-                In-Store Shopping
-              </ThemedText>
-
-              <ThemedText
-                type="small"
-                themeColor="textSecondary"
-              >
-                {list
-                  ? `${list.name} · Active list`
-                  : 'Shopping mode'}
-              </ThemedText>
-            </View>
-
-            <ThemedView
-              type="backgroundElement"
-              style={styles.badge}
-            >
-              <ThemedText style={styles.badgeText}>
-                Shopping
-              </ThemedText>
-            </ThemedView>
-          </View>
-
-          {loading && <ActivityIndicator />}
+          {loading && !list && <ActivityIndicator />}
 
           {error && (
             <ThemedView
-              type="backgroundElement"
-              style={styles.message}
+              type="card"
+              style={[styles.message, { borderColor: theme.border }]}
             >
               <ThemedText>{error}</ThemedText>
               <Pressable onPress={() => void loadActiveList()}>
@@ -237,26 +293,24 @@ export default function InStoreShoppingScreen() {
             </ThemedView>
           )}
 
-          {!loading && list && (
+          {list && (
             <>
               {/* Progress card */}
               <ThemedView
-                type="backgroundElement"
-                style={styles.progressCard}
+                type="card"
+                style={[styles.progressCard, { borderColor: theme.border }]}
               >
+                <SectionLabel label={`${list.name} · Active list`} />
                 <ThemedText type="subtitle">
-                  {remaining.length} items remaining
-                </ThemedText>
-
-                <ThemedText themeColor="textSecondary">
-                  Scan products as you find them, or check
-                  them off manually.
+                  {remaining.length === 0 && total > 0
+                    ? 'All done!'
+                    : `${remaining.length} ${remaining.length === 1 ? 'item' : 'items'} left`}
                 </ThemedText>
 
                 <View
                   style={[
                     styles.progressTrack,
-                    { backgroundColor: theme.background },
+                    { backgroundColor: theme.backgroundElement },
                   ]}
                 >
                   <View
@@ -271,15 +325,62 @@ export default function InStoreShoppingScreen() {
                   type="small"
                   themeColor="textSecondary"
                 >
-                  {completedCount} of {total} completed
+                  {completedCount} of {total} checked off · Scan items as you pick them up, or tap to check them off.
                 </ThemedText>
               </ThemedView>
 
+              {/* Scanner */}
+              {scanning ? (
+                <View style={styles.cameraBox}>
+                  <CameraView
+                    style={styles.camera}
+                    facing="back"
+                    barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                    onBarcodeScanned={handleScanned}
+                  />
+                  <ThemedText type="small" themeColor="textSecondary" style={styles.cameraHint}>
+                    Point the camera at the product's QR tag.
+                  </ThemedText>
+                  <AppButton
+                    label="Cancel"
+                    variant="secondary"
+                    onPress={() => setScanning(false)}
+                  />
+                </View>
+              ) : (
+                <AppButton
+                  label="Scan Product"
+                  onPress={() => void startScanning()}
+                  loading={busy}
+                />
+              )}
+
+              {permission && !permission.granted && !permission.canAskAgain && Platform.OS !== 'web' && (
+                <Pressable onPress={() => void Linking.openSettings()}>
+                  <ThemedText type="linkPrimary">Open settings to allow the camera</ThemedText>
+                </Pressable>
+              )}
+
+              {/* What the last scan did */}
+              {notice && (
+                <View
+                  style={[
+                    styles.notice,
+                    // borderColor first, so the colored left edge wins over it
+                    { borderColor: theme.border },
+                    { borderLeftColor: NOTICE_COLORS[notice.tone], backgroundColor: theme.card },
+                  ]}
+                  accessibilityLiveRegion="polite"
+                >
+                  <ThemedText type="smallBold" style={{ color: NOTICE_COLORS[notice.tone] }}>
+                    {notice.text}
+                  </ThemedText>
+                </View>
+              )}
+
               {/* Remaining products */}
               <View style={styles.section}>
-                <ThemedText type="smallBold">
-                  Still needed
-                </ThemedText>
+                <SectionLabel label="Still needed" />
 
                 {remaining.length > 0 ? (
                   remaining.map(renderItem)
@@ -292,26 +393,9 @@ export default function InStoreShoppingScreen() {
                 )}
               </View>
 
-              {/* Scanner integration: Trisheka */}
-              <Pressable
-                disabled
-                accessibilityRole="button"
-                accessibilityState={{ disabled: true }}
-                style={[
-                  styles.scanButton,
-                  styles.disabled,
-                ]}
-              >
-                <ThemedText style={styles.scanButtonText}>
-                  Scan Product
-                </ThemedText>
-              </Pressable>
-
               {/* Completed products */}
               <View style={styles.section}>
-                <ThemedText type="smallBold">
-                  Completed ({completed.length})
-                </ThemedText>
+                <SectionLabel label={`Checked off (${completed.length})`} />
 
                 {completed.length > 0 ? (
                   completed.map(renderItem)
@@ -325,24 +409,29 @@ export default function InStoreShoppingScreen() {
           )}
 
           {/* Leave mode without resetting completion statuses. */}
-          <Pressable
-            accessibilityRole="button"
-            onPress={() =>
-              router.replace('/products/shopping-list')
-            }
-            style={[
-              styles.exitButton,
-              { borderColor: theme.textSecondary },
-            ]}
-          >
-            <ThemedText type="smallBold">
-              Exit Shopping Mode
-            </ThemedText>
-          </Pressable>
+          <AppButton
+            label="Exit Shopping Mode"
+            variant="secondary"
+            onPress={() => router.replace('/products/shopping-list')}
+          />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
+}
+
+// The banner text for each scan result
+function scanNotice(status: string, productName: string): ScanNotice {
+  switch (status) {
+    case 'checked_off':
+      return { tone: 'success', text: `✓ Checked off ${productName}` };
+    case 'already_checked':
+      return { tone: 'info', text: `${productName} is already checked off.` };
+    case 'not_on_list':
+      return { tone: 'info', text: `${productName} isn't on this list.` };
+    default:
+      return { tone: 'problem', text: 'You have no active list. Pick one from Shopping List.' };
+  }
 }
 
 const styles = StyleSheet.create({
@@ -356,44 +445,43 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   content: {
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     gap: Spacing.three,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-  },
-  headerText: {
-    flex: 1,
-    gap: Spacing.half,
-  },
-  badge: {
-    borderRadius: 20,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.one,
-  },
-  badgeText: {
-    color: '#23865c',
-    fontWeight: '600',
-    fontSize: 12,
-  },
   progressCard: {
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
     gap: Spacing.two,
   },
   progressTrack: {
     height: 8,
-    borderRadius: 8,
+    borderRadius: Radius.pill,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 8,
-    backgroundColor: '#23865c',
+    borderRadius: Radius.pill,
+    backgroundColor: Brand.success,
+  },
+  cameraBox: {
+    gap: Spacing.two,
+  },
+  camera: {
+    width: '100%',
+    height: 260,
+    borderRadius: Radius.medium,
+    overflow: 'hidden',
+  },
+  cameraHint: {
+    textAlign: 'center',
+  },
+  notice: {
+    padding: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
+    borderLeftWidth: 5,
   },
   section: {
     gap: Spacing.two,
@@ -403,7 +491,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   checkbox: {
     width: 24,
@@ -425,27 +514,12 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
     opacity: 0.65,
   },
-  scanButton: {
-    padding: Spacing.three,
-    alignItems: 'center',
-    borderRadius: Spacing.two,
-    backgroundColor: '#3c87f7',
-  },
-  scanButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  disabled: {
-    opacity: 0.5,
-  },
-  exitButton: {
-    borderWidth: 1,
-    padding: Spacing.three,
-    alignItems: 'center',
-    borderRadius: Spacing.two,
-  },
   message: {
     padding: Spacing.three,
+    borderRadius: Radius.medium,
     gap: Spacing.two,
+  },
+  pressed: {
+    opacity: 0.6,
   },
 });

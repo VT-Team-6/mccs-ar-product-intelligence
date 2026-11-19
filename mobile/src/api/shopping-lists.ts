@@ -127,3 +127,44 @@ export async function removeShoppingListItem(
   );
   return readResponse(response, 'Could not remove item.');
 }
+
+// What happened to the active list after a scan.
+//   checked_off     it was on the list and is now checked off
+//   already_checked it was on the list and already checked off
+//   not_on_list     the active list doesn't have this product
+//   no_active_list  the shopper has no active list
+export type ScanCheckOffStatus =
+  | 'checked_off'
+  | 'already_checked'
+  | 'not_on_list'
+  | 'no_active_list';
+
+export type ScanCheckOff = {
+  status: ScanCheckOffStatus;
+  product_id: number;
+  // The updated active list, or null when there is none
+  list: ShoppingList | null;
+};
+
+// Where one product stands on the active list, for the product page.
+export type ActiveListStatus = {
+  list_id: number | null;
+  list_name: string | null;
+  on_list: boolean;
+  is_completed: boolean;
+};
+
+// Called after every scan: checks the product off the active list if it's on it.
+export async function checkOffScanned(productId: number): Promise<ScanCheckOff> {
+  const response = await authenticatedFetch(`${BASE}/active/scan`, {
+    method: 'POST',
+    body: JSON.stringify({ product_id: productId }),
+  });
+  return readResponse(response, 'Could not update your shopping list.');
+}
+
+// Whether a product is on the active list, and if it's checked off.
+export async function getActiveListStatus(productId: number): Promise<ActiveListStatus> {
+  const response = await authenticatedFetch(`${BASE}/active/products/${productId}`);
+  return readResponse(response, 'Could not load your shopping list.');
+}

@@ -28,7 +28,9 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import {
   BottomTabInset,
+  Brand,
   MaxContentWidth,
+  Radius,
   Spacing,
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -287,10 +289,10 @@ export default function ShoppingListScreen() {
           styles.checkbox,
           {
             borderColor: item.is_completed
-              ? '#23865c'
+              ? Brand.success
               : theme.textSecondary,
             backgroundColor: item.is_completed
-              ? '#23865c'
+              ? Brand.success
               : 'transparent',
           },
         ]}
@@ -808,7 +810,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#23865c',
+    backgroundColor: Brand.success,
     borderRadius: 10,
   },
   section: {
@@ -846,19 +848,20 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   search: {
-    borderRadius: Spacing.two,
+    borderRadius: Radius.medium,
     padding: Spacing.three,
     fontSize: 16,
   },
+  // MCCS red: the main action (see UI_STANDARDS.md)
   primaryButton: {
-    backgroundColor: '#3c87f7',
+    backgroundColor: Brand.red,
     padding: Spacing.three,
-    borderRadius: Spacing.two,
+    borderRadius: Radius.medium,
     alignItems: 'center',
   },
   primaryButtonText: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   disabled: {
     opacity: 0.45,
@@ -906,8 +909,8 @@ const styles = StyleSheet.create({
   addResultButton: {
     width: 42,
     height: 42,
-    borderRadius: Spacing.two,
-    backgroundColor: '#3c87f7',
+    borderRadius: Radius.small,
+    backgroundColor: Brand.navy,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -920,6 +923,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.one,
   },
   addedText: {
-    color: '#23865c',
+    color: Brand.success,
   },
 });
