@@ -1,6 +1,6 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { getActiveListStatus, type ActiveListStatus } from '@/api/shopping-lists';
 import { ThemedText } from '@/components/themed-text';
@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/use-theme';
 // One line on the product page saying where this product stands on the
 // shopper's active list: still needed, or already checked off (for example
 // right after scanning it). Shows nothing when it isn't on the active list.
+// Tapping it opens the list.
 export function ShoppingListStatus({
   productId,
   refreshKey = 0,
@@ -19,6 +20,7 @@ export function ShoppingListStatus({
   refreshKey?: number;
 }) {
   const theme = useTheme();
+  const router = useRouter();
   const [status, setStatus] = useState<ActiveListStatus | null>(null);
 
   // Loads when the page comes into view, so a scan or a check-off made on
@@ -44,12 +46,15 @@ export function ShoppingListStatus({
 
   const done = status.is_completed;
   return (
-    <View
-      style={[
+    <Pressable
+      onPress={() => router.push('/products/shopping-list' as Href)}
+      accessibilityRole="button"
+      accessibilityLabel={`${done ? 'Checked off' : 'On'} your list ${status.list_name}. Open the list`}
+      style={({ pressed }) => [
         styles.row,
         { borderColor: done ? Brand.success : theme.border, backgroundColor: theme.card },
-      ]}
-      accessibilityRole="text">
+        pressed && styles.pressed,
+      ]}>
       <ThemedText style={[styles.icon, { color: done ? Brand.success : theme.link }]}>
         {done ? '✓' : '☐'}
       </ThemedText>
@@ -61,7 +66,10 @@ export function ShoppingListStatus({
           {done ? `Got it for ${status.list_name}` : `Still needed for ${status.list_name}`}
         </ThemedText>
       </View>
-    </View>
+      <ThemedText type="smallBold" themeColor="link">
+        View list ›
+      </ThemedText>
+    </Pressable>
   );
 }
 
@@ -83,5 +91,8 @@ const styles = StyleSheet.create({
   text: {
     flex: 1,
     gap: Spacing.half,
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });

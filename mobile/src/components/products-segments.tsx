@@ -1,4 +1,5 @@
 import { usePathname, useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ScreenHeader } from '@/components/ui/screen-header';
@@ -20,11 +21,19 @@ export function ProductsSegments() {
   // The address of the screen that is showing, e.g. /products or /products/history
   const pathname = usePathname();
   const isInStoreMode = pathname.startsWith('/products/in-store');
-  const active = pathname.startsWith('/products/shopping-list')
-    ? 'shopping-list'
-    : pathname.startsWith('/products/history')
-      ? 'history'
-      : 'index';
+
+  // Which segment is showing. While another tab is open the address is
+  // something like /account, so keep the last Products segment instead of
+  // falling back to Likes; otherwise coming back flashes Likes for a frame.
+  const lastActive = useRef<(typeof SEGMENTS)[number]['name']>('index');
+  if (pathname.startsWith('/products')) {
+    lastActive.current = pathname.startsWith('/products/shopping-list')
+      ? 'shopping-list'
+      : pathname.startsWith('/products/history')
+        ? 'history'
+        : 'index';
+  }
+  const active = lastActive.current;
 
   return (
     <ScreenHeader

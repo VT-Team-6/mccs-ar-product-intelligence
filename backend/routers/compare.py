@@ -56,6 +56,10 @@ def get_comparison(
 
     products_by_id = {row["product_id"]: row for row in rows}
 
+    # Comparing coffee with shoes means nothing, so every product must share a category
+    if len({row["category"] for row in rows}) > 1:
+        raise HTTPException(status_code=400, detail="You can only compare products in the same category.")
+
     # Products that still exist and that the engine knows about
     engine = get_engine()
     valid_ids = [pid for pid in product_ids if pid in products_by_id and pid in engine.index]

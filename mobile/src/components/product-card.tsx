@@ -127,8 +127,8 @@ export function ProductCard({
           style={({ pressed }) => [styles.heartButton, pressed && styles.pressed]}>
           <ThemedText
             type="subtitle"
-            style={[styles.heart, isLiked && styles.liked]}
-            themeColor="textSecondary">
+            themeColor={isLiked ? "danger" : "textSecondary"}
+            style={styles.heart}>
             {isLiked ? '♥' : '♡'}
           </ThemedText>
         </Pressable>
@@ -197,8 +197,5 @@ const styles = StyleSheet.create({
   heart: {
     fontSize: 26,
     lineHeight: 30,
-  },
-  liked: {
-    color: Brand.red,
   },
 });

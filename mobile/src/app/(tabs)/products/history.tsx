@@ -147,6 +147,14 @@ function HistoryContent() {
     }
   };
 
+  // Only products in the same category can be compared (not coffee with shoes)
+  const pickedCategories = new Set(
+    items
+      .filter((item) => selectedIds.includes(item.product.product_id) && item.product.category)
+      .map((item) => item.product.category),
+  );
+  const mixedCategories = pickedCategories.size > 1;
+
   // Select or deselect a product
   const toggleCompare = (productId: number) => {
     if (selectedIds.includes(productId)) {
@@ -165,7 +173,9 @@ function HistoryContent() {
   };
 
   // Determine whether comparison is allowed
-  const compareProblem = selectionProblem(selectedIds.length);
+  const compareProblem = mixedCategories
+    ? 'These products are not in the same category, so they can’t be compared.'
+    : selectionProblem(selectedIds.length);
 
   // The heart shows the product's current state, not its state at event time,
   // so changing it updates every row for that product.
@@ -198,12 +208,6 @@ function HistoryContent() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="small" themeColor="textSecondary">
-            {loading && items.length === 0 ? 'Loading your activity' : ''}
-          </ThemedText>
-        </ThemedView>
-
         <TextInput
           value={text}
           onChangeText={setText}
@@ -218,52 +222,68 @@ function HistoryContent() {
           ]}
         />
 
+        {/* Shown under the search bar, only while loading, so no empty line sits above it */}
+        {loading && items.length === 0 && (
+          <ThemedText type="small" themeColor="textSecondary">
+            Loading your activity
+          </ThemedText>
+        )}
+
         {/* Navy strip, like the Home header, so comparing stands out */}
         <View style={styles.compareToolbar}>
-          <View style={styles.compareToolbarText}>
-            <ThemedText type="smallBold" style={styles.onNavy}>
-              Compare products
-            </ThemedText>
+          <View style={styles.compareToolbarRow}>
+            <View style={styles.compareToolbarText}>
+              <ThemedText type="smallBold" style={styles.onNavy}>
+                Compare products
+              </ThemedText>
 
-            <ThemedText type="small" style={styles.onNavyMuted}>
-              {selectedIds.length} of {MAX_COMPARE} selected · Choose at least 2
-            </ThemedText>
-          </View>
+              <ThemedText type="small" style={styles.onNavyMuted}>
+                {selectedIds.length} of {MAX_COMPARE} selected · Choose at least 2
+              </ThemedText>
+            </View>
 
-          {selectedIds.length > 0 && (
+            {selectedIds.length > 0 && (
+              <Pressable
+                onPress={() => {
+                  setSelectedIds([]);
+                  setSelectionMessage(null);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear comparison selection"
+              >
+                <ThemedText type="linkPrimary" style={styles.onNavyLink}>
+                  Clear
+                </ThemedText>
+              </Pressable>
+            )}
+
             <Pressable
-              onPress={() => {
-                setSelectedIds([]);
-                setSelectionMessage(null);
-              }}
+              disabled={compareProblem !== null}
               accessibilityRole="button"
-              accessibilityLabel="Clear comparison selection"
+              accessibilityState={{
+                disabled: compareProblem !== null,
+              }}
+              onPress={() =>
+                router.push(compareHref(selectedIds) as Href)
+              }
+              style={[
+                styles.compareButton,
+                compareProblem !== null &&
+                  styles.compareButtonDisabled,
+              ]}
             >
-              <ThemedText type="linkPrimary" style={styles.onNavyLink}>
-                Clear
+              <ThemedText style={styles.compareButtonText}>
+                Compare
               </ThemedText>
             </Pressable>
-          )}
+          </View>
 
-          <Pressable
-            disabled={compareProblem !== null}
-            accessibilityRole="button"
-            accessibilityState={{
-              disabled: compareProblem !== null,
-            }}
-            onPress={() =>
-              router.push(compareHref(selectedIds) as Href)
-            }
-            style={[
-              styles.compareButton,
-              compareProblem !== null &&
-                styles.compareButtonDisabled,
-            ]}
-          >
-            <ThemedText style={styles.compareButtonText}>
-              Compare
+          {/* Mixed categories (e.g. coffee and shoes) can't be compared */}
+          {mixedCategories && (
+            <ThemedText type="small" style={styles.onNavyWarning}>
+              {compareProblem}
             </ThemedText>
-          </Pressable>
+          )}
         </View>
 
         {selectionMessage && (
@@ -289,6 +309,8 @@ function HistoryContent() {
           sections={groupByDay(items)}
           keyExtractor={(item) => String(item.history_id)}
           stickySectionHeadersEnabled={false}
+          // Full width, so the scroll bar sits at the screen's edge
+          style={styles.edgeToEdge}
           contentContainerStyle={[
             styles.list,
             { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
@@ -500,12 +522,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.four,
     // The segment control above this stack already handles the top inset
-    paddingTop: Spacing.three,
+    paddingTop: Spacing.two,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
-  },
-  header: {
-    gap: Spacing.half,
   },
   search: {
     fontSize: 16,
@@ -518,16 +537,18 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     paddingVertical: Spacing.two,
   },
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
   list: {
     gap: Spacing.two,
     paddingTop: Spacing.two,
+    paddingHorizontal: Spacing.four,
   },
   sectionTitle: {
     paddingTop: Spacing.two,
   },
   compareToolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: Spacing.two,
     paddingVertical: Spacing.two,
     paddingLeft: Spacing.three,
@@ -540,6 +561,15 @@ const styles = StyleSheet.create({
   },
   onNavyMuted: {
     color: 'rgba(255,255,255,0.7)',
+  },
+  // A light red that reads well on navy in both modes
+  onNavyWarning: {
+    color: '#FF8A8A',
+  },
+  compareToolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   onNavyLink: {
     color: '#C9D6EC',

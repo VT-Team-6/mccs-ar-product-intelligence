@@ -80,7 +80,7 @@ export function StockImportModal({ storeId, storeName, csv, onClose, onImported 
             {(errors.length > 0 || changes.length > 0) && (
               <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
                 {errors.map((problem) => (
-                  <ThemedText key={`e${problem.row}`} type="small" style={styles.error}>
+                  <ThemedText key={`e${problem.row}`} type="small" themeColor="danger" style={styles.error}>
                     Row {problem.row}: {problem.message}
                   </ThemedText>
                 ))}
@@ -102,7 +102,7 @@ export function StockImportModal({ storeId, storeName, csv, onClose, onImported 
             )}
 
             {error && (
-              <ThemedText type="small" style={styles.error}>
+              <ThemedText type="small" themeColor="danger" style={styles.error}>
                 {error}
               </ThemedText>
             )}
@@ -162,7 +162,6 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   error: {
-    color: "#E5484D",
   },
   button: {
     alignSelf: "stretch",

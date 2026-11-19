@@ -229,13 +229,6 @@ function LikesContent() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="small" themeColor="textSecondary">
-            {countLabel()}
-          </ThemedText>
-        </ThemedView>
-
-
         <TextInput
           value={text}
           onChangeText={setText}
@@ -249,6 +242,13 @@ function LikesContent() {
             { color: theme.text, backgroundColor: theme.card, borderColor: theme.border },
           ]}
         />
+
+        {/* The count sits under the search bar, so no empty line sits above it */}
+        {countLabel() !== '' && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {countLabel()}
+          </ThemedText>
+        )}
 
         {/* Creates sort options. Price sorting needs a store (the backend
             answers 400 without one), so the chip is only offered with one. */}
@@ -298,6 +298,8 @@ function LikesContent() {
         <FlatList
           data={items}
           keyExtractor={(product) => String(product.product_id)}
+          // Full width, so the scroll bar sits at the screen's edge
+          style={styles.edgeToEdge}
           contentContainerStyle={[
             styles.list,
             { paddingBottom: insets.bottom + BottomTabInset + Spacing.three },
@@ -428,12 +430,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacing.four,
     // The segment control above this stack already handles the top inset
-    paddingTop: Spacing.three,
+    paddingTop: Spacing.two,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
-  },
-  header: {
-    gap: Spacing.half,
   },
   search: {
     fontSize: 16,
@@ -461,9 +460,13 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     paddingVertical: Spacing.two,
   },
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
   list: {
     gap: Spacing.two,
     paddingTop: Spacing.two,
+    paddingHorizontal: Spacing.four,
   },
   loadMore: {
     paddingVertical: Spacing.two,

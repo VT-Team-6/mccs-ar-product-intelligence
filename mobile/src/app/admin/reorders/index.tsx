@@ -293,7 +293,8 @@ export default function ReordersScreen() {
           <FlatList
             data={shownProducts}
             keyExtractor={(p) => String(p.alert_id)}
-            contentContainerStyle={listStyle}
+            style={styles.edgeToEdge}
+            contentContainerStyle={[listStyle, styles.edgePadding]}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             refreshing={refreshing}
@@ -314,7 +315,8 @@ export default function ReordersScreen() {
           <FlatList
             data={shownItems}
             keyExtractor={(item) => `${item.request_id}-${item.product_id}`}
-            contentContainerStyle={listStyle}
+            style={styles.edgeToEdge}
+            contentContainerStyle={[listStyle, styles.edgePadding]}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             refreshing={refreshing}
@@ -328,7 +330,8 @@ export default function ReordersScreen() {
           <FlatList
             data={requests}
             keyExtractor={(request) => String(request.request_id)}
-            contentContainerStyle={listStyle}
+            style={styles.edgeToEdge}
+            contentContainerStyle={[listStyle, styles.edgePadding]}
             refreshing={refreshing}
             onRefresh={refresh}
             renderItem={({ item }) => (
@@ -474,6 +477,14 @@ function RequestRow({
 }
 
 const styles = StyleSheet.create({
+  // Lists reach the screen edges so the scroll bar sits at the edge, while
+  // their content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
+  },
   container: {
     flex: 1,
   },

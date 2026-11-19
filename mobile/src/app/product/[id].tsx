@@ -107,7 +107,7 @@ export default function ShopperProductScreen() {
     const productId = Number(id);
     if (!user || recorded.current || !Number.isInteger(productId)) return;
     recorded.current = true;
-    const fromSearch = (from ?? '').startsWith('/search');
+    const fromSearch = (from ?? '').startsWith('/search') || (from ?? '').startsWith('/find');
     // Opens from recommendation cards teach "Recommended for You" what people pick
     const interaction =
       via === 'recommendation'
@@ -168,8 +168,12 @@ export default function ShopperProductScreen() {
   };
 
   // Opens a recommended product on its own details page. Back returns here, results intact.
+  // "from" keeps Back working after a web refresh too (see UI_STANDARDS.md).
   const openProduct = (picked: Product) => {
-    router.push(`/product/${picked.product_id}?via=recommendation` as Href);
+    const here = `/product/${id}`;
+    router.push(
+      `/product/${picked.product_id}?from=${encodeURIComponent(here)}&via=recommendation` as Href,
+    );
   };
 
   return (
@@ -183,6 +187,9 @@ export default function ShopperProductScreen() {
         {product && loadedId === Number(id) && (
           <ScrollView
             ref={scrollRef}
+            // Reaches the screen's edges so the scroll bar sits at the far right;
+            // the content keeps the page's side padding
+            style={styles.edgeToEdge}
             contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.two }]}>
             <ProductImageGallery imageUrls={galleryImages} productName={product.name} />
 
@@ -212,7 +219,7 @@ export default function ShopperProductScreen() {
                   styles.likeButton,
                   { borderColor: product.is_liked ? Brand.red : theme.border },
                 ]}>
-                <ThemedText type="subtitle" style={[styles.heart, product.is_liked && styles.liked]}>
+                <ThemedText type="subtitle" themeColor={product.is_liked ? "danger" : undefined} style={styles.heart}>
                   {product.is_liked ? '♥' : '♡'}
                 </ThemedText>
                 <ThemedText type="smallBold">
@@ -238,7 +245,7 @@ export default function ShopperProductScreen() {
                 <>
                   <Fact label="Price" value={price?.price ?? '—'} strong />
                   {product.store_inventory && (
-                    <Fact label="Availability" value={storeStock(product)} />
+                    <Fact label="Availability" value={storeStock(product)} wide />
                   )}
                 </>
               )}
@@ -332,13 +339,28 @@ function likeErrorMessage(problem: unknown): string {
   return 'Could not save your like.';
 }
 
-function Fact({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+// One of the three facts side by side. Availability is the longest word, so it
+// gets a wider share of the row ("wide") to keep every label on one line.
+function Fact({
+  label,
+  value,
+  strong = false,
+  wide = false,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  wide?: boolean;
+}) {
   return (
-    <ThemedView type="card" style={styles.fact}>
-      <SectionLabel label={label} />
+    <ThemedView type="card" style={[styles.fact, wide && styles.factWide]}>
+      <SectionLabel label={label} style={styles.factLabel} />
       <ThemedText
         type="smallBold"
         themeColor={strong ? 'link' : undefined}
+        // A long price shrinks a little instead of breaking onto two lines
+        numberOfLines={strong ? 1 : undefined}
+        adjustsFontSizeToFit={strong}
         style={strong && styles.strong}>
         {value}
       </ThemedText>
@@ -362,8 +384,12 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.4,
   },
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
   content: {
     gap: Spacing.three,
+    paddingHorizontal: Spacing.four,
   },
   section: {
     gap: Spacing.one,
@@ -385,9 +411,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 30,
   },
-  liked: {
-    color: Brand.red,
-  },
   facts: {
     flexDirection: 'row',
     borderRadius: Radius.medium,
@@ -408,6 +431,13 @@ const styles = StyleSheet.create({
   fact: {
     flex: 1,
     gap: Spacing.half,
+  },
+  factWide: {
+    flex: 1.4,
+  },
+  // Slightly tighter spacing than other labels so AVAILABILITY fits one line
+  factLabel: {
+    letterSpacing: 1,
   },
   moreButton: {
     alignItems: 'center',

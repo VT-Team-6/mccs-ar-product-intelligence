@@ -1,19 +1,21 @@
-import { useRouter, type Href } from 'expo-router';
+import { useNavigation, useRouter, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 
 // The app's one Back button, so going back works the same on every screen:
-// 1. go back if there is a previous page in this session
-// 2. otherwise go to "from" (the page that opened this one, e.g. /search?q=nike)
+// 1. go to "from" (the page that opened this one, e.g. /search?q=nike) when the
+//    page right underneath is just the tabs. That happens after a web refresh,
+//    when the tabs are put back underneath and plain "back" would land on Home.
+// 2. otherwise go back if there is a previous page in this session
 // 3. otherwise go to the fallback (Home by default)
-// Step 2 and 3 matter on web, where a refreshed or shared link has no history.
 export function BackButton({
   from,
   fallback = '/',
   label = 'Back',
   onDark = false,
   iconOnly = false,
+  onPress,
 }: {
   from?: string;
   fallback?: string;
@@ -23,14 +25,22 @@ export function BackButton({
   // Just a round chevron, no text (used in the header band, left of the title).
   // The label is still read out by screen readers.
   iconOnly?: boolean;
+  // Replaces the usual going back, for screens that need their own
+  onPress?: () => void;
 }) {
   const router = useRouter();
+  const navigation = useNavigation();
 
   const goBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else if (from && from.startsWith('/')) {
+    // The page right underneath this one in the stack, if any
+    const state = navigation.getState();
+    const below = state && state.index > 0 ? state.routes[state.index - 1] : undefined;
+    const onlyTabsBelow = !below || below.name === '(tabs)';
+
+    if (from && from.startsWith('/') && onlyTabsBelow) {
       router.replace(from as Href);
+    } else if (router.canGoBack()) {
+      router.back();
     } else {
       router.replace(fallback as Href);
     }
@@ -39,7 +49,7 @@ export function BackButton({
   if (iconOnly) {
     return (
       <Pressable
-        onPress={goBack}
+        onPress={onPress ?? goBack}
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel={label === 'Back' ? 'Back' : `Back to ${label}`}
@@ -51,7 +61,7 @@ export function BackButton({
 
   return (
     <Pressable
-      onPress={goBack}
+      onPress={onPress ?? goBack}
       hitSlop={12}
       accessibilityRole="button"
       accessibilityLabel={label}

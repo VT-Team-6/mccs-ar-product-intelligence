@@ -10,10 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 import auth
 import preferences
+import recent_searches
 import store_selection
 import user_products
 from database import get_connection
 from schemas import (
+    RecentSearch,
+    RecentSearchCreate,
     HistoryItem,
     HistoryPage,
     InteractionCreate,
@@ -203,3 +206,32 @@ def save_preferences(
         return preferences.save_preferences(
             conn, user["user_id"], body.model_dump()
         )
+
+# --- Recent searches (signed-in shoppers) ------------------------------------
+
+
+@router.get("/recent-searches", response_model=list[RecentSearch])
+def read_recent_searches(user=Depends(auth.require_authenticated_user)) -> list[dict]:
+    """The signed-in person's recent searches, newest first (up to 10)."""
+    with get_connection() as conn:
+        return recent_searches.list_recent(conn, user["user_id"])
+
+
+@router.post("/recent-searches", status_code=status.HTTP_204_NO_CONTENT)
+def add_recent_search(body: RecentSearchCreate, user=Depends(auth.require_authenticated_user)) -> None:
+    """Save a search that just ran. Repeats move to the top instead of piling up."""
+    with get_connection() as conn:
+        recent_searches.record(conn, user["user_id"], body.query)
+
+
+@router.delete("/recent-searches/{search_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_recent_search(search_id: int, user=Depends(auth.require_authenticated_user)) -> None:
+    with get_connection() as conn:
+        if not recent_searches.remove(conn, user["user_id"], search_id):
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Search not found")
+
+
+@router.delete("/recent-searches", status_code=status.HTTP_204_NO_CONTENT)
+def clear_recent_searches(user=Depends(auth.require_authenticated_user)) -> None:
+    with get_connection() as conn:
+        recent_searches.clear(conn, user["user_id"])

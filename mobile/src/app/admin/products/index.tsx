@@ -104,10 +104,11 @@ export default function ManageProductsScreen() {
           keyExtractor={(product) => String(product.product_id)}
           refreshing={refreshing}
           onRefresh={refresh}
-          contentContainerStyle={[
+          style={styles.edgeToEdge}
+          contentContainerStyle={[[
             styles.list,
             { paddingBottom: insets.bottom + Spacing.three },
-          ]}
+          ], styles.edgePadding]}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => <ProductRow product={item} />}
           ListEmptyComponent={
@@ -175,6 +176,14 @@ function ProductRow({ product }: { product: Product }) {
 }
 
 const styles = StyleSheet.create({
+  // Lists reach the screen edges so the scroll bar sits at the edge, while
+  // their content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
+  },
   container: {
     flex: 1,
   },

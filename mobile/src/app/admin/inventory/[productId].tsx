@@ -183,16 +183,18 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
 
   return (
     <ThemedView style={styles.container}>
+      {/* Product names are long, so the name goes under the photo, like Product details */}
       <ScreenHeader
-        title={params.name || `Product ${productId}`}
+        title={params.storeName || "Inventory"}
         eyebrow={canManageInventory ? "Inventory" : canEditStock ? "Stock count" : "Read-only inventory"}
-        subtitle={params.storeName || undefined}
         fallback="/admin/inventory"
         backLabel="Inventory"
+        compact
       />
       <View style={styles.body}>
         <ScrollView
-          contentContainerStyle={styles.content}
+          style={styles.edgeToEdge}
+          contentContainerStyle={[styles.content, styles.edgePadding]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
@@ -203,13 +205,16 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
             <ThemedView type="backgroundSelected" style={styles.image} />
           )}
 
-          <ThemedText themeColor="textSecondary">
-            {pending
-              ? canManageInventory
-                ? "Set the price and stock count to approve this product."
-                : "Waiting for manager approval."
-              : `At ${params.storeName || "this store"}`}
+          <ThemedText type="subtitle" style={styles.name}>
+            {params.name || `Product ${productId}`}
           </ThemedText>
+          {pending && (
+            <ThemedText themeColor="textSecondary">
+              {canManageInventory
+                ? "Set the price and stock count to approve this product."
+                : "Waiting for manager approval."}
+            </ThemedText>
+          )}
         
           <View style={styles.field}>
             <ThemedText type="smallBold">Price ($)</ThemedText>
@@ -354,6 +359,14 @@ function Button({ label, onPress, quiet = false }: { label: string; onPress: () 
 }
 
 const styles = StyleSheet.create({
+  // Lists reach the screen edges so the scroll bar sits at the edge, while
+  // their content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
+  },
   container: {
     flex: 1,
   },
@@ -407,6 +420,11 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
+  // Same size as the product name on Product details
+  name: {
+    fontSize: 26,
+    lineHeight: 32,
+  },
   image: {
     width: "100%",
     height: 180,

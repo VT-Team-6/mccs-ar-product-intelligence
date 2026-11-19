@@ -20,6 +20,7 @@ import {
 
 import { publicFetch, withStore } from '@/api/client';
 import {
+  addShoppingListItem,
   checkOffScanned,
   getShoppingList,
   listShoppingLists,
@@ -46,12 +47,15 @@ import { useStore } from '@/store/StoreContext';
 type ScanNotice = {
   tone: 'success' | 'info' | 'problem';
   text: string;
+  // Set when the scanned product isn't on the list, so it can be added
+  addProduct?: { id: number; name: string };
 };
 
-const NOTICE_COLORS = {
-  success: Brand.success,
-  info: Brand.navy,
-  problem: Brand.danger,
+// The scan message's color for each tone, from the theme so it stays readable in dark mode
+const NOTICE_TONE = {
+  success: 'success',
+  info: 'link',
+  problem: 'danger',
 } as const;
 
 // In-store shopping mode: the active list, with a scanner. Scanning a product
@@ -181,7 +185,7 @@ function InStoreShoppingContent() {
 
       const result = await checkOffScanned(product.product_id);
       if (result.list) setList(result.list);
-      setNotice(scanNotice(result.status, product.name));
+      setNotice(scanNotice(result.status, product.product_id, product.name));
     } catch {
       setNotice({
         tone: 'problem',
@@ -190,6 +194,26 @@ function InStoreShoppingContent() {
     } finally {
       setBusy(false);
       handlingScan.current = false;
+    }
+  };
+
+  // A scanned product that wasn't on the list: add it, and since it's already
+  // in the shopper's hand, check it off straight away.
+  const addScanned = async (productId: number, productName: string) => {
+    if (!list || busy) return;
+    setBusy(true);
+    try {
+      await addShoppingListItem(list.shopping_list_id, productId);
+      const updated = await setShoppingListItemCompleted(list.shopping_list_id, productId, true);
+      setList(updated);
+      setNotice({ tone: 'success', text: `✓ Added ${productName} and checked it off` });
+    } catch (problem) {
+      setNotice({
+        tone: 'problem',
+        text: problem instanceof Error ? problem.message : 'Could not add it to the list.',
+      });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -378,13 +402,25 @@ function InStoreShoppingContent() {
                     styles.notice,
                     // borderColor first, so the colored left edge wins over it
                     { borderColor: theme.border },
-                    { borderLeftColor: NOTICE_COLORS[notice.tone], backgroundColor: theme.card },
+                    { borderLeftColor: theme[NOTICE_TONE[notice.tone]], backgroundColor: theme.card },
                   ]}
                   accessibilityLiveRegion="polite"
                 >
-                  <ThemedText type="smallBold" style={{ color: NOTICE_COLORS[notice.tone] }}>
+                  <ThemedText type="smallBold" style={{ color: theme[NOTICE_TONE[notice.tone]] }}>
                     {notice.text}
                   </ThemedText>
+                  {notice.addProduct && (
+                    <Pressable
+                      onPress={() =>
+                        notice.addProduct &&
+                        void addScanned(notice.addProduct.id, notice.addProduct.name)
+                      }
+                      disabled={busy}
+                      accessibilityRole="button"
+                      hitSlop={8}>
+                      <ThemedText type="linkPrimary">＋ Add it to this list</ThemedText>
+                    </Pressable>
+                  )}
                 </View>
               )}
 
@@ -431,14 +467,18 @@ function InStoreShoppingContent() {
 }
 
 // The banner text for each scan result
-function scanNotice(status: string, productName: string): ScanNotice {
+function scanNotice(status: string, productId: number, productName: string): ScanNotice {
   switch (status) {
     case 'checked_off':
       return { tone: 'success', text: `✓ Checked off ${productName}` };
     case 'already_checked':
       return { tone: 'info', text: `${productName} is already checked off.` };
     case 'not_on_list':
-      return { tone: 'info', text: `${productName} isn't on this list.` };
+      return {
+        tone: 'info',
+        text: `${productName} isn't on this list.`,
+        addProduct: { id: productId, name: productName },
+      };
     default:
       return { tone: 'problem', text: 'You have no active list. Pick one from Shopping List.' };
   }
@@ -488,6 +528,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   notice: {
+    gap: Spacing.two,
     padding: Spacing.three,
     borderRadius: Radius.medium,
     borderWidth: 1,

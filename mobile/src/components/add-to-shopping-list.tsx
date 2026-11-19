@@ -1,5 +1,5 @@
 
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
@@ -44,6 +44,13 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const theme = useTheme();
+  const router = useRouter();
+
+  // Closes the dialog and opens the Shopping List screen
+  const goToLists = () => {
+    setVisible(false);
+    router.push('/products/shopping-list' as Href);
+  };
 
   const loadLists = useCallback(async () => {
     setLoading(true);
@@ -181,16 +188,28 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
             )}
 
             {message && (
-              <ThemedText style={styles.successText}>
-                {message}
-              </ThemedText>
+              <View style={styles.messageRow}>
+                <ThemedText style={styles.successText}>
+                  {message}
+                </ThemedText>
+                <Pressable onPress={goToLists} accessibilityRole="link" hitSlop={8}>
+                  <ThemedText type="linkPrimary">View list ›</ThemedText>
+                </Pressable>
+              </View>
             )}
 
             {!loading && lists.length === 0 && !error && (
-              <ThemedText themeColor="textSecondary">
-                You don't have a shopping list yet.
-                Create one from Products → Shopping List.
-              </ThemedText>
+              <View style={styles.emptyState}>
+                <ThemedText themeColor="textSecondary">
+                  You don't have a shopping list yet.
+                </ThemedText>
+                <Pressable
+                  onPress={goToLists}
+                  accessibilityRole="button"
+                  style={styles.addButton}>
+                  <ThemedText style={styles.addButtonText}>Create a shopping list</ThemedText>
+                </Pressable>
+              </View>
             )}
 
             <ScrollView
@@ -325,5 +344,15 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  emptyState: {
+    gap: Spacing.three,
+    alignItems: 'flex-start',
   },
 });

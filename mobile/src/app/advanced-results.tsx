@@ -6,19 +6,16 @@ import type { Product } from '@/api/products';
 import { getRecommendations, type Recommendation, type RecommendationResult } from '@/api/recommendations';
 import { useAuth } from '@/auth/AuthContext';
 import { ProductCard } from '@/components/product-card';
+import { MatchCard } from '@/components/match-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { SectionLabel } from '@/components/ui/section-label';
-import { BottomTabInset, Brand, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { CRITERIA } from '@/preferences/criteria';
 import { describeUnderstood, rankingFromParam } from '@/search/advanced';
 import { useStore } from '@/store/StoreContext';
-
-// A red left edge on the For You pick. A plain object rather than a StyleSheet
-// style, because on web the card's own border color would otherwise win over it.
-const FOR_YOU_EDGE = { borderLeftWidth: 5, borderLeftColor: Brand.red };
 
 // Results for an advanced search, e.g. /advanced-results?q=waterproof%20boots&rank=price
 export default function AdvancedResultsScreen() {
@@ -162,7 +159,7 @@ export default function AdvancedResultsScreen() {
           ) : result ? (
             <>
               {result.best_matches.map((item, index) => (
-                <ResultCard
+                <MatchCard
                   key={item.product.product_id}
                   item={item}
                   rank={index + 1}
@@ -176,7 +173,7 @@ export default function AdvancedResultsScreen() {
                   <ThemedText type="small" themeColor="textSecondary">
                     Also based on your saved preferences and likes
                   </ThemedText>
-                  <ResultCard item={result.for_you} onOpen={openProduct} highlight />
+                  <MatchCard item={result.for_you} onOpen={openProduct} highlight />
                 </View>
               )}
             </>
@@ -184,30 +181,6 @@ export default function AdvancedResultsScreen() {
         </View>
       </ScrollView>
     </ThemedView>
-  );
-}
-
-// A product card with its rank and the reasons it was picked
-function ResultCard({
-  item,
-  rank,
-  onOpen,
-  highlight = false,
-}: {
-  item: Recommendation;
-  // Shown as a red "#1" tag
-  rank?: number;
-  onOpen: (product: Product) => void;
-  highlight?: boolean;
-}) {
-  return (
-    <ProductCard
-      product={item.product}
-      onPress={() => onOpen(item.product)}
-      badge={rank !== undefined ? `#${rank}` : null}
-      meta={item.reasons.length > 0 ? item.reasons.join(' · ') : null}
-      style={highlight ? FOR_YOU_EDGE : undefined}
-    />
   );
 }
 

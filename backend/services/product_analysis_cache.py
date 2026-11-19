@@ -8,6 +8,7 @@ from psycopg.types.json import Jsonb
 
 from database import get_connection
 from review_analysis import analyze_product_reviews
+from services.review_reliability import RELIABILITY_VERSION
 
 
 def review_fingerprint(product_id: int) -> tuple[str, int]:
@@ -75,7 +76,7 @@ def review_fingerprint(product_id: int) -> tuple[str, int]:
     )
 
     payload = json.dumps(
-        {"sources": source_data, "reviews": review_data},
+        {"analysis_version": RELIABILITY_VERSION, "sources": source_data, "reviews": review_data},
         sort_keys=True,
         ensure_ascii=False,
         separators=(",", ":"),

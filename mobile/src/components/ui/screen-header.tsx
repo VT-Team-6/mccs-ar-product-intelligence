@@ -17,6 +17,7 @@ export function ScreenHeader({
   from,
   fallback,
   backLabel,
+  compact = false,
   children,
 }: {
   title: string;
@@ -28,6 +29,9 @@ export function ScreenHeader({
   from?: string;
   fallback?: string;
   backLabel?: string;
+  // A smaller, one-line title for screens where the title is just context
+  // (e.g. the store name on an inventory product), so the band stays short
+  compact?: boolean;
   // Anything that belongs in the band under the title, such as the Likes / History switch
   children?: ReactNode;
 }) {
@@ -46,7 +50,7 @@ export function ScreenHeader({
             {back && <BackButton from={from} fallback={fallback} label={backLabel} iconOnly />}
             <View style={styles.titleBlock}>
               {eyebrow && <Text style={styles.eyebrow}>{eyebrow.toUpperCase()}</Text>}
-              <Text style={styles.title} numberOfLines={2}>
+              <Text style={[styles.title, compact && styles.compactTitle]} numberOfLines={compact ? 1 : 2}>
                 {title}
               </Text>
               {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
@@ -95,6 +99,10 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 34,
     fontWeight: '800',
+  },
+  compactTitle: {
+    fontSize: 20,
+    lineHeight: 26,
   },
   subtitle: {
     color: 'rgba(255,255,255,0.8)',

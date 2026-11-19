@@ -295,7 +295,7 @@ export default function ManageImagesScreen() {
       />
       <View style={styles.safeArea}>
         {loadError && (
-          <ThemedText type="small" style={styles.loadError}>
+          <ThemedText type="small" themeColor="danger" style={styles.loadError}>
             {loadError}
           </ThemedText>
         )}
@@ -509,7 +509,7 @@ function ExtraImage({
             (pressed || disabled) && styles.pressed,
           ]}
         >
-          <ThemedText type="smallBold" style={styles.remove} numberOfLines={1}>
+          <ThemedText type="smallBold" themeColor="danger" style={styles.remove} numberOfLines={1}>
             Remove
           </ThemedText>
         </Pressable>
@@ -591,10 +591,8 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   remove: {
-    color: "#E5484D",
   },
   loadError: {
-    color: "#E5484D",
   },
   input: {
     fontSize: 16,

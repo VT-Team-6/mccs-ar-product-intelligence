@@ -110,7 +110,7 @@ export function AmazonImagePicker({ visible, productName, onClose, onChoose }: P
             style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
           />
           <Button label={searching ? 'Searching…' : 'Search listings'} onPress={() => void search(query)} disabled={searching || !query.trim()} />
-          {error && <ThemedText type="small" style={styles.error}>{error}</ThemedText>}
+          {error && <ThemedText type="small" themeColor="danger" style={styles.error}>{error}</ThemedText>}
           {searching && <ActivityIndicator accessibilityLabel="Loading listing images" />}
           <ScrollView style={styles.results} contentContainerStyle={styles.section} keyboardShouldPersistTaps="handled">
             {candidates.map((candidate) => (
@@ -176,7 +176,7 @@ export function ImagePreview({ uri, onLoaded, onUnavailable }: { uri: string; on
       </View>
       {status === 'error' && (
         <>
-          <ThemedText type="small" style={styles.error}>Could not load this image. Try another direct image link or retry.</ThemedText>
+          <ThemedText type="small" themeColor="danger" style={styles.error}>Could not load this image. Try another direct image link or retry.</ThemedText>
           <Button label="Retry image" onPress={() => { setStatus('loading'); setAttempt((current) => current + 1); }} />
         </>
       )}
@@ -207,5 +207,5 @@ const styles = StyleSheet.create({
   heading: { flex: 1, fontSize: 22, lineHeight: 28 },
   results: { flexShrink: 1 },
   listing: { borderRadius: Spacing.two, padding: Spacing.three, gap: Spacing.two },
-  error: { color: '#E5484D' },
+  error: {},
 });
