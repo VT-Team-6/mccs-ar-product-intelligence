@@ -4,7 +4,7 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, View } from 'react-n
 import { getProductStock, type ProductStockEntry } from '@/api/inventory';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
+import { Brand, Spacing } from '@/constants/theme';
 import { useStore } from '@/store/StoreContext';
 import { distanceToStore, formatMiles } from '@/store/distance';
 import { locationProblem } from '@/store/device-location';
@@ -251,6 +251,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   locationText: { flexShrink: 1 },
-  error: { color: '#E5484D' },
+  error: { color: Brand.danger },
   pressed: { opacity: 0.6 },
 });
