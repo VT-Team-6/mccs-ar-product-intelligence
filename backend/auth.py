@@ -35,25 +35,32 @@ CLOCK_SKEW_LEEWAY = 15
 ROLE_PERMISSIONS = {
     "user": set(),
 
-    "store_buyer": {
+    "store_clerk": {
+        "view_inventory",
         "manage_stock",
+    },
+
+    "store_buyer": {
+        "view_inventory",
     },
 
     "store_admin": {
+        "view_inventory",
         "create_products",
         "manage_stock",
         "manage_inventory",
-        "manage_store_buyers"
+        "manage_store_staff"
     },
 
     "system_admin": {
+        "view_inventory",
         "create_products",
         "manage_stock",
         "manage_inventory",
         "manage_products",
         "aggregate_reviews",
         "manage_all_stores",
-        "manage_store_buyers",
+        "manage_store_staff",
         "manage_store_admins"
     },
 }

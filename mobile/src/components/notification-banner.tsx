@@ -63,7 +63,7 @@ function NotificationBanner({
   const { profile, hasPermission } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isStaff = hasPermission("manage_stock") || hasPermission("manage_inventory");
+  const isStaff = profile?.role === "store_buyer" || hasPermission("manage_inventory");
 
   const [banner, setBanner] = useState<Banner | null>(null);
   const slide = useRef(new Animated.Value(-200)).current;
@@ -140,7 +140,7 @@ function NotificationBanner({
     if (hideTimer.current) clearTimeout(hideTimer.current);
   }, []);
 
-  if (!banner) return null;
+  if (!isStaff || !banner) return null;
 
   const open = () => {
     hide();

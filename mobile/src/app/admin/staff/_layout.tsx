@@ -12,7 +12,7 @@ export default function AdminStaffLayout() {
   if (loading || profileLoading) return <ActivityIndicator />;
   if (
     !hasPermission("manage_store_admins") &&
-    !hasPermission("manage_store_buyers")
+    !hasPermission("manage_store_staff")
   )
     return <Redirect href="/" />;
   return <Slot />;

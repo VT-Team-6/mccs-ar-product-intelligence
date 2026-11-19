@@ -88,18 +88,19 @@ def read_store_stock(
 @writer_router.get(
     "",
     response_model=StaffStoreStock,
-    dependencies=[Depends(require_permission("manage_stock"))],
 )
 def read_store_inventory(
     store_id: int = Query(gt=0),
     entry_status: InventoryStatus = Query(default=stock.SHOPPER_STATUS),
     limit: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     cursor: str | None = Query(default=None),
+    user=Depends(require_permission("view_inventory")),
 ) -> dict:
     """One store's inventory in any status — the pending queue and the rest.
 
     The status filter allows admin access to the pending queue, which is not visible to shoppers.
     """
+    _require_store_access(user, store_id)
     with get_connection() as conn:
         try:
             items, next_cursor = stock.list_store_stock(
@@ -121,6 +122,21 @@ def read_store_inventory(
 def _require_store_access(user: dict, store_id: int) -> None:
     if not can_manage_store(user, store_id):
         raise HTTPException(403, "You don't manage this store")
+
+
+def _require_stock_write(conn, user: dict, product_id: int, store_id: int, body: InventoryWrite) -> None:
+    _require_store_access(user, store_id)
+    if "manage_inventory" in user["permissions"]:
+        return
+    if body.model_fields_set & {"price", "status"}:
+        raise HTTPException(403, "Only inventory managers can change prices or status")
+    # A clerk may count existing active stock, but cannot create or approve an entry.
+    entry = conn.execute(
+        "SELECT status FROM inventory WHERE product_id = %s AND store_id = %s FOR UPDATE",
+        (product_id, store_id),
+    ).fetchone()
+    if entry is None or entry["status"] != "active":
+        raise HTTPException(403, "Stock counts can only be updated for active inventory")
 
 
 @writer_router.get("/buyers", response_model=list[StoreBuyer])
@@ -220,6 +236,7 @@ def replace_stock(
     which requires a price.
     """
     with get_connection() as conn:
+        _require_stock_write(conn, user, product_id, store_id, body)
         try:
             record = stock.upsert_record(
                 conn,
@@ -243,6 +260,8 @@ def replace_stock_batch(
 ) -> list[dict]:
     """Apply many product+store rows, or none of them."""
     with get_connection() as conn:
+        for entry in body.items:
+            _require_stock_write(conn, user, entry.product_id, entry.store_id, entry)
         try:
             records = stock.upsert_many(
                 conn,
@@ -264,14 +283,15 @@ def replace_stock_batch(
 @writer_router.post(
     "/push",
     response_model=list[PushedEntry],
-    dependencies=[Depends(require_permission("manage_stock"))],
 )
-def push_products(body: InventoryPush) -> list[dict]:
+def push_products(body: InventoryPush, user=Depends(require_permission("manage_inventory"))) -> list[dict]:
     """Push catalog products to stores as pending entries awaiting approval.
 
     Nothing about a pushed product reaches a shopper until the store approves
     it. Pushing a pair that already has an entry leaves it untouched.
     """
+    for store_id in body.store_ids:
+        _require_store_access(user, store_id)
     with get_connection() as conn:
         try:
             return stock.push_to_stores(conn, body.product_ids, body.store_ids)
@@ -287,6 +307,7 @@ def approve_pushed_product(
     user=Depends(require_permission("manage_inventory")),
 ) -> dict:
     """Approve a pending entry, with the price the store is setting."""
+    _require_store_access(user, store_id)
     with get_connection() as conn:
         try:
             record = stock.approve(
@@ -305,10 +326,10 @@ def approve_pushed_product(
 
 @writer_router.delete(
     "/{product_id}/{store_id}",
-    dependencies=[Depends(require_permission("manage_stock"))],
 )
-def delete_stock(product_id: int, store_id: int) -> dict:
+def delete_stock(product_id: int, store_id: int, user=Depends(require_permission("manage_inventory"))) -> dict:
     """Remove an entry. Declining a push is exactly this: delete the pending row."""
+    _require_store_access(user, store_id)
     with get_connection() as conn:
         try:
             return stock.delete_record(conn, product_id, store_id)

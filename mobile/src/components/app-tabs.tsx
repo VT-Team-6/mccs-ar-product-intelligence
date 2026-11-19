@@ -14,11 +14,12 @@ export default function AppTabs() {
   const { hasPermission } = useAuth();
   const { unread } = useNotifications();
   const isStaff =
+    hasPermission('view_inventory') ||
     hasPermission('manage_stock') ||
     hasPermission('manage_inventory') ||
     hasPermission('create_products') ||
     hasPermission('manage_store_admins') ||
-    hasPermission('manage_store_buyers');
+    hasPermission('manage_store_staff');
 
   return (
     <NativeTabs

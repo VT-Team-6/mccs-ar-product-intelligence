@@ -21,6 +21,7 @@ from schemas import (
     OrderRequestListEntry,
     OrderRequestSend,
     OrderRequestUpdate,
+    OrderRequestReassign,
     BuyerItem,
     ReorderGroup,
     ReorderList,
@@ -99,14 +100,23 @@ def send_order_request(
 # --- order requests --------------------------------------------------------
 
 
-def _request_for(conn, request_id: int, user: dict) -> dict:
+def _is_request_buyer(request: dict, user: dict) -> bool:
+    return (
+        request["buyer_is_eligible"]
+        and request["buyer_user_id"] == user["user_id"]
+    )
+
+
+def _request_for(conn, request_id: int, user: dict, *, lock: bool = False) -> dict:
     """The request, if this user is its buyer or a manager of its store."""
+    if lock:
+        # Reassignments and buyer responses must serialize on the same request.
+        conn.execute("SELECT request_id FROM order_requests WHERE request_id = %s FOR UPDATE", (request_id,))
     request = reorders.get_request(conn, request_id)
     if request is None:
         raise HTTPException(404, "Order request not found")
-    is_buyer = request["buyer_user_id"] == user["user_id"]
     is_manager = "manage_inventory" in user["permissions"] and can_manage_store(user, request["store_id"])
-    if not (is_buyer or is_manager):
+    if not (is_manager or _is_request_buyer(request, user)):
         raise HTTPException(403, "This order request isn't yours")
     return request
 
@@ -122,6 +132,8 @@ def read_order_requests(
     if store_id is not None:
         if "manage_inventory" not in user["permissions"] or not can_manage_store(user, store_id):
             raise HTTPException(403, "You don't manage this store")
+    elif user["role"] != "store_buyer":
+        raise HTTPException(403, "Only buyers can list their assigned order requests")
     with get_connection() as conn:
         return reorders.list_requests(conn, user["user_id"], store_id, include_finished)
 
@@ -129,6 +141,8 @@ def read_order_requests(
 @requests_router.get("/items", response_model=list[BuyerItem])
 def read_my_order_items(user=Depends(auth.require_authenticated_user)) -> list[dict]:
     """Every product in the signed-in buyer's unfinished order requests."""
+    if user["role"] != "store_buyer":
+        raise HTTPException(403, "Only buyers can list their assigned order items")
     with get_connection() as conn:
         return reorders.list_items_for_buyer(conn, user["user_id"])
 
@@ -149,13 +163,26 @@ def update_order_request_items(
 ) -> dict:
     """The buyer marks some of the request's products ordered or unavailable."""
     with get_connection() as conn:
-        request = _request_for(conn, request_id, user)
-        if request["buyer_user_id"] != user["user_id"] and "manage_all_stores" not in user["permissions"]:
+        request = _request_for(conn, request_id, user, lock=True)
+        if "manage_all_stores" not in user["permissions"] and not _is_request_buyer(request, user):
             raise HTTPException(403, "Only the buyer can update this order request")
         try:
             return reorders.update_items(
-                conn, request_id, body.product_ids, body.status, body.reason, user
+                conn, request, body.product_ids, body.status, body.reason, user
             )
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+
+
+@requests_router.put("/{request_id}/buyer", response_model=OrderRequest)
+def reassign_order_request(
+    request_id: int, body: OrderRequestReassign,
+    user=Depends(require_permission("manage_inventory")),
+) -> dict:
+    with get_connection() as conn:
+        request = _request_for(conn, request_id, user, lock=True)
+        try:
+            return reorders.reassign_request(conn, request, body.buyer_user_id, user["user_id"])
         except stock.InventoryError as error:
             raise _http_error(error) from error
 

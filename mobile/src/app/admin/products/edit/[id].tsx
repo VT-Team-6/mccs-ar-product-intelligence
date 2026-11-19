@@ -1,13 +1,13 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   View,
 } from "react-native";
 
-import { getProduct, updateProduct, type Product } from "@/api/products";
+import { canEditProduct, getProduct, updateProduct, type Product } from "@/api/products";
+import { useAuth } from "@/auth/AuthContext";
 import { ProductForm } from "@/components/product-form";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -18,6 +18,7 @@ export default function EditProductScreen() {
   // /admin/edit/2 gives id = "2"
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { profile } = useAuth();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +41,8 @@ export default function EditProductScreen() {
   // Goes back to the product page. If there's nothing to go back to, opens the list.
   const goBack = () =>
     router.canGoBack() ? router.back() : router.replace("/admin/products");
+
+  if (product && !canEditProduct(profile, product)) return <Redirect href="/admin/products" />;
 
   return (
     <ThemedView style={styles.container}>

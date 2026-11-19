@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Redirect, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +22,7 @@ import {
   type StoreBuyer,
 } from "@/api/inventory";
 import { useAuth } from "@/auth/AuthContext";
+import { canAccessStore } from "@/auth/store-access";
 import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
 import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
@@ -37,19 +38,27 @@ const WHOLE_NUMBER = /^\d+$/;
 
 // Edit one product's price, stock and status at one store, e.g.
 // /admin/inventory/12?storeId=3. Pending products are approved or declined here.
+type StockRouteParams = {
+  productId: string;
+  storeId: string;
+  storeName?: string;
+  name?: string;
+  image?: string;
+  price?: string;
+  quantity?: string;
+  status?: InventoryStatus;
+  lowStockAt?: string;
+  buyerId?: string;
+};
+
 export default function EditStockScreen() {
-  const params = useLocalSearchParams<{
-    productId: string;
-    storeId: string;
-    storeName?: string;
-    name?: string;
-    image?: string;
-    price?: string;
-    quantity?: string;
-    status?: InventoryStatus;
-    lowStockAt?: string;
-    buyerId?: string;
-  }>();
+  const params = useLocalSearchParams<StockRouteParams>();
+  const { profile } = useAuth();
+  if (!canAccessStore(profile, Number(params.storeId))) return <Redirect href="/admin/inventory" />;
+  return <EditStockForm params={params} />;
+}
+
+function EditStockForm({ params }: { params: StockRouteParams }) {
   const { hasPermission } = useAuth();
   const router = useRouter();
   const theme = useTheme();
@@ -57,6 +66,8 @@ export default function EditStockScreen() {
   const productId = Number(params.productId);
   const storeId = Number(params.storeId);
   const pending = params.status === "pending";
+  const canManageInventory = hasPermission("manage_inventory");
+  const canEditStock = hasPermission("manage_stock") && (canManageInventory || params.status === "active");
 
   const [price, setPrice] = useState(params.price ?? "");
   const [quantity, setQuantity] = useState(params.quantity ?? "0");
@@ -74,7 +85,7 @@ export default function EditStockScreen() {
   const [error, setError] = useState<string | null>(null);
 
   // Low-stock level and buyer: only managers and app admins set these
-  const canSetLowStock = hasPermission("manage_inventory") && !pending;
+  const canSetLowStock = canManageInventory && !pending;
   // What's saved right now, so Save only sends the level or buyer when they changed
   const [savedLevel, setSavedLevel] = useState(params.lowStockAt || "10");
   const [savedBuyer, setSavedBuyer] = useState<number | null>(params.buyerId ? Number(params.buyerId) : null);
@@ -98,7 +109,7 @@ export default function EditStockScreen() {
 
   // The typed values as numbers, or null (with a message) when one isn't valid
   const readValues = (): { price: number; quantity: number } | null => {
-    if (!PRICE.test(price.trim())) {
+    if (canManageInventory && !PRICE.test(price.trim())) {
       setError("Enter a price like 89 or 89.99.");
       return null;
     }
@@ -144,7 +155,7 @@ export default function EditStockScreen() {
       }
     }
     run(async () => {
-      await updateStock(productId, storeId, { ...values, status });
+      await updateStock(productId, storeId, canManageInventory ? { ...values, status } : { quantity: values.quantity });
       if (Object.keys(lowStock).length > 0) {
         await updateLowStockSettings(storeId, [productId], lowStock);
         setSavedLevel(lowStockAt.trim());
@@ -172,9 +183,9 @@ export default function EditStockScreen() {
 
   return (
     <ThemedView style={styles.container}>
-            <ScreenHeader
+      <ScreenHeader
         title={params.name || `Product ${productId}`}
-        eyebrow="Inventory"
+        eyebrow={canManageInventory ? "Inventory" : canEditStock ? "Stock count" : "Read-only inventory"}
         subtitle={params.storeName || undefined}
         fallback="/admin/inventory"
         backLabel="Inventory"
@@ -194,43 +205,53 @@ export default function EditStockScreen() {
 
           <ThemedText themeColor="textSecondary">
             {pending
-              ? `Waiting for approval at ${params.storeName || "this store"}. Set the price and stock to start selling it.`
+              ? canManageInventory
+                ? "Set the price and stock count to approve this product."
+                : "Waiting for manager approval."
               : `At ${params.storeName || "this store"}`}
           </ThemedText>
         
           <View style={styles.field}>
             <ThemedText type="smallBold">Price ($)</ThemedText>
-            <TextInput
-              value={price}
-              onChangeText={setPrice}
-              placeholder="89.99"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="decimal-pad"
-              ref={priceField}
-              onFocus={() => setTyping("price")}
-              onBlur={() => setTyping(null)}
-              caretHidden={barShowing}
-              style={inputStyle}
-            />
+            {canManageInventory ? (
+              <TextInput
+                value={price}
+                onChangeText={setPrice}
+                placeholder="89.99"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="decimal-pad"
+                ref={priceField}
+                onFocus={() => setTyping("price")}
+                onBlur={() => setTyping(null)}
+                caretHidden={barShowing}
+                style={inputStyle}
+              />
+            ) : (
+              <ThemedText>{price ? `$${price}` : "Price not set"}</ThemedText>
+            )}
           </View>
 
           <View style={styles.field}>
             <ThemedText type="smallBold">Quantity in stock</ThemedText>
-            <TextInput
-              value={quantity}
-              onChangeText={setQuantity}
-              placeholder="0"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="number-pad"
-              ref={quantityField}
-              onFocus={() => setTyping("quantity")}
-              onBlur={() => setTyping(null)}
-              caretHidden={barShowing}
-              style={inputStyle}
-            />
+            {canEditStock ? (
+              <TextInput
+                value={quantity}
+                onChangeText={setQuantity}
+                placeholder="0"
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="number-pad"
+                ref={quantityField}
+                onFocus={() => setTyping("quantity")}
+                onBlur={() => setTyping(null)}
+                caretHidden={barShowing}
+                style={inputStyle}
+              />
+            ) : (
+              <ThemedText>{quantity}</ThemedText>
+            )}
           </View>
 
-          {!pending && (
+          {!pending && canManageInventory && (
             <View style={styles.field}>
               <ThemedText type="smallBold">Status</ThemedText>
               <View style={styles.choices}>
@@ -253,7 +274,7 @@ export default function EditStockScreen() {
               </View>
               {status === "discontinued" && (
                 <ThemedText type="small" themeColor="textSecondary">
-                  Shoppers won't find it in search, and scanning it shows that it's discontinued here.
+                  This product is hidden in search. Scanning it shows that it is discontinued here.
                 </ThemedText>
               )}
             </View>
@@ -289,7 +310,7 @@ export default function EditStockScreen() {
           {error && <ThemedText themeColor="textSecondary">{error}</ThemedText>}
           {saved && <ThemedText type="smallBold">Changes saved ✓</ThemedText>}
 
-          {saving ? (
+          {canEditStock && (saving ? (
             <ActivityIndicator />
           ) : pending ? (
             <View style={styles.actions}>
@@ -297,8 +318,8 @@ export default function EditStockScreen() {
               <Button label="Decline" onPress={decline} quiet />
             </View>
           ) : (
-            <Button label="Save changes" onPress={save} />
-          )}
+            <Button label={canManageInventory ? "Save changes" : "Save stock count"} onPress={save} />
+          ))}
         </ScrollView>
       </View>
       <KeyboardDoneBar

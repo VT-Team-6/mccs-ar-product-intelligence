@@ -76,11 +76,12 @@ export default function ProductScreen() {
   // Deleting removes it from every store, so only the app admin can.
   const canEdit = product !== null && canEditProduct(profile, product);
   const canDelete = hasPermission("manage_products");
+  const canManageReviews = hasPermission("aggregate_reviews");
 
   // Load selected review listings when this product page comes into view.
   useFocusEffect(
     useCallback(() => {
-      if (!canEdit) return;
+      if (!canManageReviews) return;
       let cancelled = false;
       setReviewError(null);
       getReviewSources(Number(id))
@@ -93,7 +94,7 @@ export default function ProductScreen() {
       return () => {
         cancelled = true;
       };
-    }, [id, canEdit]),
+    }, [id, canManageReviews]),
   );
 
   async function reloadReviewSources() {
@@ -242,7 +243,7 @@ export default function ProductScreen() {
               <ThemedText>{product.description}</ThemedText>
             )}
 
-            {canEdit && (
+            {canManageReviews && (
             <ThemedView type="backgroundElement" style={styles.reviewSection}>
               <ThemedText type="smallBold">Review sources</ThemedText>
               {reviewSources === null && !reviewError ? (
@@ -362,7 +363,7 @@ export default function ProductScreen() {
           onClose={() => setSendVisible(false)}
         />
       )}
-      {product && (
+      {product && canManageReviews && (
         <ReviewSourceSelector
           visible={sourceSelectorVisible}
           productId={product.product_id}

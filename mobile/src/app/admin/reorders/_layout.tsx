@@ -6,9 +6,9 @@ import { useAuth } from "@/auth/AuthContext";
 // Reorders, order requests and sending them: for store managers and buyers.
 // These sit outside the tabs (like Inventory), so the tab bar is hidden here.
 export default function AdminReordersLayout() {
-  const { loading, profileLoading, hasPermission } = useAuth();
+  const { loading, profileLoading, hasPermission, profile } = useAuth();
   if (loading || profileLoading) return <ActivityIndicator />;
-  if (!hasPermission("manage_stock") && !hasPermission("manage_inventory"))
+  if (profile?.role !== "store_buyer" && !hasPermission("manage_inventory"))
     return <Redirect href="/" />;
   return <Slot />;
 }

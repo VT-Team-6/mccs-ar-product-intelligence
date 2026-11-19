@@ -10,10 +10,10 @@ import {
 } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Linking,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -365,19 +365,11 @@ function StoreSelectorSheet({
   // Only the searched place is local. The device's fix comes from the provider,
   // because it outlives this sheet (the product page measures from it too), while
   // a search is this visit's choice and resets on the next open.
-  const [placeOrigin, setPlaceOrigin] = useState<{
-    placeId: number;
-    latitude: number;
-    longitude: number;
-    name: string;
-  } | null>(null);
+  const [placeOrigin, setPlaceOrigin] = useState<LocationSuggestion | null>(null);
 
-  // Reopening starts clean, so a previous search doesn't surprise the shopper.
-  // Reset by remounting (see the `key` on StoreSelectorSheet in the provider)
-  // rather than an effect that clears state. An explicit search wins over the
-  // device fix: the shopper just typed it.
-  const selectedOrigin = placeOrigin
-    ? { latitude: placeOrigin.latitude, longitude: placeOrigin.longitude, name: placeOrigin.name }
+  const showStores = mode === 'near' || placeOrigin !== null;
+  const selectedOrigin = mode === 'search' && placeOrigin
+    ? { latitude: placeOrigin.latitude, longitude: placeOrigin.longitude, name: placeOrigin.label }
     : deviceOrigin
       ? {
           latitude: deviceOrigin.latitude,
@@ -391,18 +383,6 @@ function StoreSelectorSheet({
   // Every store is listed, nearest first. Nothing is filtered out by a radius:
   // a picker should show every location. Stores without coordinates keep the
   // API's order at the end rather than sorting as distance 0.
-
-  // The device row only claims to be in use when it is the origin actually
-  // sorting the list: a searched place overrides it for this visit, so showing
-  // "Using your current location" beside a place-based sort would be a lie.
-  const usingDevice = deviceOrigin !== null && placeOrigin === null;
-
-  // Pressing the button drops a searched place first, so the request is never
-  // invisible: without this, a fix would arrive and still lose to that place.
-  const requestDeviceLocation = () => {
-    setPlaceOrigin(null);
-    void onUseDeviceLocation();
-  };
 
   const rows = stores
     .map((item) => ({
@@ -425,16 +405,22 @@ function StoreSelectorSheet({
 
   const canSearch = zipQuery.trim().length >= 2;
 
+  const changeQuery = (query: string) => {
+    setZipQuery(query);
+    setPlaceOrigin(null);
+    setSuggestions(null);
+    setSearchError(null);
+  };
+
   const search = async () => {
     if (!canSearch || searching) return;
+    Keyboard.dismiss();
     setSearching(true);
+    setPlaceOrigin(null);
     setSearchError(null);
     setSuggestions(null);
     try {
-      // Keyed on the trimmed text so a slow response cannot overwrite a newer
-      // search: the value is read once here, and stale sets are ignored.
-      const found = await searchLocations(zipQuery);
-      setSuggestions(found);
+      setSuggestions(await searchLocations(zipQuery.trim()));
     } catch (problem) {
       setSearchError(
         problem instanceof Error ? problem.message : 'Could not search for that location.',
@@ -449,11 +435,8 @@ function StoreSelectorSheet({
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}
-      statusBarTranslucent>
-      <KeyboardAvoidingView
-        style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      onRequestClose={onClose}>
+      <KeyboardAvoidingView style={styles.overlay} behavior="padding">
         <ThemedView style={styles.dialog}>
           <View style={styles.header}>
             <View style={styles.headingText}>
@@ -478,7 +461,7 @@ function StoreSelectorSheet({
               secondary={mode !== 'near'}
             />
             <ActionButton
-              label="Search a ZIP"
+              label="Search location"
               onPress={() => setMode('search')}
               secondary={mode !== 'search'}
             />
@@ -486,7 +469,7 @@ function StoreSelectorSheet({
 
           {mode === 'near' && (
             <View style={styles.locationBlock}>
-              {usingDevice ? (
+              {deviceOrigin ? (
                 <View style={styles.locationActive}>
                   <ThemedText type="small" themeColor="textSecondary" style={styles.locationText}>
                     Using your current location.
@@ -502,7 +485,7 @@ function StoreSelectorSheet({
               ) : (
                 <ActionButton
                   label={locating ? 'Finding you…' : 'Use my location'}
-                  onPress={requestDeviceLocation}
+                  onPress={onUseDeviceLocation}
                   disabled={locating}
                   compact
                 />
@@ -530,7 +513,7 @@ function StoreSelectorSheet({
               <View style={styles.searchRow}>
                 <TextInput
                   value={zipQuery}
-                  onChangeText={setZipQuery}
+                  onChangeText={changeQuery}
                   onSubmitEditing={search}
                   placeholder="ZIP code or city"
                   returnKeyType="search"
@@ -559,50 +542,36 @@ function StoreSelectorSheet({
 
               {suggestions !== null && suggestions.length === 0 && (
                 <ThemedText type="small" themeColor="textSecondary">
-                  No stores found near that ZIP.
+                  No locations found. Try a different ZIP code or city.
                 </ThemedText>
-              )}
-
-              {suggestions !== null && suggestions.length > 0 && (
-                <>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    Pick a place to measure distances from.
-                  </ThemedText>
-                  {suggestions.map((place) => {
-                    const active = placeOrigin?.placeId === place.id;
-                    return (
-                      <Pressable
-                        key={place.id}
-                        onPress={() =>
-                          setPlaceOrigin({
-                            placeId: place.id,
-                            latitude: place.latitude,
-                            longitude: place.longitude,
-                            name: place.label,
-                          })
-                        }
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: active }}
-                        style={({ pressed }) => [styles.suggestion, pressed && styles.dimmed]}>
-                        <ThemedView
-                          type={active ? 'backgroundSelected' : 'backgroundElement'}
-                          style={styles.listing}>
-                          <View style={styles.listingMain}>
-                            <View style={styles.listingText}>
-                              <ThemedText type="smallBold">{place.label}</ThemedText>
-                            </View>
-                            {active && <ThemedText type="linkPrimary">✓</ThemedText>}
-                          </View>
-                        </ThemedView>
-                      </Pressable>
-                    );
-                  })}
-                </>
               )}
             </View>
           )}
 
-          {stores.length === 0 ? (
+          {!showStores && !!suggestions?.length && (
+            <ScrollView
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
+              keyboardShouldPersistTaps="handled">
+              {suggestions.map((place) => (
+                <Pressable
+                  key={place.id}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setPlaceOrigin(place);
+                    setSuggestions(null);
+                  }}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.suggestion, pressed && styles.dimmed]}>
+                  <ThemedView type="backgroundElement" style={styles.listing}>
+                    <ThemedText type="smallBold">{place.label}</ThemedText>
+                  </ThemedView>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+
+          {showStores && (stores.length === 0 ? (
             <View style={styles.center}>
               <ActivityIndicator />
               <ThemedText themeColor="textSecondary">Loading stores…</ThemedText>
@@ -647,9 +616,9 @@ function StoreSelectorSheet({
                 );
               })}
             </ScrollView>
-          )}
+          ))}
 
-          {allowClear && selected && (
+          {showStores && allowClear && selected && (
             <View style={styles.footer}>
               <ActionButton label="Clear store" onPress={onClear} secondary />
             </View>

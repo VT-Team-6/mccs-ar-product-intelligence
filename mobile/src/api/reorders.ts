@@ -103,6 +103,13 @@ export type OrderRequest = {
   store_address: string;
   buyer_user_id: number | null;
   buyer_email: string | null;
+  needs_reassignment: boolean;
+  reassignments: {
+    from_buyer_email: string | null;
+    to_buyer_email: string | null;
+    changed_by_email: string | null;
+    created_at: string;
+  }[];
   sent_by_email: string | null;
   note: string;
   created_at: string;
@@ -119,6 +126,8 @@ export type OrderRequest = {
     updated_at: string | null;
     current_quantity: number | null;
     restocked: boolean;
+    updated_by: number | null;
+    updated_by_email: string | null;
   }[];
 };
 
@@ -128,11 +137,20 @@ export type OrderRequestListEntry = {
   store_name: string;
   sent_by_email: string | null;
   buyer_email: string | null;
+  needs_reassignment: boolean;
   created_at: string;
   unread: boolean;
   product_count: number;
   summary: OrderSummary;
 };
+
+export async function reassignOrderRequest(requestId: number, buyerUserId: number): Promise<OrderRequest> {
+  const response = await authenticatedFetch(`/api/order-requests/${requestId}/buyer`, {
+    method: "PUT", body: JSON.stringify({ buyer_user_id: buyerUserId }),
+  });
+  if (!response.ok) throw await problem(response, "Could not reassign the buyer");
+  return response.json();
+}
 
 // The order requests sent to the signed-in buyer
 export async function getMyOrderRequests(includeFinished = false): Promise<OrderRequestListEntry[]> {

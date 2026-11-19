@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { Redirect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -20,6 +20,8 @@ import {
   type StoreStockEntry,
 } from "@/api/inventory";
 import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
+import { useAuth } from "@/auth/AuthContext";
+import { canAccessStore } from "@/auth/store-access";
 import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
@@ -40,6 +42,14 @@ function capitalize(text: string) {
 export default function LowStockSettingsScreen() {
   const params = useLocalSearchParams<{ storeId: string; storeName?: string }>();
   const storeId = Number(params.storeId);
+  const { profile, hasPermission } = useAuth();
+  if (!hasPermission("manage_inventory") || !canAccessStore(profile, storeId)) {
+    return <Redirect href="/admin/inventory" />;
+  }
+  return <LowStockSettings storeId={storeId} storeName={params.storeName} />;
+}
+
+function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?: string }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -147,7 +157,7 @@ export default function LowStockSettingsScreen() {
             <ScreenHeader
         title="Low stock & buyers"
         eyebrow="Inventory"
-        subtitle={params.storeName || undefined}
+        subtitle={storeName || undefined}
         fallback="/admin/inventory"
         backLabel="Inventory"
       />

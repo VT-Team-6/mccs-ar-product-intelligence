@@ -192,11 +192,12 @@ def test_new_user_cannot_manage_products(db, cognito, client):
 
 @pytest.mark.parametrize("role,permissions,can_manage_products", [
     ("user", [], False),
-    ("store_buyer", ["manage_stock"], False),
-    ("store_admin", ["create_products", "manage_inventory", "manage_stock", "manage_store_buyers"], False),
+    ("store_clerk", ["manage_stock", "view_inventory"], False),
+    ("store_buyer", ["view_inventory"], False),
+    ("store_admin", ["create_products", "manage_inventory", "manage_stock", "manage_store_staff", "view_inventory"], False),
     ("system_admin", [
         "aggregate_reviews", "create_products", "manage_all_stores", "manage_inventory",
-        "manage_products", "manage_stock", "manage_store_admins", "manage_store_buyers",
+        "manage_products", "manage_stock", "manage_store_admins", "manage_store_staff", "view_inventory",
     ], True),
 ])
 def test_role_permissions_are_read_from_database(
@@ -207,7 +208,7 @@ def test_role_permissions_are_read_from_database(
 
     expected_store_ids = []
     db.execute("UPDATE users SET role = %s WHERE cognito_sub = %s", (role, sub))
-    if role in ("store_buyer", "store_admin"):
+    if role in ("store_clerk", "store_buyer", "store_admin"):
         store_id = db.execute(
             "INSERT INTO stores (name, address) VALUES ('Role test', 'Test') RETURNING store_id"
         ).fetchone()[0]

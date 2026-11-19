@@ -115,7 +115,7 @@ def _with_stock(rows, changes: dict[int, str]) -> str:
 
 
 def test_export_lists_the_store_products_with_their_stock(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
 
     rows = _export_rows(client)
 
@@ -129,7 +129,7 @@ def test_export_lists_the_store_products_with_their_stock(client, db):
 
 def test_export_leaves_out_products_the_store_does_not_sell(client, db):
     db.execute("UPDATE inventory SET status = 'discontinued' WHERE product_id = 3 AND store_id = 1")
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
 
     ids = {int(row["product_id"]) for row in _export_rows(client)}
 
@@ -138,7 +138,7 @@ def test_export_leaves_out_products_the_store_does_not_sell(client, db):
 
 
 def test_cannot_export_another_store(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
 
     assert client.get(EXPORT, params={"store_id": 2}).status_code == 403
 
@@ -153,7 +153,7 @@ def test_shoppers_cannot_export(client, db):
 
 
 def test_preview_lists_changes_and_saves_nothing(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
     text = _with_stock(_export_rows(client), {1: "5", 2: "20"})
 
     response = client.post(PREVIEW, json={"store_id": 1, "csv": text})
@@ -167,7 +167,7 @@ def test_preview_lists_changes_and_saves_nothing(client, db):
 
 
 def test_preview_reports_problem_rows(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
     rows = _export_rows(client)
     text = _with_stock(rows, {1: "-3", 2: "lots", 4: "2.5"})
     text += "999999,Not ours,,4\nabc,Bad id,,4\n"
@@ -184,7 +184,7 @@ def test_preview_reports_problem_rows(client, db):
 
 
 def test_a_product_listed_twice_is_a_problem(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
 
     text = "product_id,stock\n1,5\n1,6\n"
     body = client.post(PREVIEW, json={"store_id": 1, "csv": text}).json()
@@ -193,7 +193,7 @@ def test_a_product_listed_twice_is_a_problem(client, db):
 
 
 def test_only_product_id_and_stock_are_needed(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
 
     text = "﻿Product_ID , Stock\n1, 7 \n2,\n3,8.0\n"  # Excel BOM, spaces, 8.0
     body = client.post(PREVIEW, json={"store_id": 1, "csv": text}).json()
@@ -204,7 +204,7 @@ def test_only_product_id_and_stock_are_needed(client, db):
 
 
 def test_a_file_without_the_columns_is_rejected(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
 
     response = client.post(PREVIEW, json={"store_id": 1, "csv": "id,count\n1,5\n"})
 
@@ -216,7 +216,7 @@ def test_a_file_without_the_columns_is_rejected(client, db):
 
 
 def test_import_updates_stock_and_logs_each_change(client, db):
-    user = _sign_in_as(client, db, "store_buyer", [1])
+    user = _sign_in_as(client, db, "store_clerk", [1])
     text = _with_stock(_export_rows(client), {1: "5", 2: "0"})
 
     response = client.post(IMPORT, json={"store_id": 1, "csv": text})
@@ -237,7 +237,7 @@ def test_import_updates_stock_and_logs_each_change(client, db):
 
 
 def test_import_with_any_problem_saves_nothing(client, db):
-    _sign_in_as(client, db, "store_buyer", [1])
+    _sign_in_as(client, db, "store_clerk", [1])
     text = _with_stock(_export_rows(client), {1: "5", 2: "-1"})
 
     response = client.post(IMPORT, json={"store_id": 1, "csv": text})
@@ -254,6 +254,24 @@ def test_cannot_import_into_another_store(client, db):
 
     assert response.status_code == 403
     assert _quantity(db, 3, store_id=2) == 14
+
+
+@pytest.mark.parametrize("role", ["store_buyer", "user"])
+def test_read_only_roles_cannot_use_stock_csv(client, db, role):
+    _sign_in_as(client, db, role, [1])
+    body = {"store_id": 1, "csv": "product_id,stock\n1,1\n"}
+    assert client.get(EXPORT, params={"store_id": 1}).status_code == 403
+    assert client.post(PREVIEW, json=body).status_code == 403
+    assert client.post(IMPORT, json=body).status_code == 403
+    assert _quantity(db, 1) == 12
+
+
+def test_clerk_csv_preview_and_export_are_store_scoped(client, db):
+    _sign_in_as(client, db, "store_clerk", [1])
+    body = {"store_id": 2, "csv": "product_id,stock\n3,1\n"}
+    assert client.get(EXPORT, params={"store_id": 2}).status_code == 403
+    assert client.post(PREVIEW, json=body).status_code == 403
+    assert client.post(IMPORT, json=body).status_code == 403
 
 
 def test_app_admin_can_import_into_any_store(client, db):

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { Redirect, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -41,9 +41,9 @@ import { imageUrlProblem } from "@/utils/product-images";
 // stays the picture every card and listing shows.
 export default function ManageImagesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const theme = useTheme();
-  const { profile } = useAuth();
+  const { profile, profileLoading, hasPermission } = useAuth();
+  const canView = hasPermission("create_products");
 
   const [product, setProduct] = useState<Product | null>(null);
   const [images, setImages] = useState<ProductImage[] | null>(null);
@@ -62,6 +62,7 @@ export default function ManageImagesScreen() {
   // change made on the product page is reflected here.
   useFocusEffect(
     useCallback(() => {
+      if (!canView) return;
       let cancelled = false;
       setLoadError(null);
       Promise.all([getProduct(Number(id)), listProductImages(Number(id))])
@@ -76,11 +77,8 @@ export default function ManageImagesScreen() {
       return () => {
         cancelled = true;
       };
-    }, [id]),
+    }, [canView, id]),
   );
-
-  const goBack = () =>
-    router.canGoBack() ? router.back() : router.replace("/admin/products");
 
   // Refreshes the grid from the backend after a change, so the screen shows
   // exactly what was stored rather than what the app hoped was stored.
@@ -283,6 +281,9 @@ export default function ManageImagesScreen() {
   // Owners can change the gallery; someone who can open the product page but
   // not edit it sees the photos read-only.
   const canManage = product !== null && canEditProduct(profile, product);
+
+  if (profileLoading && !profile) return <ActivityIndicator />;
+  if (!canView) return <Redirect href="/" />;
 
   return (
     <ThemedView style={styles.container}>

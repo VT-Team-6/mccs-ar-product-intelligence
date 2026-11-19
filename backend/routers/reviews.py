@@ -117,9 +117,9 @@ from services.product_analysis_cache import (
 logger = logging.getLogger(__name__)
 
 def require_review_access(
-    product_id: int, user=Depends(require_permission("create_products"))
+    product_id: int, user=Depends(require_permission("aggregate_reviews"))
 ) -> None:
-    """Review sources follow product ownership: the app admin, or the owning store."""
+    """Only app admins manage review sources and imports."""
     with get_connection() as conn:
         require_product_owner(conn, user, product_id)
 

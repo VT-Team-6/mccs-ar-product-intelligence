@@ -312,6 +312,19 @@ def test_remember_buyer_saves_it_on_products_without_one(client, db, staff):
 # --- the buyer's side ------------------------------------------------------
 
 
+def test_removed_default_buyer_can_be_replaced_when_sending_an_order(client, db, staff):
+    _set_stock(client, 1, 4)
+    former_buyer = staff["buyer"]["user_id"]
+    db.execute("UPDATE inventory SET buyer_user_id=%s WHERE product_id=1 AND store_id=1", (former_buyer,))
+    db.execute("DELETE FROM user_stores WHERE user_id=%s", (former_buyer,))
+
+    groups = client.get(f"{REORDERS}/groups", params={"store_id": 1}).json()
+    assert groups[0]["buyer_user_id"] is None
+    assert _send(client, staff, [1], buyer="other_buyer", remember_buyer=True).status_code == 200
+    entry = db.execute("SELECT buyer_user_id FROM inventory WHERE product_id=1 AND store_id=1").fetchone()
+    assert entry["buyer_user_id"] == staff["other_buyer"]["user_id"]
+
+
 def test_the_buyer_lists_their_requests(client, db, staff):
     _set_stock(client, 1, 4)
     request_id = _send(client, staff, [1]).json()["request_id"]
@@ -498,3 +511,151 @@ def test_unread_is_counted_per_store(client, db, staff):
 
     assert mine["unread"] == 3
     assert mine["unread_by_store"] == {"1": 2, "2": 1}
+
+
+# --- role revocation and reassignment --------------------------------------
+
+
+@pytest.mark.parametrize("role", ["user", "store_clerk", "store_admin"])
+def test_demoted_buyer_loses_request_list_detail_and_updates(client, db, staff, role):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    _as(client, db, "buyer", role, [1])
+    # A promoted manager may read the store's requests, but not respond as buyer.
+    assert client.get(REQUESTS).status_code == 403
+    assert client.get(f"{REQUESTS}/items").status_code == 403
+    assert client.get(f"{REQUESTS}/{request_id}").status_code == (200 if role == "store_admin" else 403)
+    assert client.post(f"{REQUESTS}/{request_id}/items", json={"product_ids": [1], "status": "ordered"}).status_code == 403
+    assert client.get(MESSAGES).json()["messages"] == []
+    assert client.post(f"{MESSAGES}/read", json={"request_id": request_id}).json() == {"marked": 0}
+    _as(client, db, "manager-one", "store_admin", [1])
+    assert client.get(f"{REQUESTS}/{request_id}").json()["needs_reassignment"] is True
+
+
+def test_removed_buyer_loses_old_requests_and_notifications(client, db, staff):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    _as(client, db, "buyer", "store_buyer", [1])
+    db.execute("DELETE FROM user_stores WHERE user_id=%s", (staff["buyer"]["user_id"],))
+    assert client.get(REQUESTS).json() == []
+    assert client.get(f"{REQUESTS}/items").json() == []
+    assert client.get(f"{REQUESTS}/{request_id}").status_code == 403
+    assert client.post(f"{REQUESTS}/{request_id}/items", json={"product_ids": [1], "status": "ordered"}).status_code == 403
+    messages = client.get(MESSAGES).json()
+    assert messages == {"messages": [], "unread": 0, "unread_by_store": {}}
+    _as(client, db, "manager-one", "store_admin", [1])
+    requests = client.get(REQUESTS, params={"store_id": 1}).json()
+    assert requests[0]["needs_reassignment"] is True
+
+
+def test_reassignment_preserves_progress_and_records_history(client, db, staff):
+    for product_id in [1, 2, 3]:
+        _set_stock(client, product_id, 4)
+    request_id = _send(client, staff, [1, 2, 3]).json()["request_id"]
+    _as(client, db, "buyer", "store_buyer", [1])
+    client.post(f"{REQUESTS}/{request_id}/items", json={"product_ids": [1], "status": "ordered"})
+    client.post(f"{REQUESTS}/{request_id}/items", json={"product_ids": [2], "status": "unavailable", "reason": "Supplier closed"})
+    db.execute("DELETE FROM user_stores WHERE user_id=%s", (staff["buyer"]["user_id"],))
+    _as(client, db, "manager-one", "store_admin", [1])
+    response = client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": staff["other_buyer"]["user_id"]})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["needs_reassignment"] is False
+    assert body["buyer_user_id"] == staff["other_buyer"]["user_id"]
+    by_id = {item["product_id"]: item for item in body["items"]}
+    assert by_id[1]["status"] == "ordered"
+    assert by_id[2]["reason"] == "Supplier closed"
+    assert by_id[1]["updated_by"] == staff["buyer"]["user_id"]
+    assert by_id[3]["status"] == "pending"
+    assert body["reassignments"][0]["from_buyer_email"] == "buyer@example.com"
+    assert body["reassignments"][0]["to_buyer_email"] == "buyer-two@example.com"
+    _as(client, db, "buyer-two", "store_buyer", [1])
+    assert client.get(REQUESTS).json()[0]["request_id"] == request_id
+    assert client.get(MESSAGES).json()["unread"] == 1
+    assert client.post(f"{REQUESTS}/{request_id}/items", json={"product_ids": [1], "status": "unavailable", "reason": "Wrong"}).status_code == 409
+    assert client.post(f"{REQUESTS}/{request_id}/items", json={"product_ids": [3], "status": "ordered"}).status_code == 200
+
+
+def test_reassignment_revokes_previous_buyer_even_when_still_eligible(client, db, staff):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    response = client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": staff["other_buyer"]["user_id"]})
+    assert response.status_code == 200
+    _as(client, db, "buyer", "store_buyer", [1])
+    assert client.get(REQUESTS).json() == []
+    assert client.get(f"{REQUESTS}/{request_id}").status_code == 403
+    assert client.get(MESSAGES).json()["messages"] == []
+
+
+@pytest.mark.parametrize("role,token,stores", [
+    ("store_buyer", "buyer", [1]), ("store_clerk", "clerk", [1]),
+    ("user", "shopper", []), ("store_admin", "manager-far", [2]),
+])
+def test_only_store_managers_can_reassign(client, db, staff, role, token, stores):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    _as(client, db, token, role, stores)
+    response = client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": staff["other_buyer"]["user_id"]})
+    assert response.status_code == 403
+
+
+def test_reassignment_validates_new_buyer_and_is_idempotent(client, db, staff):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    for user_id in [staff["far_manager"]["user_id"], staff["manager"]["user_id"], 999999]:
+        assert client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": user_id}).status_code == 422
+    new_buyer = staff["other_buyer"]["user_id"]
+    for _ in range(2):
+        assert client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": new_buyer}).status_code == 200
+    assert db.execute("SELECT count(*) AS n FROM order_request_reassignments WHERE request_id=%s", (request_id,)).fetchone()["n"] == 1
+    assert db.execute("SELECT count(*) AS n FROM messages WHERE request_id=%s AND recipient_user_id=%s", (request_id, new_buyer)).fetchone()["n"] == 1
+
+
+def test_requests_without_pending_work_are_not_reassigned(client, db, staff):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    _as(client, db, "buyer", "store_buyer", [1])
+    client.post(f"{REQUESTS}/{request_id}/items", json={"product_ids": [1], "status": "ordered"})
+    db.execute("DELETE FROM user_stores WHERE user_id=%s", (staff["buyer"]["user_id"],))
+    _as(client, db, "manager-one", "store_admin", [1])
+    assert client.get(f"{REQUESTS}/{request_id}").json()["needs_reassignment"] is False
+    assert client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": staff["other_buyer"]["user_id"]}).status_code == 409
+
+
+def test_app_admin_can_reassign_without_store_assignment(client, db, staff):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    _as(client, db, "global", "system_admin", [])
+    assert client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": staff["other_buyer"]["user_id"]}).status_code == 200
+
+
+def test_cannot_reassign_to_a_buyer_from_another_store(client, db, staff):
+    _set_stock(client, 1, 4)
+    request_id = _send(client, staff, [1]).json()["request_id"]
+    foreign = _as(client, db, "foreign-buyer", "store_buyer", [2])
+    _as(client, db, "manager-one", "store_admin", [1])
+    assert client.put(f"{REQUESTS}/{request_id}/buyer", json={"buyer_user_id": foreign["user_id"]}).status_code == 422
+    assert client.get(f"{REQUESTS}/{request_id}").json()["buyer_user_id"] == staff["buyer"]["user_id"]
+    assert db.execute("SELECT count(*) AS n FROM order_request_reassignments").fetchone()["n"] == 0
+
+
+def test_demoted_buyer_notifications_do_not_expose_old_order_content(client, db, staff):
+    _set_stock(client, 1, 4)
+    _send(client, staff, [1])
+    _as(client, db, "buyer", "store_clerk", [1])
+    assert client.get(MESSAGES).json() == {"messages": [], "unread": 0, "unread_by_store": {}}
+
+
+def test_reassignment_migration_backfills_existing_responses():
+    with PostgresContainer("postgres:17") as pg:
+        url = f"postgresql://{quote(pg.username)}:{quote(pg.password)}@{pg.get_container_host_ip()}:{pg.get_exposed_port(5432)}/{pg.dbname}"
+        with psycopg.connect(url, autocommit=True) as conn:
+            for path in sorted(DB_DIR.rglob("*.sql")):
+                if path.name != "021-order-request-reassignment.sql":
+                    conn.execute(path.read_text())
+            buyer_id = conn.execute("SELECT user_id FROM users LIMIT 1").fetchone()[0]
+            alert_id = conn.execute("INSERT INTO low_stock_alerts (product_id,store_id,quantity,threshold) VALUES (1,1,1,10) RETURNING alert_id").fetchone()[0]
+            request_id = conn.execute("INSERT INTO order_requests (store_id,buyer_user_id) VALUES (1,%s) RETURNING request_id", (buyer_id,)).fetchone()[0]
+            conn.execute("INSERT INTO order_request_items (request_id,alert_id,product_id,quantity,status,updated_at) VALUES (%s,%s,1,5,'ordered',NOW())", (request_id,alert_id))
+            conn.execute((DB_DIR / "migrations/021-order-request-reassignment.sql").read_text())
+            assert conn.execute("SELECT status,updated_by FROM order_request_items WHERE request_id=%s", (request_id,)).fetchone() == ("ordered",buyer_id)
