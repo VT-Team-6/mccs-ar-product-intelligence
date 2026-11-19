@@ -11,7 +11,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   addProductImage,
@@ -31,6 +30,7 @@ import { FailureDialog, type Failure } from "@/components/failure-dialog";
 import { ActionProgress, FeedbackNotice } from "@/components/feedback-banner";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmAction } from "@/utils/confirm";
@@ -286,24 +286,13 @@ export default function ManageImagesScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <Pressable
-          onPress={goBack}
-          hitSlop={12}
-          style={({ pressed }) => pressed && styles.pressed}
-        >
-          <ThemedText type="linkPrimary">‹ Back</ThemedText>
-        </Pressable>
-
-        <ThemedText type="subtitle" style={styles.title}>
-          Product images
-        </ThemedText>
-        {product && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {product.name}
-          </ThemedText>
-        )}
-
+      <ScreenHeader
+        title="Product images"
+        eyebrow="Manage Products"
+        subtitle={product?.name}
+        fallback="/admin/products"
+      />
+      <View style={styles.safeArea}>
         {loadError && (
           <ThemedText type="small" style={styles.loadError}>
             {loadError}
@@ -455,7 +444,7 @@ export default function ManageImagesScreen() {
             )}
           </ScrollView>
         )}
-      </SafeAreaView>
+      </View>
 
       {canManage && product && (
         <AmazonImagePicker
@@ -531,14 +520,13 @@ function ExtraImage({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
+    width: "100%",
+    alignSelf: "center",
     paddingHorizontal: Spacing.four,
-    paddingTop:
-      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop: Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },

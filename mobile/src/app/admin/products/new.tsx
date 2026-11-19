@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Platform, Pressable, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { useAuth } from "@/auth/AuthContext";
 import { listStores, manageableStores, type Store } from "@/api/inventory";
@@ -12,6 +11,7 @@ import { ReviewSourceSelector } from "@/components/review-source-selector";
 import { ProductForm } from "@/components/product-form";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 
 export default function AddProductScreen() {
@@ -83,17 +83,8 @@ export default function AddProductScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <Pressable
-          onPress={goBack}
-          hitSlop={12}
-          style={({ pressed }) => pressed && styles.pressed}
-        >
-          <ThemedText type="linkPrimary">‹ Cancel</ThemedText>
-        </Pressable>
-        <ThemedText type="subtitle" style={styles.title}>
-          Add product
-        </ThemedText>
+      <ScreenHeader title="Add product" eyebrow="Manage Products" fallback="/admin/products" />
+      <View style={styles.safeArea}>
 
         {forStore && myStores.length === 1 && (
           <ThemedText themeColor="textSecondary">
@@ -129,7 +120,7 @@ export default function AddProductScreen() {
         )}
 
         <ProductForm submitLabel="Add product" onSubmit={handleCreate} />
-      </SafeAreaView>
+      </View>
 
       {createdProduct && (
         <ReviewSourceSelector
@@ -146,15 +137,13 @@ export default function AddProductScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
   safeArea: {
     flex: 1,
+    width: "100%",
+    alignSelf: "center",
     paddingHorizontal: Spacing.four,
-    // On web the tab bar sits at the top, so leave room for it
-    paddingTop:
-      Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
+    paddingTop: Spacing.three,
     gap: Spacing.two,
     maxWidth: MaxContentWidth,
   },

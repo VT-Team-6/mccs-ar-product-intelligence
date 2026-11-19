@@ -4,15 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Platform,
   Pressable,
   StyleSheet,
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
+  exportStockCsv,
   getStoreInventory,
   listStores,
   type InventoryStatus,
@@ -21,10 +21,15 @@ import {
 } from "@/api/inventory";
 import { productImageUrl } from "@/api/products";
 import { useAuth } from "@/auth/AuthContext";
+import { StockImportModal } from "@/components/stock-import-modal";
+import { StorePicker } from "@/components/store-picker";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { AppButton } from "@/components/ui/app-button";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { MaxContentWidth, Spacing, Radius } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { pickCsv, saveCsv } from "@/utils/csv-file";
 
 const TABS: { status: InventoryStatus; label: string }[] = [
   { status: "active", label: "Active" },
@@ -33,20 +38,23 @@ const TABS: { status: InventoryStatus; label: string }[] = [
 ];
 
 export default function InventoryScreen() {
-  const { profile } = useAuth();
+  const { profile, hasPermission } = useAuth();
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
   const [stores, setStores] = useState<Store[]>([]);
   const [storeId, setStoreId] = useState<number | null>(null);
-  const [choosingStore, setChoosingStore] = useState(false);
   const [status, setStatus] = useState<InventoryStatus>("active");
   const [items, setItems] = useState<StoreStockEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  // The picked end-of-day stock file; the import popup is open while it's set
+  const [importCsv, setImportCsv] = useState<string | null>(null);
+  const [fileBusy, setFileBusy] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const store = stores.find((item) => item.store_id === storeId);
 
@@ -97,10 +105,39 @@ export default function InventoryScreen() {
     }, [loadInventory]),
   );
 
+
   const refresh = async () => {
     setRefreshing(true);
     await loadInventory();
     setRefreshing(false);
+  };
+
+  // Downloads the store's stock as a CSV to fill in at closing
+  const exportStock = async () => {
+    if (!store) return;
+    setFileBusy(true);
+    setFileError(null);
+    try {
+      const text = await exportStockCsv(store.store_id);
+      const slug = store.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const today = new Date().toISOString().slice(0, 10);
+      await saveCsv(`stock-${slug}-${today}.csv`, text);
+    } catch (problem) {
+      setFileError(problem instanceof Error ? problem.message : "Could not export the stock.");
+    } finally {
+      setFileBusy(false);
+    }
+  };
+
+  // Picks the filled-in CSV and opens the preview
+  const importStock = async () => {
+    setFileError(null);
+    try {
+      const text = await pickCsv();
+      if (text !== null) setImportCsv(text);
+    } catch (problem) {
+      setFileError(problem instanceof Error ? problem.message : "Could not open the file.");
+    }
   };
 
   const query = search.trim().toLowerCase();
@@ -123,66 +160,25 @@ export default function InventoryScreen() {
         price: item.price === null ? "" : item.price.toFixed(2),
         quantity: String(item.quantity),
         status: item.status,
+        lowStockAt: String(item.low_stock_threshold ?? 10),
+        buyerId: item.buyer_user_id ? String(item.buyer_user_id) : "",
       },
     });
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-        <ThemedView style={styles.topBar}>
-          <Pressable
-            onPress={() => router.dismissTo("/")}
-            hitSlop={12}
-            style={({ pressed }) => pressed && styles.pressed}
-          >
-            <ThemedText type="linkPrimary">‹ User view</ThemedText>
-          </Pressable>
-        </ThemedView>
-
-        <ThemedText type="subtitle">Inventory</ThemedText>
-
-        {store ? (
-          <ThemedView type="backgroundElement" style={styles.storeBox}>
-            <ThemedText type="small" themeColor="textSecondary">
-              Store
-            </ThemedText>
-            <ThemedText type="smallBold">{store.name}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {store.address}
-            </ThemedText>
-            {stores.length > 1 && (
-              <Pressable
-                onPress={() => setChoosingStore((open) => !open)}
-                style={({ pressed }) => pressed && styles.pressed}
-              >
-                <ThemedText type="linkPrimary">
-                  {choosingStore ? "Close store list" : "Change store"}
-                </ThemedText>
-              </Pressable>
-            )}
-            {choosingStore &&
-              stores.map((item) => (
-                <Pressable
-                  key={item.store_id}
-                  onPress={() => {
-                    setStoreId(item.store_id);
-                    setChoosingStore(false);
-                  }}
-                  style={({ pressed }) => pressed && styles.pressed}
-                >
-                  <ThemedText type={item.store_id === storeId ? "smallBold" : "small"}>
-                    {`${item.store_id === storeId ? "✓ " : ""}${item.name}`}
-                  </ThemedText>
-                </Pressable>
-              ))}
-          </ThemedView>
-        ) : (
-          !loading &&
-          !error && (
-            <ThemedText themeColor="textSecondary">
-              You aren't assigned to any stores yet.
-            </ThemedText>
-          )
+            <ScreenHeader
+        title="Inventory"
+        eyebrow="Management"
+        subtitle={store?.name}
+        fallback="/manage"
+        backLabel="Management"
+      />
+      <View style={styles.body}>
+        {/* The store's name is in the header; this only switches stores */}
+        <StorePicker stores={stores} storeId={storeId} onChange={setStoreId} />
+        {!store && !loading && !error && (
+          <ThemedText themeColor="textSecondary">You aren't assigned to any stores yet.</ThemedText>
         )}
 
         <View style={styles.tabs}>
@@ -203,6 +199,32 @@ export default function InventoryScreen() {
             </Pressable>
           ))}
         </View>
+
+        {store && status === "active" && (
+          <View style={styles.fileButtons}>
+            <FileButton label="Export stock" onPress={exportStock} disabled={fileBusy} />
+            <FileButton label="Import stock" onPress={importStock} disabled={fileBusy} />
+          </View>
+        )}
+        {store && status === "active" && hasPermission("manage_inventory") && (
+          <View style={styles.fileButtons}>
+            <FileButton
+              label="Low stock & buyers"
+              disabled={false}
+              onPress={() =>
+                router.push({
+                  pathname: "/admin/inventory/low-stock",
+                  params: { storeId: String(store.store_id), storeName: store.name },
+                })
+              }
+            />
+          </View>
+        )}
+        {fileError && (
+          <ThemedText type="small" themeColor="textSecondary">
+            {fileError}
+          </ThemedText>
+        )}
 
         <TextInput
           value={search}
@@ -238,20 +260,38 @@ export default function InventoryScreen() {
             ) : null
           }
         />
-      </SafeAreaView>
+      </View>
+      {store && (
+        <StockImportModal
+          storeId={store.store_id}
+          storeName={store.name}
+          csv={importCsv}
+          onClose={() => setImportCsv(null)}
+          onImported={loadInventory}
+        />
+      )}
     </ThemedView>
   );
 }
 
+function FileButton({ label, onPress, disabled }: { label: string; onPress: () => void; disabled: boolean }) {
+  return (
+    <AppButton label={label} onPress={onPress} disabled={disabled} variant="secondary" size="small" style={styles.fileButton} />
+  );
+}
+
 function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => void }) {
+  const theme = useTheme();
   const price = item.price === null ? "No price" : `$${item.price.toFixed(2)}`;
   const stock =
-    item.status === "pending" ? "Needs approval" : item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock";
+    item.status === "pending"
+      ? "Needs approval"
+      : `${item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock"}${item.low_stock ? " · Low" : ""}`;
   const imageUrl = productImageUrl(item);
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundElement" style={styles.row}>
+      <ThemedView type="card" style={[styles.row, { borderColor: theme.border }]}>
         {imageUrl ? (
           <Image
             source={{ uri: imageUrl }}
@@ -261,13 +301,13 @@ function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => voi
         ) : (
           <ThemedView type="backgroundSelected" style={styles.thumbnail} />
         )}
-        <ThemedView type="backgroundElement" style={styles.rowText}>
+        <ThemedView type="card" style={styles.rowText}>
           <ThemedText type="smallBold">{item.product_name}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {[item.brand, `ID ${item.product_id}`].filter(Boolean).join(" · ")}
           </ThemedText>
         </ThemedView>
-        <ThemedView type="backgroundElement" style={styles.rowRight}>
+        <ThemedView type="card" style={styles.rowRight}>
           <ThemedText type="smallBold">{price}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {stock}
@@ -281,24 +321,20 @@ function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => voi
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    flexDirection: "row",
   },
-  safeArea: {
+  // The page content under the navy band, centered on wide screens
+  body: {
     flex: 1,
-    paddingHorizontal: Spacing.three,
-    paddingTop: Platform.OS === "web" ? Spacing.six + Spacing.four : Spacing.three,
-    gap: Spacing.two,
+    width: "100%",
     maxWidth: MaxContentWidth,
+    alignSelf: "center",
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.three,
+    gap: Spacing.two,
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  storeBox: {
-    padding: Spacing.three,
-    borderRadius: Spacing.three,
-    gap: Spacing.half,
   },
   tabs: {
     flexDirection: "row",
@@ -311,6 +347,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: Spacing.two,
     borderRadius: Spacing.three,
+  },
+  fileButton: {
+    flex: 1,
+  },
+  fileButtons: {
+    flexDirection: "row",
+    gap: Spacing.two,
   },
   search: {
     fontSize: 16,
@@ -327,7 +370,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.medium,
+    borderWidth: 1,
   },
   thumbnail: {
     width: 56,
