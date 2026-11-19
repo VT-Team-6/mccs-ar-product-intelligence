@@ -27,7 +27,12 @@ export default function TabLayout() {
           <AuthenticatedApp>
             {/* Unread count for the Manage tab, and the banner on top of every screen */}
             <NotificationsProvider>
-              <Stack screenOptions={{ headerShown: false }} />
+              <Stack screenOptions={{ headerShown: false }}>
+                {/* The QR scanner covers the whole screen and slides up from the bottom */}
+                <Stack.Screen name="scan" options={{ presentation: "fullScreenModal", animation: "slide_from_bottom" }} />
+                {/* Search fades in under the Home bar that just slid to the top */}
+                <Stack.Screen name="find" options={{ animation: "fade", animationDuration: 150 }} />
+              </Stack>
             </NotificationsProvider>
           </AuthenticatedApp>
         </StoreProvider>

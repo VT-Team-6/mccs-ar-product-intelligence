@@ -535,7 +535,7 @@ function StoreSelectorSheet({
               </View>
 
               {searchError && (
-                <ThemedText type="small" style={styles.error}>
+                <ThemedText type="small" themeColor="danger" style={styles.error}>
                   {searchError}
                 </ThemedText>
               )}
@@ -706,7 +706,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   suggestion: { borderRadius: Spacing.three },
-  error: { color: '#E5484D' },
+  error: {},
   compactButton: { paddingHorizontal: Spacing.two },
   headingText: { flex: 1, gap: Spacing.half },
   center: {

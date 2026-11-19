@@ -53,7 +53,9 @@ export default function CompareScreen() {
           setError(
             problem instanceof TypeError
               ? "Could not reach the backend. Is it running?"
-              : "Could not load the comparison. Try again.",
+              : problem instanceof Error && problem.message.startsWith("You can only")
+                ? problem.message
+                : "Could not load the comparison. Try again.",
           );
         }
       })

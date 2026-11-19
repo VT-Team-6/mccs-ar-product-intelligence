@@ -35,7 +35,8 @@ export function AppButton({
   const theme = useTheme();
   const inactive = disabled || loading;
   const filled = variant === 'primary';
-  const outline = variant === 'danger' ? Brand.danger : theme.link;
+  // The theme's red is brighter in dark mode, so a danger outline stays readable
+  const outline = variant === 'danger' ? theme.danger : theme.link;
   const textColor = filled ? '#ffffff' : outline;
 
   return (

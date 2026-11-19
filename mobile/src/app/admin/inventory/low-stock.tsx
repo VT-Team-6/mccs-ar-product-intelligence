@@ -210,7 +210,8 @@ function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?:
         <FlatList
           data={visible}
           keyExtractor={(item) => String(item.product_id)}
-          contentContainerStyle={styles.list}
+          style={styles.edgeToEdge}
+          contentContainerStyle={[styles.list, styles.edgePadding]}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => {
@@ -269,7 +270,7 @@ function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?:
               <BuyerPicker buyers={buyers} value={buyer} onChange={setBuyer} allowKeep />
             </View>
           </View>
-          {error && <ThemedText type="small" style={styles.error}>{error}</ThemedText>}
+          {error && <ThemedText type="small" themeColor="danger" style={styles.error}>{error}</ThemedText>}
           {message && <ThemedText type="small">{message}</ThemedText>}
           <AppButton
             label={`Apply to ${selected.size} selected`}
@@ -287,6 +288,14 @@ function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?:
 }
 
 const styles = StyleSheet.create({
+  // Lists reach the screen edges so the scroll bar sits at the edge, while
+  // their content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
+  },
   container: {
     flex: 1,
   },
@@ -355,7 +364,6 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
   },
   error: {
-    color: "#E5484D",
   },
   button: {
     alignItems: "center",

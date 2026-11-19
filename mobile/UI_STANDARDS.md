@@ -15,7 +15,8 @@ All colors live in `src/constants/theme.ts`.
 | Prices, section labels | `theme.link` (navy), extra bold | Follows light/dark mode |
 | Body text / hints | `theme.text` / `theme.textSecondary` | Follows light/dark mode |
 | Links | `theme.link` (navy, light navy in dark mode) | Used by `type="linkPrimary"` |
-| Good / warning / problem | `Brand.success` / `Brand.warning` / `Brand.danger` | Status messages |
+| Problem / good **text** (errors, "Unavailable", the like heart) | `themeColor="danger"` / `themeColor="success"`, or `theme.danger` / `theme.success` | Brighter in dark mode so it stays readable |
+| Red or green **fills** (buttons, badges, stripes) | `Brand.red` / `Brand.success` | Stay the same in both modes |
 
 Don't add new hex colors in screens. The old blue `#3c87f7` is replaced by navy.
 

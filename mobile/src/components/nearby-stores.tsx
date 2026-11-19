@@ -189,7 +189,7 @@ export function NearbyStores({ productId }: Props) {
       )}
 
       {saveError && (
-        <ThemedText type="small" style={styles.error}>
+        <ThemedText type="small" themeColor="danger" style={styles.error}>
           {saveError}
         </ThemedText>
       )}
@@ -251,6 +251,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   locationText: { flexShrink: 1 },
-  error: { color: Brand.danger },
+  error: {},
   pressed: { opacity: 0.6 },
 });

@@ -242,6 +242,17 @@ def test_service_lists_history_newest_first_with_current_like_state(db):
     assert items[0]["product"]["is_liked"] is False
 
 
+def test_service_history_includes_category(db):
+    # History's compare uses the category to stop coffee being compared with shoes
+    user_id = _sign_in_as_direct(db)
+    product_id = _new_product(db, name="Ground Coffee", category="coffee")
+    user_products.record_interaction(db, user_id, product_id, "viewed")
+
+    items, _ = user_products.list_product_history(db, user_id, None, 20, None)
+
+    assert items[0]["product"]["category"] == "coffee"
+
+
 def test_service_rejects_forged_like_interaction(db):
     user_id = _sign_in_as_direct(db)
     product_id = _new_product(db)

@@ -47,10 +47,11 @@ type ScanNotice = {
   addProduct?: { id: number; name: string };
 };
 
-const NOTICE_COLORS = {
-  success: Brand.success,
-  info: Brand.navy,
-  problem: Brand.danger,
+// The scan message's color for each tone, from the theme so it stays readable in dark mode
+const NOTICE_TONE = {
+  success: 'success',
+  info: 'link',
+  problem: 'danger',
 } as const;
 
 // In-store shopping mode: the active list, with a scanner. Scanning a product
@@ -391,11 +392,11 @@ export default function InStoreShoppingScreen() {
                     styles.notice,
                     // borderColor first, so the colored left edge wins over it
                     { borderColor: theme.border },
-                    { borderLeftColor: NOTICE_COLORS[notice.tone], backgroundColor: theme.card },
+                    { borderLeftColor: theme[NOTICE_TONE[notice.tone]], backgroundColor: theme.card },
                   ]}
                   accessibilityLiveRegion="polite"
                 >
-                  <ThemedText type="smallBold" style={{ color: NOTICE_COLORS[notice.tone] }}>
+                  <ThemedText type="smallBold" style={{ color: theme[NOTICE_TONE[notice.tone]] }}>
                     {notice.text}
                   </ThemedText>
                   {notice.addProduct && (

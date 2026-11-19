@@ -254,7 +254,7 @@ export function ReviewSourceSelector({
               </View>
 
               {error && (
-                <ThemedText type="small" style={styles.error}>{error}</ThemedText>
+                <ThemedText type="small" themeColor="danger" style={styles.error}>{error}</ThemedText>
               )}
               {selectionSaved && error && (
                 <ThemedText type="small" themeColor="textSecondary">
@@ -446,6 +446,6 @@ const styles = StyleSheet.create({
   compactButton: { paddingHorizontal: Spacing.two },
   buttonText: { textAlign: 'center' },
   dimmed: { opacity: 0.5 },
-  error: { color: Brand.danger },
+  error: {},
   result: { gap: Spacing.three, paddingVertical: Spacing.four },
 });

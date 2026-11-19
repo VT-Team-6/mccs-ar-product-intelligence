@@ -199,7 +199,8 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
       />
       <View style={styles.body}>
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.six }]}
+          style={styles.edgeToEdge}
+          contentContainerStyle={[[styles.content, { paddingBottom: insets.bottom + Spacing.six }], styles.edgePadding]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
@@ -370,6 +371,14 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
 }
 
 const styles = StyleSheet.create({
+  // Lists reach the screen edges so the scroll bar sits at the edge, while
+  // their content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
+  },
   container: {
     flex: 1,
   },

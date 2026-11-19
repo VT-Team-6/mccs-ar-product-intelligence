@@ -15,6 +15,7 @@ export function BackButton({
   label = 'Back',
   onDark = false,
   iconOnly = false,
+  onPress,
 }: {
   from?: string;
   fallback?: string;
@@ -24,6 +25,8 @@ export function BackButton({
   // Just a round chevron, no text (used in the header band, left of the title).
   // The label is still read out by screen readers.
   iconOnly?: boolean;
+  // Replaces the usual going back, for screens that need their own
+  onPress?: () => void;
 }) {
   const router = useRouter();
   const navigation = useNavigation();
@@ -46,7 +49,7 @@ export function BackButton({
   if (iconOnly) {
     return (
       <Pressable
-        onPress={goBack}
+        onPress={onPress ?? goBack}
         hitSlop={10}
         accessibilityRole="button"
         accessibilityLabel={label === 'Back' ? 'Back' : `Back to ${label}`}
@@ -58,7 +61,7 @@ export function BackButton({
 
   return (
     <Pressable
-      onPress={goBack}
+      onPress={onPress ?? goBack}
       hitSlop={12}
       accessibilityRole="button"
       accessibilityLabel={label}

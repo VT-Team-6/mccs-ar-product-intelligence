@@ -155,3 +155,27 @@ export async function saveSelectedStore(storeId: number | null): Promise<number 
   const body = await readJson<{ store_id: number | null }>(response, "Could not save your store");
   return body.store_id;
 }
+// --- Recent searches (signed-in shoppers) --------------------------------------
+
+export type RecentSearch = { search_id: number; query: string; searched_at: string };
+
+export async function listRecentSearches(): Promise<RecentSearch[]> {
+  const response = await authenticatedFetch("/api/me/recent-searches");
+  return readJson(response, "Could not load your recent searches");
+}
+
+// Saves a search that just ran. Never worth bothering the shopper about if it fails.
+export async function recordRecentSearch(query: string): Promise<void> {
+  await authenticatedFetch("/api/me/recent-searches", {
+    method: "POST",
+    body: JSON.stringify({ query }),
+  }).catch(() => undefined);
+}
+
+export async function deleteRecentSearch(searchId: number): Promise<void> {
+  await authenticatedFetch(`/api/me/recent-searches/${searchId}`, { method: "DELETE" });
+}
+
+export async function clearRecentSearches(): Promise<void> {
+  await authenticatedFetch("/api/me/recent-searches", { method: "DELETE" });
+}

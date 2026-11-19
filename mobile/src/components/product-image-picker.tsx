@@ -54,7 +54,7 @@ export function ProductImagePicker({ productName, value, onChange, onVerified, d
         editable={!disabled}
         style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
       />
-      {problem && <ThemedText type="small" style={styles.error}>{problem}</ThemedText>}
+      {problem && <ThemedText type="small" themeColor="danger" style={styles.error}>{problem}</ThemedText>}
       <View style={styles.actions}>
         <Button label="Preview link" onPress={() => setPreviewUrl(currentUrl)} disabled={disabled || !currentUrl || !!problem} />
         <Button label="Choose Amazon image" onPress={() => setVisible(true)} disabled={disabled} />
@@ -102,5 +102,5 @@ const styles = StyleSheet.create({
   button: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingHorizontal: Spacing.one },
   dimmed: { opacity: .4 },
   placeholder: { minHeight: 100, alignItems: 'center', justifyContent: 'center', borderRadius: Spacing.two },
-  error: { color: '#E5484D' },
+  error: {},
 });

@@ -140,7 +140,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
       />
 
       {problems.map((problem) => (
-        <ThemedText key={problem} type="small" style={styles.problem}>
+        <ThemedText key={problem} type="small" themeColor="danger" style={styles.problem}>
           {problem}
         </ThemedText>
       ))}
@@ -219,7 +219,6 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   problem: {
-    color: "#E5484D",
   },
   saveButton: {
     alignItems: "center",

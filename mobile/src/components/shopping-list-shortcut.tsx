@@ -68,7 +68,7 @@ export function ShoppingListShortcut() {
           {detail}
         </ThemedText>
       </View>
-      <ThemedText type="smallBold" style={styles.action}>
+      <ThemedText type="smallBold" themeColor="danger" style={styles.action}>
         {`${action} ›`}
       </ThemedText>
     </Pressable>
@@ -94,7 +94,6 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   action: {
-    color: Brand.red,
   },
   pressed: {
     opacity: 0.7,
