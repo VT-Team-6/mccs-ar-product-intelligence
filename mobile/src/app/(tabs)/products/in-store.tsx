@@ -1,3 +1,6 @@
+import { useAuth } from '@/auth/AuthContext';
+import { SignInRequired } from '@/components/authentication/SignInRequired';
+
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
@@ -15,7 +18,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
-import { authenticatedFetch } from '@/api/client';
+import { publicFetch, withStore } from '@/api/client';
 import {
   addShoppingListItem,
   checkOffScanned,
@@ -38,6 +41,7 @@ import {
   Spacing,
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useStore } from '@/store/StoreContext';
 
 // What the last scan did, shown as a banner above the list
 type ScanNotice = {
@@ -57,9 +61,15 @@ const NOTICE_TONE = {
 // In-store shopping mode: the active list, with a scanner. Scanning a product
 // that is on the list checks it off right here, without leaving the list.
 export default function InStoreShoppingScreen() {
+  const { user } = useAuth();
+  return user ? <InStoreShoppingContent /> : <SignInRequired message="Sign in to use your shopping list in store." />;
+}
+
+function InStoreShoppingContent() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { store } = useStore();
 
   const [list, setList] = useState<ShoppingList | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,8 +171,8 @@ export default function InStoreShoppingScreen() {
 
     try {
       // The same lookup the Home scanner uses
-      const response = await authenticatedFetch(
-        `/api/scan?code=${encodeURIComponent(data)}`,
+      const response = await publicFetch(
+        withStore(`/api/scan?code=${encodeURIComponent(data)}`, store?.store_id),
       );
       const product = await response.json();
       if (!response.ok) {

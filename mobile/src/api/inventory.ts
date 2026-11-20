@@ -54,8 +54,8 @@ async function problem(response: Response, fallback: string): Promise<Error> {
 }
 
 // Every store. The screen narrows this to the ones the user manages.
-export async function listStores(): Promise<Store[]> {
-  const response = await publicFetch("/api/stores");
+export async function listStores(signal?: AbortSignal): Promise<Store[]> {
+  const response = await publicFetch("/api/stores", { signal });
   if (!response.ok) throw await problem(response, "Could not load stores");
   return response.json();
 }

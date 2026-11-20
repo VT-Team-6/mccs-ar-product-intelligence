@@ -22,6 +22,9 @@ import {
 type AuthContextType = {
   user: unknown | null;
   loading: boolean;
+  guestBrowsing: boolean;
+  continueAsGuest: () => void;
+  showSignIn: () => void;
   profileLoading: boolean;
   hasPermission: (permission: Permission) => boolean;
   /** The signed-in user's row from our backend, once it has loaded. */
@@ -50,11 +53,25 @@ async function loadProfileWithRetry(): Promise<User | null> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<unknown | null>(null);
   const [loading, setLoading] = useState(true);
+  const [guestBrowsing, setGuestBrowsing] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<User | null>(null);
   // Ignore account requests that finish after sign-out or a newer refresh.
   const sessionVersion = useRef(0);
   const profileRequest = useRef(0);
+
+  const continueAsGuest = useCallback(() => setGuestBrowsing(true), []);
+  const showSignIn = useCallback(() => setGuestBrowsing(false), []);
+
+  const resetSession = useCallback(() => {
+    sessionVersion.current++;
+    profileRequest.current++;
+    setGuestBrowsing(false);
+    setUser(null);
+    setProfile(null);
+    setLoading(false);
+    setProfileLoading(false);
+  }, []);
 
   const refreshUser = useCallback(async () => {
     const version = ++sessionVersion.current;
@@ -65,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const currentUser = await getCurrentUser();
       if (version !== sessionVersion.current) return;
+      setGuestBrowsing(false);
       setUser(currentUser);
       // Asks our backend who this is. This also creates their row in the users table on first login.
       const loaded = await loadProfileWithRetry();
@@ -95,20 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error("Google redirect sign-in failed:", payload.data);
       }
 
-      if (payload.event === "signedOut") {
-        sessionVersion.current++;
-        profileRequest.current++;
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-        setProfileLoading(false);
-      }
+      if (payload.event === "signedOut") resetSession();
     });
 
     refreshUser();
 
     return unsubscribe;
-  }, [refreshUser]);
+  }, [refreshUser, resetSession]);
 
   async function signIn(email: string, password: string) {
     const result = await amplifySignIn({
@@ -124,12 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signOut() {
     await amplifySignOut();
-    sessionVersion.current++;
-    profileRequest.current++;
-    setUser(null);
-    setProfile(null);
-    setLoading(false);
-    setProfileLoading(false);
+    resetSession();
   }
 
   // Refresh the profile on first load, if we haven't already loaded it. 
@@ -162,7 +168,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, profileLoading, hasPermission, profile, refreshProfile, signIn, signOut }}>
+      value={{
+        user, loading, guestBrowsing, continueAsGuest, showSignIn,
+        profileLoading, hasPermission, profile, refreshProfile, signIn, signOut,
+      }}>
       {children}
     </AuthContext.Provider>
   );

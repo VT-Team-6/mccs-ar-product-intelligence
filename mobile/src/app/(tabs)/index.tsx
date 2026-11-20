@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useRef } from "react";
-import { Alert, Animated, Easing, Image, Platform, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { useCallback, useRef, useState, useEffect } from "react";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { Alert, Animated, Easing, Image, Linking, Platform, Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
+
+import { publicFetch, withStore } from "@/api/client";
+import { API_URL } from "@/api/config";
+import { recordInteraction } from "@/api/me";
+import { checkOffScanned } from "@/api/shopping-lists";
+import { useAuth } from "@/auth/AuthContext";
 import { SymbolView } from "expo-symbols";
 
 import { AskChestyButton } from "@/components/ask-chesty-button";
@@ -24,6 +31,7 @@ const DOCK_GAP = 10;
 // shortcut, and a search bar pinned above the tab bar. The bar opens search,
 // the QR scanner, or Ask Chesty (advanced search).
 export default function HomeScreen() {
+  const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -35,18 +43,20 @@ export default function HomeScreen() {
   // isn't stuck at a disabled Scan button. Closing it is respected.
   const offeredStore = useRef(false);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     if (storeLoading || offeredStore.current) return;
     offeredStore.current = true;
     if (store === null) openStoreSelector();
-  }, [store, storeLoading, openStoreSelector]);
+  }, [store, storeLoading, openStoreSelector]));
 
   // Prices and stock depend on the store, so scanning or searching needs one first.
   // Returns true (and opens the store list) when no store is chosen yet.
   const needsStore = () => {
     if (store !== null) return false;
     openStoreSelector();
-    Alert.alert("Choose a store first", "Prices and stock depend on the store you're shopping at.");
+    if (!storeLoading) {
+      Alert.alert("Choose a store first", "Prices and stock depend on the store you're shopping at.");
+    }
     return true;
   };
 
@@ -142,7 +152,7 @@ export default function HomeScreen() {
               <ThemedText style={styles.wordmark}>MCCS</ThemedText>
               <ThemedText style={styles.tagline}>PRODUCT INTELLIGENCE</ThemedText>
             </View>
-            <SignoutButton />
+            {user ? <SignoutButton /> : null}
           </View>
 
           {/* The shared store sheet opens on top */}
@@ -152,7 +162,7 @@ export default function HomeScreen() {
           >
             <ThemedText style={styles.storeLabel}>{store ? "Shopping at" : "Store"}</ThemedText>
             <ThemedText style={styles.storeName} numberOfLines={1}>
-              {store ? store.name : "Choose a store"}
+              {store?.name ?? (storeLoading ? "Loading stores…" : "Choose a store")}
             </ThemedText>
             <ThemedText style={styles.storeChevron}>▾</ThemedText>
           </Pressable>

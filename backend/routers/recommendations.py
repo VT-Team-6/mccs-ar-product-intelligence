@@ -57,22 +57,26 @@ def recommend(
         default=None,
         description="Prices each card at this store; a query parameter, not a body field.",
     ),
-    user=Depends(auth.require_authenticated_user),
+    user=Depends(auth.optional_user),
 ):
     """Recommendations for the shopper's store (task 39): only products that store
     sells (active), priced at that store, in-stock ones first. Without a store,
     the whole catalog at its average price. The store also sets the price shown
     on each card via store_inventory."""
+    user_id = user["user_id"] if user is not None else None
+    saved_ranks = None
+    liked_ids = []
     with get_connection() as conn:
-        saved_ranks = preferences.get_preferences(conn, user["user_id"])
-        resolved = store_selection.resolve_store_id(conn, user["user_id"], store_id)
-        liked_ids = [
-            row["product_id"]
-            for row in conn.execute(
-                "SELECT product_id FROM user_product_likes WHERE user_id = %s",
-                (user["user_id"],),
-            ).fetchall()
-        ]
+        resolved = store_selection.resolve_store_id(conn, user_id, store_id)
+        if user_id is not None:
+            saved_ranks = preferences.get_preferences(conn, user_id)
+            liked_ids = [
+                row["product_id"]
+                for row in conn.execute(
+                    "SELECT product_id FROM user_product_likes WHERE user_id = %s",
+                    (user_id,),
+                ).fetchall()
+            ]
         # What the shopper's store sells right now, at its own prices
         store_stock = None
         if resolved is not None:
@@ -123,7 +127,8 @@ def recommend(
 
     best = [c for c in (with_product(card) for card in result["best_matches"]) if c]
     for_you = with_product(result["for_you"]) if result["for_you"] else None
-    _log_impressions(user["user_id"], best, for_you, result.get("signals", {}))
+    if user_id is not None:
+        _log_impressions(user_id, best, for_you, result.get("signals", {}))
 
     # How the text was read, so the shopper can see the limits the results follow
     understood = understand(body.text, engine.brands, types_named_in(body.text or "", set(engine.types)))

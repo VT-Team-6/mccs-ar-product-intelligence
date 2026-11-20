@@ -1,3 +1,6 @@
+import { useAuth } from '@/auth/AuthContext';
+import { SignInRequired } from '@/components/authentication/SignInRequired';
+
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -17,6 +20,11 @@ import {
 
 
 export default function PreferencesScreen() {
+  const { user } = useAuth();
+  return user ? <PreferencesContent /> : <SignInRequired message="Sign in to view and save your preferences." title="Preferences" />;
+}
+
+function PreferencesContent() {
   // What is currently selected on screen
   const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFERENCES);
   // What is saved on the account, so we know whether there is anything to save

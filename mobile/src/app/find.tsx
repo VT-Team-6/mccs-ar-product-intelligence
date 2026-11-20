@@ -107,7 +107,7 @@ export default function FindScreen() {
     let cancelled = false;
     setLoading(true);
     setResults([]);
-    searchProducts(query)
+    searchProducts(query, store?.store_id)
       .then((found) => {
         if (!cancelled) setResults(found);
       })

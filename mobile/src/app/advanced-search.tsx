@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Product } from '@/api/products';
 import { getRecommendations, type RecommendationResult } from '@/api/recommendations';
+import { useAuth } from '@/auth/AuthContext';
 import { MatchCard } from '@/components/match-card';
 import { RankPicker } from '@/components/rank-picker';
 import { ThemedText } from '@/components/themed-text';
@@ -27,6 +28,7 @@ import { Brand, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { CRITERIA, rankedCount, type Preferences } from '@/preferences/criteria';
 import { describeUnderstood, EXAMPLE_REQUESTS, MAX_REQUEST_LENGTH, rankingFromParam } from '@/search/advanced';
+import { useStore } from '@/store/StoreContext';
 
 // The character count only shows once the message gets close to the limit
 const SHOW_COUNT_AT = 150;
@@ -47,6 +49,8 @@ type Exchange = {
 // and Chesty answers in the chat with the best matches.
 export default function AdvancedSearchScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { store } = useStore();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   // Coming back from the results with "Edit search" keeps what was typed and ranked
@@ -101,7 +105,10 @@ export default function AdvancedSearchScreen() {
   // Runs the advanced search for one question and fills in Chesty's answer
   const ask = (id: number, question: string, priorities: Preferences) => {
     update(id, { status: 'loading', result: null });
-    getRecommendations({ text: question, ranking: priorities })
+    getRecommendations(
+      { text: question, ranking: priorities },
+      { signedIn: !!user, storeId: store?.store_id },
+    )
       .then((result) => update(id, { status: 'done', result }))
       .catch(() => update(id, { status: 'error' }));
   };

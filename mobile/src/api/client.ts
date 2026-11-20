@@ -1,6 +1,12 @@
 import { fetchAuthSession } from "aws-amplify/auth";
 import { API_URL } from "./config";
 
+export function withStore(path: string, storeId?: number): string {
+  if (storeId === undefined) return path;
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}store_id=${storeId}`;
+}
+
 // Fetch helper which requires the user to be authenticated, and passes in the tokens to the backend
 export async function authenticatedFetch(
   path: string,

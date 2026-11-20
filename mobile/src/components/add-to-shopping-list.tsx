@@ -18,6 +18,8 @@ import {
   type ShoppingListSummary,
 } from '@/api/shopping-lists';
 
+import { useAuth } from '@/auth/AuthContext';
+import { useSignInPrompt } from '@/auth/use-sign-in-prompt';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Brand, Radius, Spacing } from '@/constants/theme';
@@ -30,6 +32,8 @@ type Props = {
 };
 
 export function AddToShoppingList({ productId, onAdded }: Props) {
+  const { user } = useAuth();
+  const promptSignIn = useSignInPrompt();
   const [visible, setVisible] = useState(false);
   const [lists, setLists] = useState<ShoppingListSummary[]>([]);
   const [listItems, setListItems] = useState<
@@ -82,13 +86,17 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
   // Refresh saved-list membership when returning to this product.
   useFocusEffect(
     useCallback(() => {
-      if (visible) {
+      if (visible && user) {
         void loadLists();
       }
-    }, [visible, loadLists]),
+    }, [visible, user, loadLists]),
   );
 
   const openPicker = () => {
+    if (!user) {
+      void promptSignIn('Sign in to add products to a shopping list.');
+      return;
+    }
     setMessage(null);
     setError(null);
     setVisible(true);

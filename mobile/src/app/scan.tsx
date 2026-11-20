@@ -13,7 +13,9 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAuth } from "@/auth/AuthContext";
 import { Brand, Radius, Spacing } from "@/constants/theme";
+import { useStore } from "@/store/StoreContext";
 import { lookUpScannedCode } from "@/utils/scanned-product";
 
 // Dark sheet and overlay colors stay the same in light and dark mode, like a
@@ -26,6 +28,8 @@ const SHADE = "rgba(0,0,0,0.55)";
 // it takes a photo and reads the code from that instead.
 export default function ScanScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { store } = useStore();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [permission, requestPermission] = useCameraPermissions();
@@ -47,7 +51,10 @@ export default function ScanScreen() {
     handling.current = true;
     setBusy(true);
     setProblem(null);
-    const result = await lookUpScannedCode(code);
+    const result = await lookUpScannedCode(code, {
+      signedIn: !!user,
+      storeId: store?.store_id,
+    });
     if (result.ok) {
       // Replace the scanner, so Back from the product returns to Home
       router.replace(`/product/${result.productId}?from=/` as Href);

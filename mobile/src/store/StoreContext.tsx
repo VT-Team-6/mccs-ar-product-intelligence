@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -22,7 +23,7 @@ import {
 } from 'react-native';
 
 import { listStores, type Store } from '../api/inventory';
-import { getSelectedStore, saveSelectedStore } from '../api/me';
+import { getHomeStore, saveHomeStore } from '../api/me';
 import { searchLocations, type LocationSuggestion } from '../api/stores';
 import { useAuth } from '../auth/AuthContext';
 import { ThemedText } from '../components/themed-text';
@@ -33,14 +34,37 @@ import { confirmAction } from '../utils/confirm';
 import { locateDevice, locationProblem, type LocationRefusal } from './device-location';
 import { distanceToStore, formatMiles } from './distance';
 
-// The cache is a startup accelerator, not a per-account record, so it holds the
-// resolved store (name included) rather than a bare id: a cold start can then
-// paint "Price at MCCS Main Exchange location." before listStores() returns.
-const CACHE_KEY = 'mccs.active-store';
+// Keep anonymous device choices separate from account preferences.
+const CACHE_KEY = 'mccs.guest-store';
+const STORE_LOAD_TIMEOUT_MS = 10_000;
+
+async function withStoreTimeout<T>(request: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const deadline = new Promise<never>((_, reject) => {
+      timeout = setTimeout(() => {
+        controller.abort();
+        reject(new Error('Store request timed out'));
+      }, STORE_LOAD_TIMEOUT_MS);
+    });
+    return await Promise.race([request(controller.signal), deadline]);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+type StoreSelection = {
+  user: unknown;
+  store: Store | null;
+  // undefined means the account preference could not be read.
+  homeId: number | null | undefined;
+};
 
 type StoreContextType = {
   /** The store the shopper is shopping at, or null when they haven't picked one. */
   store: Store | null;
+  homeStore: Store | null;
   /** Every location, in the backend's stable order. The selector renders this. */
   stores: Store[];
   /** True while the saved selection is being read. Screens can avoid a flash of "no store". */
@@ -48,11 +72,9 @@ type StoreContextType = {
   /** Changes the active store. Rejects if the server refuses, leaving the old store in place. */
   setStore: (store: Store | null) => Promise<void>;
   /**
-   * Opens the one store sheet. `allowClear` shows the "Clear store" action, which
-   * only the Account screen offers: clearing is never what a shopper tapping a
-   * price prompt meant.
+   * Opens the store picker. Home mode edits the signed-in account preference.
    */
-  openStoreSelector: (options?: { allowClear?: boolean }) => void;
+  openStoreSelector: (options?: { allowClear?: boolean; home?: boolean }) => void;
   /**
    * The device's own coordinates, once the shopper has asked for them. Lives here
    * so distances mean the same thing everywhere: the sheet and the product page 
@@ -103,106 +125,113 @@ async function writeCache(store: Store | null): Promise<void> {
       await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(store));
     }
   } catch {
-    // Ignored on purpose. The server is the source of truth.
+    // The selection still works for this visit.
   }
 }
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const [store, setStoreState] = useState<Store | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const [selection, setSelection] = useState<StoreSelection | null>(null);
   const [stores, setStores] = useState<Store[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [storeListError, setStoreListError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [retryingStores, setRetryingStores] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [allowClear, setAllowClear] = useState(false);
+  const [choosingHome, setChoosingHome] = useState(false);
+  const sawGuestSession = useRef(false);
+  const current = selection?.user === user ? selection : null;
+  const loading = authLoading || current === null || retryingStores;
+  const loadError = storeListError
+    ? 'Could not load stores.'
+    : user && current && current.homeId === undefined
+      ? 'Could not load your saved store.'
+      : null;
+  const store = current?.store ?? null;
+  const homeStore = stores.find((item) => item.store_id === current?.homeId) ?? null;
   const [deviceOrigin, setDeviceOrigin] = useState<DeviceOrigin | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationRefusal, setLocationRefusal] = useState<LocationRefusal | null>(null);
 
-  // Learns the shopper's store once a user is signed in. The cache paints first
-  // so the name is on screen immediately; the server then overrides it.
   useEffect(() => {
+    if (authLoading) return;
     let cancelled = false;
+    const signedOut = !user && !sawGuestSession.current;
+    if (!user) sawGuestSession.current = true;
 
     void (async () => {
-      if (!user) {
-        // Sign-out: drop the in-memory store and the cache. The account's saved
-        // store stays on the server, so the same person gets it back next time,
-        // and a different person never inherits it. The same goes for the device
-        // fix: it belongs to the person who asked for it, not to the next shopper.
-        await writeCache(null);
-        if (cancelled) return;
-        setStores([]);
-        setStoreState(null);
-        setDeviceOrigin(null);
-        setLocationRefusal(null);
-        setLoading(true);
-        return;
-      }
-
-      // A cached store paints immediately, then has to agree with the server.
-      const cached = await readCache();
-      if (cancelled) return;
-      setLoading(true);
-      if (cached) setStoreState(cached);
-
-      const [all, savedId] = await Promise.all([
-        listStores().catch(() => [] as Store[]),
-        getSelectedStore().catch(() => null),
+      const [all, cached, savedId] = await Promise.all([
+        withStoreTimeout(listStores).catch(() => null),
+        readCache(),
+        user ? withStoreTimeout(getHomeStore).catch(() => undefined) : Promise.resolve(null),
       ]);
       if (cancelled) return;
 
-      setStores(all);
-      // An id that no longer resolves (the store was deleted) counts as no
-      // store, and is deliberately not written back.
-      const fromServer = all.find((item) => item.store_id === savedId) ?? null;
+      const guestStore = all
+        ? all.find((item) => item.store_id === cached?.store_id) ?? null
+        : cached;
+      let homeId = savedId;
+      let active = user ? all?.find((item) => item.store_id === homeId) ?? null : guestStore;
 
-      if (cached && savedId !== null && cached.store_id !== savedId && fromServer) {
-        const keepCached = await confirmAction(
-          'Keep your last store?',
-          `Your account is set to ${fromServer.name}, but this device last used ${cached.name}.`,
-          `Keep ${cached.name}`,
-        );
-        if (cancelled) return;
-
-        // Either way the choice is persisted, so the account and the device agree.
-        const chosen = keepCached ? cached : fromServer;
+      // Carry an anonymous selection into a new account once. The server keeps
+      // any home store saved on another device during sign-in.
+      if (user && sawGuestSession.current && homeId === null && all && guestStore) {
+        active = guestStore;
         try {
-          if (keepCached) await saveSelectedStore(cached.store_id);
-          setStoreState(chosen);
-          writeCache(chosen);
+          homeId = await withStoreTimeout((signal) => saveHomeStore(guestStore.store_id, { onlyIfUnset: true, signal }));
+          active = all.find((item) => item.store_id === homeId) ?? guestStore;
         } catch {
-          setStoreState(fromServer);
-          writeCache(fromServer);
+          // The store still works for this visit if the preference could not be saved.
         }
-        setLoading(false);
-        return;
       }
+      if (cancelled) return;
+      if (user && all && homeId !== undefined) sawGuestSession.current = false;
 
-      setStoreState(fromServer);
-      writeCache(fromServer);
-      setLoading(false);
+      if (signedOut) {
+        setDeviceOrigin(null);
+        setLocationRefusal(null);
+      }
+      setRetryingStores(false);
+      setStoreListError(all === null);
+      if (all) setStores(all);
+      setSelection((previous) => {
+        if (!previous || previous.user !== user) return { user, homeId, store: active };
+        const previousStore = all
+          ? all.find((item) => item.store_id === previous.store?.store_id)
+          : previous.store;
+        return {
+          user,
+          homeId: homeId === undefined ? previous.homeId : homeId,
+          store: previousStore ?? active,
+        };
+      });
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
+  }, [authLoading, user, loadAttempt]);
+
+  const setStore = useCallback(async (next: Store | null) => {
+    if (!current) return;
+    const savedHomeId = user && next && current.homeId === null
+      ? await withStoreTimeout((signal) => saveHomeStore(next.store_id, { onlyIfUnset: true, signal }))
+      : undefined;
+    setSelection((previous) => previous && previous.user === user
+      ? { ...previous, store: next, homeId: savedHomeId === undefined ? previous.homeId : savedHomeId }
+      : previous);
+    if (!user) await writeCache(next);
+  }, [current, user]);
+
+  const changeHome = useCallback(async (next: Store | null) => {
+    if (!user) return;
+    const homeId = await withStoreTimeout((signal) => saveHomeStore(next?.store_id ?? null, { signal }));
+    setSelection((previous) => previous && previous.user === user
+      ? { ...previous, homeId, store: next ?? previous.store }
+      : previous);
   }, [user]);
 
-  const setStore = useCallback(
-    async (next: Store | null) => {
-      // Signed in, the server is the source of truth: commit only after it
-      // agrees. Otherwise the next read would silently revert the choice.
-      if (user) {
-        await saveSelectedStore(next === null ? null : next.store_id);
-      }
-      setStoreState(next);
-      await writeCache(next);
-    },
-    [user],
-  );
-
-  const openStoreSelector = useCallback((options?: { allowClear?: boolean }) => {
+  const openStoreSelector = useCallback((options?: { allowClear?: boolean; home?: boolean }) => {
     setAllowClear(options?.allowClear ?? false);
+    setChoosingHome(options?.home ?? false);
     setSheetOpen(true);
   }, []);
 
@@ -233,7 +262,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     async (picked: Store) => {
       setSheetOpen(false);
       try {
-        await setStore(picked);
+        await (choosingHome ? changeHome(picked) : setStore(picked));
       } catch {
         // setStore already left the old store in place. Tell the shopper rather
         // than leaving them to wonder why the price didn't change.
@@ -244,13 +273,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       }
     },
-    [setStore],
+    [changeHome, choosingHome, setStore],
   );
 
   const clear = useCallback(async () => {
     setSheetOpen(false);
     try {
-      await setStore(null);
+      await (choosingHome ? changeHome(null) : setStore(null));
     } catch {
       await confirmAction(
         'Could not clear your store',
@@ -258,11 +287,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         'OK',
       );
     }
-  }, [setStore]);
+  }, [changeHome, choosingHome, setStore]);
 
   const value = useMemo(
     () => ({
       store,
+      homeStore,
       stores,
       loading,
       setStore,
@@ -275,6 +305,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       store,
+      homeStore,
       stores,
       loading,
       setStore,
@@ -297,7 +328,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         key={sheetOpen ? 'open' : 'closed'}
         visible={sheetOpen}
         stores={stores}
-        selected={store}
+        selected={choosingHome ? homeStore : store}
+        choosingHome={choosingHome}
+        loading={loading}
+        loadError={loadError}
+        onRetry={() => {
+          setRetryingStores(true);
+          setLoadAttempt((attempt) => attempt + 1);
+        }}
         allowClear={allowClear}
         deviceOrigin={deviceOrigin}
         locating={locating}
@@ -332,6 +370,10 @@ function StoreSelectorSheet({
   visible,
   stores,
   selected,
+  choosingHome,
+  loading,
+  loadError,
+  onRetry,
   allowClear,
   deviceOrigin,
   locating,
@@ -345,6 +387,10 @@ function StoreSelectorSheet({
   visible: boolean;
   stores: Store[];
   selected: Store | null;
+  choosingHome: boolean;
+  loading: boolean;
+  loadError: string | null;
+  onRetry: () => void;
   allowClear: boolean;
   deviceOrigin: DeviceOrigin | null;
   locating: boolean;
@@ -440,9 +486,9 @@ function StoreSelectorSheet({
         <ThemedView style={styles.dialog}>
           <View style={styles.header}>
             <View style={styles.headingText}>
-              <ThemedText type="subtitle">Your store</ThemedText>
+              <ThemedText type="subtitle">{choosingHome ? 'Home store' : 'Your store'}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Prices and stock are shown for the store you pick.
+                {choosingHome ? 'This is the default when you open the app.' : 'Prices and stock are shown for the store you pick.'}
               </ThemedText>
             </View>
             <Pressable
@@ -571,12 +617,25 @@ function StoreSelectorSheet({
             </ScrollView>
           )}
 
-          {showStores && (stores.length === 0 ? (
+          {showStores && (loading || loadError || stores.length === 0) && (
             <View style={styles.center}>
-              <ActivityIndicator />
-              <ThemedText themeColor="textSecondary">Loading stores…</ThemedText>
+              {loading ? (
+                <>
+                  <ActivityIndicator />
+                  <ThemedText themeColor="textSecondary">Loading stores…</ThemedText>
+                </>
+              ) : (
+                <>
+                  <ThemedText themeColor="textSecondary">
+                    {loadError ?? 'No stores are available.'}
+                  </ThemedText>
+                  <ActionButton label="Try again" onPress={onRetry} />
+                </>
+              )}
             </View>
-          ) : (
+          )}
+
+          {showStores && !loading && stores.length > 0 && (
             <ScrollView
               style={styles.list}
               contentContainerStyle={styles.listContent}
@@ -616,11 +675,11 @@ function StoreSelectorSheet({
                 );
               })}
             </ScrollView>
-          ))}
+          )}
 
-          {showStores && allowClear && selected && (
+          {showStores && !loading && allowClear && selected && (
             <View style={styles.footer}>
-              <ActionButton label="Clear store" onPress={onClear} secondary />
+              <ActionButton label={choosingHome ? 'Clear home store' : 'Clear store'} onPress={onClear} secondary />
             </View>
           )}
         </ThemedView>

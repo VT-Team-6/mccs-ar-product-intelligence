@@ -2,6 +2,7 @@
 # detail page, and the admin screen that maintains it.
 
 import os
+from contextlib import contextmanager
 from pathlib import Path
 from urllib.parse import quote
 
@@ -448,6 +449,40 @@ def test_making_an_image_featured_swaps_it_with_the_previous_one(client, db):
     assert _gallery_urls(client, product_id) == [SECOND_IMAGE]
     # The endpoint answers with the gallery the screen reloads.
     assert [image["image_url"] for image in response.json()] == [SECOND_IMAGE]
+
+
+def test_promotion_fails_if_the_gallery_row_disappears_before_it_is_claimed(client, db, monkeypatch):
+    product_id = _owned_product(client, db)
+    _set_featured_url(client, product_id, SECOND_IMAGE)
+    photo = _add(client, product_id, THIRD_IMAGE).json()
+    get_connection = routers.product_images.get_connection
+
+    @contextmanager
+    def connection():
+        with get_connection() as conn:
+            class RemoveBeforeClaim:
+                def execute(self, query, params=()):
+                    if query.lstrip().startswith("DELETE FROM product_images"):
+                        db.execute("DELETE FROM product_images WHERE image_id = %s", (photo["image_id"],))
+                    return conn.execute(query, params)
+
+            yield RemoveBeforeClaim()
+
+    monkeypatch.setattr(routers.product_images, "get_connection", connection)
+    assert _make_featured(client, product_id, photo["image_id"]).status_code == 404
+    assert _featured_url(client, product_id) == SECOND_IMAGE
+
+
+def test_deleting_a_gallery_copy_preserves_the_featured_upload(client, db, images_dir):
+    product_id = _owned_product(client, db)
+    photo = _add_upload(client, product_id).json()
+    _set_featured_url(client, product_id, photo["image_url"])
+
+    response = client.delete(f"/api/admin/products/{product_id}/images/{photo['image_id']}")
+
+    assert response.status_code == 200
+    assert (images_dir / photo["image_url"].removeprefix("/static/products/")).exists()
+    assert _featured_url(client, product_id) == photo["image_url"]
 
 
 def test_making_the_same_image_featured_again_restores_the_original(client, db):

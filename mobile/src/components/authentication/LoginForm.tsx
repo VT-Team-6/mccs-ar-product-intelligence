@@ -22,7 +22,7 @@ export default function LoginForm({
   onToVerification,
   onToPasswordReset,
 }: LoginProps) {
-  const { signIn } = useAuth();
+  const { signIn, continueAsGuest } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -65,8 +65,8 @@ export default function LoginForm({
         Sign in to save preferences and history
       </Text>
 
-      <Pressable style={styles.googleButton} onPress={handleGoogleLogin}>
-        <Text style={styles.googleButtonText} onPress={handleGoogleLogin}>
+      <Pressable style={styles.secondaryButton} onPress={handleGoogleLogin}>
+        <Text style={styles.secondaryButtonText} onPress={handleGoogleLogin}>
           ▢ Continue with Google
         </Text>
       </Pressable>
@@ -126,8 +126,13 @@ export default function LoginForm({
       </View>
 
       <View style={styles.guestSection}>
-        <Pressable style={styles.guestButton}>
-          <Text style={styles.guestButtonText}>
+        <Pressable
+          style={[styles.secondaryButton, loading && styles.disabledButton]}
+          accessibilityRole="button"
+          disabled={loading}
+          onPress={continueAsGuest}
+        >
+          <Text style={styles.secondaryButtonText}>
             Continue without signing in
           </Text>
         </Pressable>
@@ -178,7 +183,7 @@ const styles = StyleSheet.create({
     color: "#777777",
   },
 
-  googleButton: {
+  secondaryButton: {
     height: 44,
     borderWidth: 1,
     borderColor: "#d0d0d0",
@@ -188,7 +193,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  googleButtonText: {
+  secondaryButtonText: {
     fontSize: 14,
     fontWeight: "600",
     color: "#222222",
@@ -284,22 +289,6 @@ const styles = StyleSheet.create({
 
   guestSection: {
     marginTop: 100,
-  },
-
-  guestButton: {
-    height: 42,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#cccccc",
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#ffffff",
-  },
-
-  guestButtonText: {
-    fontSize: 12,
-    color: "#666666",
   },
 
   guestDescription: {

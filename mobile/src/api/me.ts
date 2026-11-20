@@ -1,4 +1,4 @@
-import { authenticatedFetch } from "./client";
+import { authenticatedFetch, withStore } from "./client";
 import type { Product } from "./products";
 
 // A product plus whether the signed-in user currently likes it.
@@ -65,8 +65,8 @@ function queryString(params: Record<string, string | number | null | undefined>)
 }
 
 // The product detail page: product fields plus the caller's like state
-export async function getMyProduct(productId: number): Promise<MyProduct> {
-  const response = await authenticatedFetch(`/api/me/products/${productId}`);
+export async function getMyProduct(productId: number, storeId?: number): Promise<MyProduct> {
+  const response = await authenticatedFetch(withStore(`/api/me/products/${productId}`, storeId));
   if (response.status === 404) {
     throw new Error("Product not found");
   }
@@ -79,11 +79,13 @@ export async function listLikedProducts(options: {
   sort?: LikedSort;
   limit?: number;
   cursor?: string | null;
+  storeId?: number;
 } = {}): Promise<LikedProductPage> {
   const response = await authenticatedFetch(
     `/api/me/liked-products${queryString({
       q: options.query,
       sort: options.sort,
+      store_id: options.storeId,
       limit: options.limit,
       cursor: options.cursor,
     })}`,
@@ -96,10 +98,12 @@ export async function listProductHistory(options: {
   query?: string;
   limit?: number;
   cursor?: string | null;
+  storeId?: number;
 } = {}): Promise<HistoryPage> {
   const response = await authenticatedFetch(
     `/api/me/product-history${queryString({
       q: options.query,
+      store_id: options.storeId,
       limit: options.limit,
       cursor: options.cursor,
     })}`,
@@ -108,15 +112,15 @@ export async function listProductHistory(options: {
 }
 
 // Both calls are idempotent, so repeating one is harmless.
-export async function likeProduct(productId: number): Promise<MyProduct> {
-  const response = await authenticatedFetch(`/api/me/liked-products/${productId}`, {
+export async function likeProduct(productId: number, storeId?: number): Promise<MyProduct> {
+  const response = await authenticatedFetch(withStore(`/api/me/liked-products/${productId}`, storeId), {
     method: "PUT",
   });
   return readJson(response, "Could not like the product");
 }
 
-export async function unlikeProduct(productId: number): Promise<MyProduct> {
-  const response = await authenticatedFetch(`/api/me/liked-products/${productId}`, {
+export async function unlikeProduct(productId: number, storeId?: number): Promise<MyProduct> {
+  const response = await authenticatedFetch(withStore(`/api/me/liked-products/${productId}`, storeId), {
     method: "DELETE",
   });
   return readJson(response, "Could not remove the like");
@@ -126,8 +130,9 @@ export async function unlikeProduct(productId: number): Promise<MyProduct> {
 export async function recordInteraction(
   productId: number,
   interaction: ClientInteraction,
+  storeId?: number,
 ): Promise<void> {
-  const response = await authenticatedFetch("/api/me/product-interactions", {
+  const response = await authenticatedFetch(withStore("/api/me/product-interactions", storeId), {
     method: "POST",
     body: JSON.stringify({ product_id: productId, interaction }),
   });
@@ -137,20 +142,22 @@ export async function recordInteraction(
 }
 
 
-// The store the shopper is shopping at, or null if they haven't picked one
-export async function getSelectedStore(): Promise<number | null> {
-  const response = await authenticatedFetch("/api/me/store");
+// The shopper's account-level default, or null if unset.
+export async function getHomeStore(signal?: AbortSignal): Promise<number | null> {
+  const response = await authenticatedFetch("/api/me/store", { signal });
   const body = await readJson<{ store_id: number | null }>(response, "Could not load your store");
   return body.store_id;
 }
 
-// Saves the store the shopper is shopping at. Prices and stock follow it.
-// Passing null clears the selection, which is a real state: the app goes back
-// to prompting for a store and drops the price sort.
-export async function saveSelectedStore(storeId: number | null): Promise<number | null> {
-  const response = await authenticatedFetch("/api/me/store", {
+export async function saveHomeStore(
+  storeId: number | null,
+  { onlyIfUnset = false, signal }: { onlyIfUnset?: boolean; signal?: AbortSignal } = {},
+): Promise<number | null> {
+  const path = onlyIfUnset ? "/api/me/store?only_if_unset=true" : "/api/me/store";
+  const response = await authenticatedFetch(path, {
     method: "PUT",
     body: JSON.stringify({ store_id: storeId }),
+    signal,
   });
   const body = await readJson<{ store_id: number | null }>(response, "Could not save your store");
   return body.store_id;

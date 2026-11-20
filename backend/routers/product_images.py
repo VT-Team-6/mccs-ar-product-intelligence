@@ -93,12 +93,21 @@ def _require_product(conn, product_id: int) -> None:
         )
 
 
-def _require_new_url(conn, product_id: int, image_url: str) -> None:
-    """409 when this link would add nothing (the featured photo, or a repeat)."""
-    featured_image = conn.execute(
-        "SELECT image_url FROM products WHERE product_id = %s", (product_id,)
+def _lock_gallery(conn, user: dict, product_id: int) -> str | None:
+    """Serialize gallery writes and return the current featured URL."""
+    require_product_owner(conn, user, product_id)
+    product = conn.execute(
+        "SELECT image_url FROM products WHERE product_id = %s FOR NO KEY UPDATE",
+        (product_id,),
     ).fetchone()
-    if featured_image is not None and featured_image["image_url"] == image_url:
+    if product is None:
+        raise HTTPException(status_code=404, detail=f"Product {product_id} not found")
+    return product["image_url"]
+
+
+def _require_new_url(conn, product_id: int, image_url: str, featured_url: str | None) -> None:
+    """409 when this link would add nothing (the featured photo, or a repeat)."""
+    if featured_url == image_url:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="That is already the product's featured image",
@@ -188,8 +197,8 @@ def add_product_image(
 ) -> dict:
     """Add a photo by link. Storage is the client's: nothing is downloaded."""
     with get_connection() as conn:
-        require_product_owner(conn, user, product_id)
-        _require_new_url(conn, product_id, image.image_url)
+        featured_url = _lock_gallery(conn, user, product_id)
+        _require_new_url(conn, product_id, image.image_url, featured_url)
         try:
             return _insert_image(conn, product_id, image.image_url, "url")
         except psycopg.errors.UniqueViolation:
@@ -238,8 +247,7 @@ async def upload_product_image(
     name = None
     try:
         with get_connection() as conn:
-            # Ownership first: a rejected upload must never leave a file behind.
-            require_product_owner(conn, user, product_id)
+            _lock_gallery(conn, user, product_id)
             PRODUCT_IMAGES_DIR.mkdir(parents=True, exist_ok=True)
             # A fresh name each time
             name = f"product-{product_id}-{uuid4().hex}.{extension}"
@@ -268,13 +276,13 @@ def make_product_image_featured(
     file the featured image points at — see _remove_uploaded_file.
     """
     with get_connection() as conn:
-        require_product_owner(conn, user, product_id)
+        outgoing = _lock_gallery(conn, user, product_id)
 
         chosen = conn.execute(
             """
-            SELECT image_url
-            FROM product_images
+            DELETE FROM product_images
             WHERE product_id = %s AND image_id = %s
+            RETURNING image_url
             """,
             (product_id, image_id),
         ).fetchone()
@@ -284,18 +292,6 @@ def make_product_image_featured(
                 detail=f"Image {image_id} not found on product {product_id}",
             )
 
-        outgoing = conn.execute(
-            "SELECT image_url FROM products WHERE product_id = %s",
-            (product_id,),
-        ).fetchone()["image_url"]
-
-        # Remove first: it frees the name for the outgoing image below (the
-        # unique constraint) and guarantees the featured image is never also a
-        # gallery row.
-        conn.execute(
-            "DELETE FROM product_images WHERE product_id = %s AND image_id = %s",
-            (product_id, image_id),
-        )
         conn.execute(
             """
             UPDATE products
@@ -341,7 +337,7 @@ def delete_product_image(
 ) -> dict:
     """Remove one photo. An uploaded file goes with its row."""
     with get_connection() as conn:
-        require_product_owner(conn, user, product_id)
+        featured_url = _lock_gallery(conn, user, product_id)
         deleted = conn.execute(
             """
             DELETE FROM product_images
@@ -355,6 +351,6 @@ def delete_product_image(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Image {image_id} not found on product {product_id}",
             )
-    if deleted["source"] == "upload":
+    if deleted["source"] == "upload" and deleted["image_url"] != featured_url:
         _remove_uploaded_file(deleted["image_url"])
     return {"deleted": True, "image_id": image_id}

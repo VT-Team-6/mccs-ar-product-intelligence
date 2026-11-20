@@ -653,6 +653,18 @@ def test_store_selection_round_trip_and_repeat_save(client, db, cognito):
     assert client.get("/api/me/store").json() == {"store_id": None}
 
 
+def test_first_home_store_does_not_replace_existing_preference(client, db, cognito):
+    _sign_in_as(client, "first-home-store")
+    first = client.put("/api/me/store?only_if_unset=true", json={"store_id": 1})
+    assert first.status_code == 200
+    assert first.json() == {"store_id": 1}
+
+    second = client.put("/api/me/store?only_if_unset=true", json={"store_id": 2})
+    assert second.status_code == 200
+    assert second.json() == {"store_id": 1}
+    assert client.get("/api/me/store").json() == {"store_id": 1}
+
+
 def test_store_selection_rejects_unknown_store(client, db, cognito):
     _sign_in_as(client, "store-unknown")
 
@@ -676,18 +688,21 @@ def test_store_selection_is_per_user(client, db, cognito):
 def test_shopper_endpoints_use_saved_store_without_param(client, db, cognito):
     _sign_in_as(client, "saved-store")
     _save_store(client, 1)
-    # Seeded product 1: 220.00 at store 1, 240.00 (out of stock) at store 2.
-    client.put("/api/me/liked-products/1")
+    product_id = _new_product(db)
+    _add_inventory(db, product_id, 1, 12, 220.0)
+    _add_inventory(db, product_id, 2, 0, 240.0)
+    client.put(f"/api/me/liked-products/{product_id}")
 
-    detail = client.get("/api/me/products/1").json()
+    detail = client.get(f"/api/me/products/{product_id}").json()
     assert detail["store_inventory"]["price"] == 220.0
 
     likes = client.get("/api/me/liked-products", params={"sort": "price"}).json()
     assert likes["items"][0]["store_inventory"]["price"] == 220.0
 
     # An explicit store_id always wins over the saved store.
-    override = client.get("/api/me/products/1", params={"store_id": 2}).json()
+    override = client.get(f"/api/me/products/{product_id}", params={"store_id": 2}).json()
     assert override["store_inventory"]["price"] == 240.0
+    assert client.get("/api/me/store").json() == {"store_id": 1}
 
 
 def test_optional_user_invalid_token_is_rejected(client, db):
@@ -715,11 +730,11 @@ def test_optional_user_valid_token_applies_saved_store(client, db, cognito):
         "is_admin": False,
     }
 
-    response = client.get("/api/products/1")
+    product_id = _new_product(db)
+    _add_inventory(db, product_id, 1, 12, 220.0)
+    response = client.get(f"/api/products/{product_id}")
 
     assert response.status_code == 200
-    # Seeded product 1: the saved store (1) prices it, not just an explicit
-    # ?store_id=.
     assert response.json()["store_inventory"]["price"] == 220.0
 
 
