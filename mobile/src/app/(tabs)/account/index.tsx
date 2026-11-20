@@ -15,7 +15,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { SectionLabel } from "@/components/ui/section-label";
-import { BottomTabInset, Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { BottomTabInset, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { useStore } from "@/store/StoreContext";
 
@@ -149,7 +149,7 @@ function Row({
               {hint}
             </ThemedText>
           )}
-        </View>
+        </ThemedView>
         <ThemedText themeColor="link" style={styles.chevron}>›</ThemedText>
       </ThemedView>
     </Pressable>

@@ -18,6 +18,11 @@ export default function AppNavigator() {
         </Stack.Protected>
         <Stack.Protected guard={canBrowse}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="scan"
+            options={{ presentation: "fullScreenModal", animation: "slide_from_bottom" }}
+          />
+          <Stack.Screen name="find" options={{ animation: "fade", animationDuration: 150 }} />
           <Stack.Screen name="search" />
           <Stack.Screen name="advanced-search" />
           <Stack.Screen name="advanced-results" />
