@@ -24,6 +24,7 @@ import {
   type Product,
   type ProductImage,
 } from "@/api/products";
+import { getAdminVariants, setImageOption, variantColors, variantSizes, type Variant } from "@/api/variants";
 import { useAuth } from "@/auth/AuthContext";
 import { AmazonImagePicker } from "@/components/amazon-image-picker";
 import { FailureDialog, type Failure } from "@/components/failure-dialog";
@@ -32,6 +33,7 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { PHOTO_OPTION } from "@/constants/variants";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmAction } from "@/utils/confirm";
 import { imageUrlProblem } from "@/utils/product-images";
@@ -53,6 +55,9 @@ export default function ManageImagesScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [picking, setPicking] = useState(false);
+  const [variants, setVariants] = useState<Variant[]>([]);
+  // The color or size new photos are for (null: all of them)
+  const [photoFor, setPhotoFor] = useState<string | null>(null);
   // True while an action is running. `pending` drives the UI, but this ref is
   // what the guards read: two quick taps would both see the same render's
   // `pending`, while a ref is already updated by the first one.
@@ -65,11 +70,16 @@ export default function ManageImagesScreen() {
       if (!canView) return;
       let cancelled = false;
       setLoadError(null);
-      Promise.all([getProduct(Number(id)), listProductImages(Number(id))])
-        .then(([loadedProduct, loadedImages]) => {
+      Promise.all([
+        getProduct(Number(id)),
+        listProductImages(Number(id)),
+        getAdminVariants(Number(id)).catch(() => [] as Variant[]),
+      ])
+        .then(([loadedProduct, loadedImages, loadedVariants]) => {
           if (cancelled) return;
           setProduct(loadedProduct);
           setImages(loadedImages);
+          setVariants(loadedVariants);
         })
         .catch((problem: Error) => {
           if (!cancelled) setLoadError(problem.message);
@@ -140,7 +150,7 @@ export default function ManageImagesScreen() {
       "Adding image…",
       "Could not add the image",
       async () => {
-        await addProductImage(Number(id), imageUrl);
+        await addProductImage(Number(id), imageUrl, optionTag(photoFor));
         setUrl("");
         return "Image added.";
       },
@@ -162,7 +172,7 @@ export default function ManageImagesScreen() {
           type: asset.mimeType,
           // Web fills this in; native leaves it undefined.
           file: asset.file,
-        });
+        }, optionTag(photoFor));
         return "Image uploaded.";
       },
       retry,
@@ -229,7 +239,7 @@ export default function ManageImagesScreen() {
       "Adding image…",
       "Could not add the image",
       async () => {
-        await addProductImage(Number(id), imageUrl);
+        await addProductImage(Number(id), imageUrl, optionTag(photoFor));
         return "Image added.";
       },
       () => void addFromListing(imageUrl),
@@ -276,6 +286,35 @@ export default function ManageImagesScreen() {
       true,
     );
   };
+
+  // Changes which color or size a photo is for: All -> first option -> ... -> All
+  const retag = async (image: ProductImage) => {
+    const current = (photoOption && image[photoOption]) || null;
+    const next = photoChoices[(photoChoices.indexOf(current ?? "") + 1) % photoChoices.length] || null;
+    await perform(
+      "Updating photo…",
+      "Could not update the photo",
+      async () => {
+        await setImageOption(Number(id), image.image_id, optionTag(next));
+        return next ? `Photo is now for ${next}.` : "Photo is now shown for all.";
+      },
+      () => void retag(image),
+    );
+  };
+
+  // Photos go with the option that changes how the product looks: color for
+  // shoes, backpacks and headphones; size for coffee and shampoo
+  const photoOption = product?.category ? PHOTO_OPTION[product.category] : null;
+  const optionValues =
+    photoOption === "color"
+      ? variantColors(variants).map((color) => color.name)
+      : photoOption === "size"
+        ? variantSizes(variants)
+        : [];
+  // "" stands for All in the cycle
+  const photoChoices = ["", ...optionValues];
+  const optionTag = (value: string | null) =>
+    photoOption === "size" ? { color: null, size: value } : { color: value, size: null };
 
   const featuredImage = product ? productImageUrl(product) : null;
   // Owners can change the gallery; someone who can open the product page but
@@ -348,6 +387,12 @@ export default function ManageImagesScreen() {
                       image={image}
                       onMakeFeatured={() => makeFeatured(image)}
                       onRemove={() => remove(image)}
+                      tag={
+                        optionValues.length > 0
+                          ? ((photoOption && image[photoOption]) || "All " + (photoOption === "size" ? "sizes" : "colors"))
+                          : null
+                      }
+                      onRetag={() => retag(image)}
                       disabled={pending !== null || !canManage}
                     />
                   ))}
@@ -377,6 +422,31 @@ export default function ManageImagesScreen() {
             {canManage && (
               <ThemedView type="backgroundElement" style={styles.section}>
                 <ThemedText type="smallBold">Add an image</ThemedText>
+                {optionValues.length > 0 && (
+                  <View style={styles.forRow}>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {photoOption === "size" ? "Photo of size:" : "Photo of color:"}
+                    </ThemedText>
+                    {photoChoices.map((value) => {
+                      const chosen = (photoFor ?? "") === value;
+                      return (
+                        <Pressable
+                          key={value || "all"}
+                          onPress={() => setPhotoFor(value || null)}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: chosen }}
+                          style={[
+                            styles.forChip,
+                            { borderColor: chosen ? theme.link : theme.backgroundSelected },
+                            chosen && { backgroundColor: theme.backgroundSelected },
+                          ]}
+                        >
+                          <ThemedText type={chosen ? "smallBold" : "small"}>{value || "All"}</ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                )}
                 <ThemedText type="small" themeColor="textSecondary">
                   Photos must be PNG, JPEG, WebP, or AVIF, up to 5 MB.
                 </ThemedText>
@@ -465,11 +535,16 @@ function ExtraImage({
   image,
   onMakeFeatured,
   onRemove,
+  tag,
+  onRetag,
   disabled,
 }: {
   image: ProductImage;
   onMakeFeatured: () => void;
   onRemove: () => void;
+  // Which color/size the photo is for, or null when the product has no options
+  tag: string | null;
+  onRetag: () => void;
   disabled: boolean;
 }) {
   const uri = productImageUrl(image);
@@ -483,6 +558,19 @@ function ExtraImage({
         />
       ) : (
         <ThemedView type="backgroundSelected" style={styles.cardImage} />
+      )}
+      {tag !== null && (
+        <Pressable
+          onPress={onRetag}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel={`Shown for ${tag}. Tap to change`}
+          style={({ pressed }) => [styles.tag, (pressed || disabled) && styles.pressed]}
+        >
+          <ThemedText type="small" numberOfLines={1}>
+            For: {tag} ▸
+          </ThemedText>
+        </Pressable>
       )}
       <View style={styles.cardActions}>
         <Pressable
@@ -591,6 +679,22 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   remove: {
+  },
+  forRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: Spacing.one,
+  },
+  forChip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingVertical: Spacing.half,
+    paddingHorizontal: Spacing.two,
+  },
+  tag: {
+    alignItems: "center",
+    paddingVertical: Spacing.half,
   },
   loadError: {
   },

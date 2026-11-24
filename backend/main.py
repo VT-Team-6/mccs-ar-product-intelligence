@@ -10,7 +10,7 @@ import reorders as reorder_alerts
 
 from fastapi.staticfiles import StaticFiles
 from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, inventory, admin, compare, reorders
-from routers import product_images, review_images, shopping_lists
+from routers import product_images, review_images, shopping_lists, variants
 import auth
 
 
@@ -58,7 +58,10 @@ app.include_router(recommendations.router)
 app.include_router(compare.router)
 app.include_router(inventory.product_stock_router)
 app.include_router(inventory.store_stock_router)
+app.include_router(variants.inventory_router)
 app.include_router(inventory.writer_router)
+app.include_router(variants.public_router)
+app.include_router(variants.admin_router)
 app.include_router(admin.router)
 app.include_router(reorders.manager_router)
 app.include_router(reorders.requests_router)

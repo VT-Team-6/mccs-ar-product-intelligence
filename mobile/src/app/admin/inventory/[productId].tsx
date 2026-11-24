@@ -21,6 +21,7 @@ import {
   type LowStockChange,
   type StoreBuyer,
 } from "@/api/inventory";
+import { getStoreVariants, updateVariantStock, variantPrice, type StoreVariant } from "@/api/variants";
 import { useAuth } from "@/auth/AuthContext";
 import { canAccessStore } from "@/auth/store-access";
 import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
@@ -93,6 +94,32 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
   const [buyer, setBuyer] = useState<BuyerChoice>(savedBuyer);
   const [buyers, setBuyers] = useState<StoreBuyer[]>([]);
 
+  // Colors and sizes: each has its own stock (and price) at this store. A
+  // product without options has one, and keeps the single quantity field.
+  const [variants, setVariants] = useState<StoreVariant[]>([]);
+  const [rows, setRows] = useState<Record<number, { quantity: string; price: string }>>({});
+  const multi = variants.length > 1 || variants.some((v) => v.color || v.size);
+  const loadVariants = () =>
+    getStoreVariants(storeId, productId)
+      .then((loaded) => {
+        setVariants(loaded);
+        setRows(
+          Object.fromEntries(
+            loaded.map((v) => [
+              v.variant_id,
+              { quantity: String(v.quantity ?? 0), price: variantPrice(v)?.toFixed(2) ?? "" },
+            ]),
+          ),
+        );
+      })
+      .catch(() => setVariants([]));
+  useEffect(() => {
+    void loadVariants();
+    // Loads once per product and store
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId, productId]);
+  const pricesDiffer = new Set(variants.map((v) => variantPrice(v))).size > 1;
+
   // "Changes saved" fades after a few seconds
   useEffect(() => {
     if (!saved) return;
@@ -112,6 +139,20 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
     if (canManageInventory && !PRICE.test(price.trim())) {
       setError("Enter a price like 89 or 89.99.");
       return null;
+    }
+    if (multi) {
+      for (const variant of variants) {
+        const row = rows[variant.variant_id];
+        if (!row || !WHOLE_NUMBER.test(row.quantity.trim())) {
+          setError(`${variant.label}: stock must be a whole number, 0 or more.`);
+          return null;
+        }
+        if (canManageInventory && row.price.trim() && !PRICE.test(row.price.trim())) {
+          setError(`${variant.label}: enter a price like 89 or 89.99.`);
+          return null;
+        }
+      }
+      return { price: Number(price.trim()), quantity: 0 };
     }
     if (!WHOLE_NUMBER.test(quantity.trim())) {
       setError("Quantity must be a whole number, 0 or more.");
@@ -155,7 +196,26 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
       }
     }
     run(async () => {
-      await updateStock(productId, storeId, canManageInventory ? { ...values, status } : { quantity: values.quantity });
+      if (multi) {
+        // The product's status, and its price when it was changed here ("same
+        // price for all"); then each size/color whose stock or price changed
+        if (canManageInventory) {
+          const priceChanged = price.trim() !== (params.price ?? "") && !!price.trim();
+          await updateStock(productId, storeId, priceChanged ? { price: values.price, status } : { status });
+        }
+        for (const variant of variants) {
+          const row = rows[variant.variant_id];
+          const change: { quantity?: number; price?: number } = {};
+          if (Number(row.quantity) !== (variant.quantity ?? 0)) change.quantity = Number(row.quantity);
+          if (canManageInventory && row.price.trim() && Number(row.price) !== variantPrice(variant)) {
+            change.price = Number(row.price);
+          }
+          if (Object.keys(change).length > 0) await updateVariantStock(variant.variant_id, storeId, change);
+        }
+        await loadVariants();
+      } else {
+        await updateStock(productId, storeId, canManageInventory ? { ...values, status } : { quantity: values.quantity });
+      }
       if (Object.keys(lowStock).length > 0) {
         await updateLowStockSettings(storeId, [productId], lowStock);
         setSavedLevel(lowStockAt.trim());
@@ -166,7 +226,8 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
 
   const approve = () => {
     const values = readValues();
-    if (values) run(() => approveEntry(productId, storeId, values));
+    // A product with sizes/colors is approved at a price; stock is counted per size after
+    if (values) run(() => approveEntry(productId, storeId, multi ? { price: values.price } : values));
   };
 
   const decline = () =>
@@ -217,7 +278,12 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
           )}
         
           <View style={styles.field}>
-            <ThemedText type="smallBold">Price ($)</ThemedText>
+            <ThemedText type="smallBold">{multi ? "Price for every size/color ($)" : "Price ($)"}</ThemedText>
+            {multi && pricesDiffer && (
+              <ThemedText type="small" themeColor="textSecondary">
+                Prices differ by size/color (set them below). Changing this sets them all to one price.
+              </ThemedText>
+            )}
             {canManageInventory ? (
               <TextInput
                 value={price}
@@ -236,6 +302,53 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
             )}
           </View>
 
+          {multi && !pending && (
+            <View style={styles.field}>
+              <ThemedText type="smallBold">Stock by size/color</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {`${variants.reduce((total, v) => total + Number(rows[v.variant_id]?.quantity || 0), 0)} in stock across ${variants.length}`}
+              </ThemedText>
+              {variants.map((variant) => {
+                const row = rows[variant.variant_id] ?? { quantity: "0", price: "" };
+                const setRow = (change: Partial<typeof row>) =>
+                  setRows((current) => ({ ...current, [variant.variant_id]: { ...row, ...change } }));
+                return (
+                  <View key={variant.variant_id} style={[styles.variantRow, { borderColor: theme.border }]}>
+                    <View style={styles.variantName}>
+                      <ThemedText type="smallBold" numberOfLines={1}>{variant.label || "Standard"}</ThemedText>
+                      <ThemedText type="small" themeColor={variant.low_stock ? "danger" : "textSecondary"} numberOfLines={1}>
+                        {variant.low_stock ? "Low stock" : variant.sku}
+                      </ThemedText>
+                    </View>
+                    {canEditStock ? (
+                      <TextInput
+                        value={row.quantity}
+                        onChangeText={(text) => setRow({ quantity: text })}
+                        keyboardType="number-pad"
+                        accessibilityLabel={`${variant.label} stock`}
+                        style={[inputStyle, styles.variantQuantity]}
+                      />
+                    ) : (
+                      <ThemedText>{row.quantity}</ThemedText>
+                    )}
+                    {canManageInventory && (
+                      <TextInput
+                        value={row.price}
+                        onChangeText={(text) => setRow({ price: text })}
+                        keyboardType="decimal-pad"
+                        placeholder="Price"
+                        placeholderTextColor={theme.textSecondary}
+                        accessibilityLabel={`${variant.label} price`}
+                        style={[inputStyle, styles.variantPrice]}
+                      />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+
+          {!multi && (
           <View style={styles.field}>
             <ThemedText type="smallBold">Quantity in stock</ThemedText>
             {canEditStock ? (
@@ -255,6 +368,7 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
               <ThemedText>{quantity}</ThemedText>
             )}
           </View>
+          )}
 
           {!pending && canManageInventory && (
             <View style={styles.field}>
@@ -361,6 +475,24 @@ function Button({ label, onPress, quiet = false }: { label: string; onPress: () 
 const styles = StyleSheet.create({
   // Lists reach the screen edges so the scroll bar sits at the edge, while
   // their content keeps the page's side margins
+  variantRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  variantName: {
+    flex: 1,
+    minWidth: 0,
+  },
+  variantQuantity: {
+    width: 72,
+    textAlign: "center",
+  },
+  variantPrice: {
+    width: 92,
+  },
   edgeToEdge: {
     marginHorizontal: -Spacing.four,
   },

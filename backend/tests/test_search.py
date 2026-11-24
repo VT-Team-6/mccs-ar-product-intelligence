@@ -52,7 +52,8 @@ def _seed_products() -> list[dict]:
     ):
         products.append(
             {
-                "name": name.replace("''", "'"),
+                # 007-product-variants moves a coffee/shampoo size out of the name
+                "name": re.sub(r", [0-9.]+ (fl )?oz$", "", name.replace("''", "'")),
                 "brand": brand.replace("''", "'"),
                 "product_type": product_type.replace("''", "'"),
                 "description": description.replace("''", "'"),

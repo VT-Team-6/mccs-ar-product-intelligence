@@ -285,11 +285,18 @@ function FileButton({ label, onPress, disabled }: { label: string; onPress: () =
 
 function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => void }) {
   const theme = useTheme();
-  const price = item.price === null ? "No price" : `$${item.price.toFixed(2)}`;
+  // A product in sizes/colors shows its lowest price and how many of them are low
+  const options = (item.variant_count ?? 1) > 1;
+  const price = item.price === null ? "No price" : `${options ? "From " : ""}$${item.price.toFixed(2)}`;
+  const low = !item.low_stock
+    ? ""
+    : options
+      ? ` · ${item.low_variant_count} of ${item.variant_count} low`
+      : " · Low";
   const stock =
     item.status === "pending"
       ? "Needs approval"
-      : `${item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock"}${item.low_stock ? " · Low" : ""}`;
+      : `${item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock"}${low}`;
   const imageUrl = productImageUrl(item);
 
   return (

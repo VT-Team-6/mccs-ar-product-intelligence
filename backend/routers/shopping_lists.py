@@ -15,6 +15,8 @@ class CreateShoppingList(BaseModel):
 
 class AddShoppingListItem(BaseModel):
     product_id: int = Field(gt=0)
+    # The color/size picked on the product page; None means any
+    variant_id: int | None = Field(default=None, gt=0)
 
 class UpdateShoppingListItem(BaseModel):
     is_completed: bool
@@ -116,6 +118,7 @@ def add_item(
                 user["user_id"],
                 list_id,
                 body.product_id,
+                body.variant_id,
             )
         except shopping_lists.ShoppingListError as error:
             raise _http_error(error) from error

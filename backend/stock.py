@@ -50,6 +50,15 @@ def _require_product(conn: Connection, product_id: int) -> None:
         raise InventoryError(f"Product {product_id} not found", status=404)
 
 
+VARIANT_QUANTITY_DETAIL = "This product comes in colors or sizes. Set the stock for each one."
+
+
+def _variant_count(conn: Connection, product_id: int) -> int:
+    return conn.execute(
+        "SELECT count(*) AS n FROM product_variants WHERE product_id = %s", (product_id,)
+    ).fetchone()["n"]
+
+
 def _require_store(conn: Connection, store_id: int) -> None:
     row = conn.execute(
         "SELECT 1 FROM stores WHERE store_id = %s", (store_id,)
@@ -136,9 +145,18 @@ def list_store_stock(
         " i.store_id, i.quantity, i.price, i.status, i.updated_at,"
         " (i.quantity > 0 AND i.status = 'active') AS in_stock,"
         " i.low_stock_threshold, i.buyer_user_id, b.email AS buyer_email,"
-        " (i.status = 'active' AND i.quantity <= i.low_stock_threshold) AS low_stock"
+        # Low when any color/size is at or below the level (see variants.py)
+        " (i.status = 'active' AND vc.low_count > 0) AS low_stock,"
+        " vc.variant_count, vc.low_count AS low_variant_count"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"
         " LEFT JOIN users b ON b.user_id = i.buyer_user_id"
+        " CROSS JOIN LATERAL ("
+        "   SELECT count(*) AS variant_count,"
+        "          count(*) FILTER (WHERE COALESCE(vs.quantity, 0) <= i.low_stock_threshold) AS low_count"
+        "   FROM product_variants v LEFT JOIN variant_stock vs"
+        "     ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"
+        "   WHERE v.product_id = i.product_id"
+        " ) vc"
         f" WHERE i.store_id = %s AND i.status = %s{where}"
         " ORDER BY i.product_id LIMIT %s",
         (*params, limit + 1),
@@ -174,6 +192,9 @@ def upsert_record(
     _validate(quantity, price, status)
     _require_product(conn, product_id)
     _require_store(conn, store_id)
+    if quantity is not None and _variant_count(conn, product_id) > 1:
+        # The product's quantity is the sum of its sizes/colors (see variants.py)
+        raise InventoryError(VARIANT_QUANTITY_DETAIL)
 
     existing = _get_record(conn, product_id, store_id)
     if existing is None and quantity is None and price is None and status is None:
@@ -263,13 +284,22 @@ def log_change(
     new_quantity: int,
     source: str,
     user_id: int | None,
+    variant_id: int | None = None,
 ) -> None:
-    """Record one stock change in stock_changes."""
+    """Record one stock change in stock_changes.
+
+    Without a variant_id the change is for the product's only variant.
+    """
+    if variant_id is None:
+        rows = conn.execute(
+            "SELECT variant_id FROM product_variants WHERE product_id = %s LIMIT 2", (product_id,)
+        ).fetchall()
+        variant_id = rows[0]["variant_id"] if len(rows) == 1 else None
     conn.execute(
         "INSERT INTO stock_changes"
-        " (product_id, store_id, old_quantity, new_quantity, source, changed_by)"
-        " VALUES (%s, %s, %s, %s, %s, %s)",
-        (product_id, store_id, old_quantity, new_quantity, source, user_id),
+        " (product_id, store_id, old_quantity, new_quantity, source, changed_by, variant_id)"
+        " VALUES (%s, %s, %s, %s, %s, %s, %s)",
+        (product_id, store_id, old_quantity, new_quantity, source, user_id, variant_id),
     )
 
 

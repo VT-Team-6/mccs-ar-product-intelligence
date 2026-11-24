@@ -178,7 +178,8 @@ def test_catalog_reviews_import_from_the_archive(client, db, tmp_path, monkeypat
 
     assert summary["products"] == 1 and summary["reviews"] == 3
     product_id = db.execute(
-        "SELECT product_id FROM products WHERE name = %s", (item["name"],)
+        "SELECT product_id FROM products WHERE name = regexp_replace(%s, ', [0-9.]+ (fl )?oz$', '')",
+        (item["name"],)
     ).fetchone()["product_id"]
     ratings = sorted(
         float(row["rating"]) for row in db.execute(

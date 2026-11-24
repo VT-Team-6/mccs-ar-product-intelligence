@@ -1,14 +1,15 @@
 """End-of-day stock update by CSV: export a store's stock, edit it, import it.
 
-The export lists every product the store sells, with the columns the import
-reads back:
+The export lists every product the store sells, one row per color/size, with
+the columns the import reads back:
 
-    product_id, name, brand, stock
+    sku, product_id, name, brand, color, size, stock
 
 Staff overwrite the stock column with what is on the shelf at closing and import
-the file. Only product_id and stock are read; name and brand are there so the
-file is easy to fill in. A row with a blank stock, or the same stock as now, is
-no change, and a product missing from the file keeps its stock.
+the file. Only sku (or product_id) and stock are read; the rest is there so the
+file is easy to fill in. A file with only product_id still works for products
+without colors or sizes. A row with a blank stock, or the same stock as now, is
+no change, and a row missing from the file keeps its stock.
 
 The import is two steps. preview() checks every row and says what would change
 without writing anything. apply() saves all the changes or, if any row has a
@@ -24,8 +25,7 @@ from psycopg import Connection
 import reorders
 import stock
 
-COLUMNS = ["product_id", "name", "brand", "stock"]
-REQUIRED = ("product_id", "stock")
+COLUMNS = ["sku", "product_id", "name", "brand", "color", "size", "stock"]
 
 # A store has a few hundred products; anything far bigger is the wrong file.
 MAX_ROWS = 5000
@@ -36,10 +36,12 @@ def export_csv(conn: Connection, store_id: int) -> str:
     """The store's active products and their stock, sorted by name."""
     stock._require_store(conn, store_id)
     rows = conn.execute(
-        "SELECT i.product_id, p.name, p.brand, i.quantity"
+        "SELECT v.sku, i.product_id, p.name, p.brand, v.color, v.size, vs.quantity"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"
+        " JOIN product_variants v ON v.product_id = i.product_id"
+        " LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"
         " WHERE i.store_id = %s AND i.status = 'active' AND p.deleted_at IS NULL"
-        " ORDER BY lower(p.name), i.product_id",
+        " ORDER BY lower(p.name), i.product_id, v.color_order, v.size_order, v.variant_id",
         (store_id,),
     ).fetchall()
 
@@ -47,10 +49,16 @@ def export_csv(conn: Connection, store_id: int) -> str:
     writer = csv.writer(out)
     writer.writerow(COLUMNS)
     for row in rows:
-        writer.writerow(
-            [row["product_id"], row["name"], row["brand"] or "", row["quantity"] or 0]
-        )
+        writer.writerow([
+            row["sku"], row["product_id"], row["name"], row["brand"] or "",
+            row["color"] or "", row["size"] or "", row["quantity"] or 0,
+        ])
     return out.getvalue()
+
+
+def _item_name(row: dict) -> str:
+    """'Nike Dunk Low (Color: Black, Size: 10)', or just the name without options."""
+    return reorders.item_title(row)
 
 
 def _whole_number(text: str) -> int | None:
@@ -86,10 +94,9 @@ def preview(conn: Connection, store_id: int, text: str, *, lock_inventory: bool 
     stock._require_store(conn, store_id)
     reader = csv.DictReader(io.StringIO(text.lstrip("﻿")))
     headers = [h.strip().lower() for h in (reader.fieldnames or [])]
-    missing = [column for column in REQUIRED if column not in headers]
-    if missing:
+    if "stock" not in headers or not ({"sku", "product_id"} & set(headers)):
         raise stock.InventoryError(
-            "The file needs a product_id column and a stock column."
+            "The file needs a sku (or product_id) column and a stock column."
             " Export the stock again to get the right format."
         )
     reader.fieldnames = headers
@@ -97,51 +104,65 @@ def preview(conn: Connection, store_id: int, text: str, *, lock_inventory: bool 
     rows = list(islice(reader, MAX_ROWS + 1))
     if len(rows) > MAX_ROWS:
         raise stock.InventoryError(f"The file has more than {MAX_ROWS} rows")
-    parsed_rows = []
-    product_ids = set()
-    for line, row in enumerate(rows, start=2):  # line 1 is the header
-        if not any((value or "").strip() for value in row.values() if isinstance(value, str)):
-            continue
-        raw_id = (row.get("product_id") or "").strip()
-        product_id = _whole_number(raw_id)
-        parsed_rows.append((line, row, raw_id, product_id))
-        if product_id is not None and 0 < product_id <= MAX_PRODUCT_ID:
-            product_ids.add(product_id)
+    # Every color/size the store sells, by SKU and by product
+    lock = " ORDER BY i.product_id FOR NO KEY UPDATE OF i" if lock_inventory else ""
     # Applying a file takes the same row locks as manual stock edits. Preview
     # stays read-only, while apply calculates the changes from the locked rows.
-    lock = " ORDER BY i.product_id FOR NO KEY UPDATE OF i" if lock_inventory else ""
-    current = {
-        row["product_id"]: row
-        for row in conn.execute(
-            "SELECT i.product_id, p.name, p.brand, i.quantity, i.low_stock_threshold"
-            " FROM inventory i JOIN products p ON p.product_id = i.product_id"
-            " WHERE i.store_id = %s AND i.product_id = ANY(%s::integer[])"
-            " AND i.status = 'active' AND p.deleted_at IS NULL" + lock,
-            (store_id, sorted(product_ids)),
-        ).fetchall()
-    }
+    sold = conn.execute(
+        "SELECT v.variant_id, upper(v.sku) AS sku, i.product_id, p.name, p.brand,"
+        " v.color, v.size,"
+        " COALESCE(vs.quantity, 0) AS quantity, i.low_stock_threshold"
+        " FROM inventory i JOIN products p ON p.product_id = i.product_id"
+        " JOIN product_variants v ON v.product_id = i.product_id"
+        " LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"
+        " WHERE i.store_id = %s AND i.status = 'active' AND p.deleted_at IS NULL" + lock,
+        (store_id,),
+    ).fetchall()
+    by_sku = {row["sku"]: row for row in sold}
+    by_product: dict[int, list[dict]] = {}
+    for row in sold:
+        by_product.setdefault(row["product_id"], []).append(row)
 
     changes, errors, seen = [], [], set()
     unchanged = 0
-    low_after = 0  # products this import takes from above their low-stock level to at or below it
-    for line, row, raw_id, product_id in parsed_rows:
-        if product_id is None:
-            errors.append({"row": line, "message": f"'{raw_id}' is not a product id"})
+    low_after = 0  # sizes/colors this import takes from above their low-stock level to at or below it
+    for line, row in enumerate(rows, start=2):  # line 1 is the header
+        if not any((value or "").strip() for value in row.values() if isinstance(value, str)):
             continue
-        if product_id in seen:
-            errors.append({"row": line, "message": f"Product {product_id} is in the file twice"})
+        raw_sku = (row.get("sku") or "").strip()
+        raw_id = (row.get("product_id") or "").strip()
+        if raw_sku:
+            variant = by_sku.get(raw_sku.upper())
+            if variant is None:
+                errors.append({"row": line, "message": f"SKU {raw_sku} isn't sold at this store"})
+                continue
+        else:
+            product_id = _whole_number(raw_id)
+            if product_id is None or not 0 < product_id <= MAX_PRODUCT_ID:
+                errors.append({"row": line, "message": f"'{raw_id}' is not a product id"})
+                continue
+            options = by_product.get(product_id)
+            if not options:
+                errors.append({"row": line, "message": f"Product {product_id} isn't sold at this store"})
+                continue
+            if len(options) > 1:
+                errors.append({
+                    "row": line,
+                    "message": f"{options[0]['name']} comes in colors or sizes. Give each one's SKU.",
+                })
+                continue
+            variant = options[0]
+        if variant["variant_id"] in seen:
+            twice = f"SKU {raw_sku}" if raw_sku else f"Product {variant['product_id']}"
+            errors.append({"row": line, "message": f"{twice} is in the file twice"})
             continue
-        seen.add(product_id)
-
-        product = current.get(product_id)
-        if product is None:
-            errors.append({"row": line, "message": f"Product {product_id} isn't sold at this store"})
-            continue
+        seen.add(variant["variant_id"])
+        product = variant
 
         old = product["quantity"] or 0
         new, problem = _new_quantity(row, old)
         if problem:
-            errors.append({"row": line, "message": f"{product['name']}: {problem}"})
+            errors.append({"row": line, "message": f"{_item_name(product)}: {problem}"})
         elif new is None or new == old:
             unchanged += 1
         else:
@@ -149,8 +170,11 @@ def preview(conn: Connection, store_id: int, text: str, *, lock_inventory: bool 
             if new <= threshold < old:
                 low_after += 1
             changes.append({
-                "product_id": product_id,
+                "product_id": product["product_id"],
+                "variant_id": product["variant_id"],
                 "name": product["name"],
+                "color": product["color"],
+                "size": product["size"],
                 "brand": product["brand"],
                 "old_quantity": old,
                 "new_quantity": new,
@@ -178,13 +202,15 @@ def apply(conn: Connection, store_id: int, text: str, user_id: int) -> dict:
         )
     for change in result["changes"]:
         conn.execute(
-            "UPDATE inventory SET quantity = %s, updated_at = CURRENT_TIMESTAMP"
-            " WHERE product_id = %s AND store_id = %s",
-            (change["new_quantity"], change["product_id"], store_id),
+            "INSERT INTO variant_stock (variant_id, store_id, quantity) VALUES (%s, %s, %s)"
+            " ON CONFLICT (variant_id, store_id) DO UPDATE SET quantity = EXCLUDED.quantity,"
+            " updated_at = CURRENT_TIMESTAMP",
+            (change["variant_id"], store_id, change["new_quantity"]),
         )
         stock.log_change(
             conn, change["product_id"], store_id,
             change["old_quantity"], change["new_quantity"], "csv", user_id,
+            variant_id=change["variant_id"],
         )
     # One message to the managers for everything this import made low
     reorders.check_stock(conn, store_id, [change["product_id"] for change in result["changes"]])

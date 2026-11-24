@@ -18,11 +18,11 @@ from pagination import InvalidCursor, decode_cursor, encode_cursor
 # store_inventory is built by _product_columns() and joins inventory at the
 # resolved store.
 _PRODUCT_COLUMNS = (
-    "p.product_id, p.name, p.brand, p.product_type, p.category, s.average_rating AS rating, "
+    "p.product_id, p.name, p.brand, p.product_type, p.category, p.fit, s.average_rating AS rating, "
     "p.description, p.image_url, p.created_at, p.updated_at"
 )
 _PRODUCT_KEYS = (
-    "product_id", "name", "brand", "product_type", "category",
+    "product_id", "name", "brand", "product_type", "category", "fit",
     "rating", "description", "image_url", "created_at", "updated_at", "store_inventory",
 )
 

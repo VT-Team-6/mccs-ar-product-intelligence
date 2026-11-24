@@ -46,6 +46,7 @@ import {
 import { Image } from 'expo-image';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { addShoppingListItem } from '@/api/shopping-lists';
+import { VariantLines } from '@/components/variant-lines';
 
 export default function ShoppingListScreen() {
   const { user } = useAuth();
@@ -337,6 +338,7 @@ function ShoppingListContent() {
         >
           {[item.brand, item.product_type].filter(Boolean).join(' · ')}
         </ThemedText>
+        <VariantLines color={item.variant_color} size={item.variant_size} />
       </Pressable>
 
       <Pressable

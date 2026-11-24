@@ -10,6 +10,10 @@ export type ShoppingListItem = {
   brand: string | null;
   product_type: string;
   image_url: string | null;
+  // The color/size the shopper picked, or null for any
+  variant_id?: number | null;
+  variant_color?: string | null;
+  variant_size?: string | null;
 };
 
 // Summary used when selecting a list.
@@ -89,12 +93,13 @@ export async function activateShoppingList(
 export async function addShoppingListItem(
   listId: number,
   productId: number,
+  variantId?: number | null,
 ): Promise<ShoppingList> {
   const response = await authenticatedFetch(
     `${BASE}/${listId}/items`,
     {
       method: 'POST',
-      body: JSON.stringify({ product_id: productId }),
+      body: JSON.stringify({ product_id: productId, variant_id: variantId ?? null }),
     },
   );
   return readResponse(response, 'Could not add product.');

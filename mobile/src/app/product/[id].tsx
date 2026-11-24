@@ -1,17 +1,27 @@
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getMyProduct, likeProduct, recordInteraction, unlikeProduct, type MyProduct } from '@/api/me';
 import {
+  fitLabel,
   getShopperProduct,
   listProductImages,
   productImageUrl,
   storePriceLine,
   storeStock,
   type Product,
+  type ProductImage,
 } from '@/api/products';
+import {
+  getVariants,
+  hasOptions,
+  variantColors,
+  variantPrice,
+  variantSizes,
+  type Variant,
+} from '@/api/variants';
 import { useAuth } from '@/auth/AuthContext';
 import { useSignInPrompt } from '@/auth/use-sign-in-prompt';
 import { ProductImageGallery } from '@/components/product-image-gallery';
@@ -27,6 +37,8 @@ import { NearbyStores } from '@/components/nearby-stores';
 import { useStore } from '@/store/StoreContext';
 import { AddToShoppingList } from '@/components/add-to-shopping-list';
 import { ShoppingListStatus } from '@/components/shopping-list-status';
+import { VariantPicker } from '@/components/variant-picker';
+import { PHOTO_OPTION } from '@/constants/variants';
 
 export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
@@ -45,7 +57,11 @@ export default function ShopperProductScreen() {
   const [loadedId, setLoadedId] = useState<number | null>(null);
   // The product's extra photos, featured image not included. A failure here is not
   // an error for the page: the featured image alone still works.
-  const [extraImages, setExtraImages] = useState<string[]>([]);
+  const [extraImages, setExtraImages] = useState<ProductImage[]>([]);
+  // The colors/sizes it comes in, with stock at the store, and the shopper's pick
+  const [variants, setVariants] = useState<Variant[]>([]);
+  const [color, setColor] = useState<string | null>(null);
+  const [size, setSize] = useState<string | null>(null);
   // True while a like request is running, so the heart cannot be double-tapped
   const [savingLike, setSavingLike] = useState(false);
   // Stops one visit from being recorded more than once
@@ -90,9 +106,7 @@ export default function ShopperProductScreen() {
     listProductImages(productId)
       .then((images) => {
         if (cancelled) return;
-        setExtraImages(
-          images.map((image) => productImageUrl(image)).filter((url): url is string => !!url),
-        );
+        setExtraImages(images);
       })
       .catch(() => {
         if (!cancelled) setExtraImages([]);
@@ -101,6 +115,42 @@ export default function ShopperProductScreen() {
       cancelled = true;
     };
   }, [id]);
+
+  // The colors and sizes, priced at the store. A failure leaves the page as it
+  // was before colors and sizes existed: one product, one price.
+  useEffect(() => {
+    let cancelled = false;
+    const productId = Number(id);
+    if (!Number.isInteger(productId)) return;
+    getVariants(productId, store?.store_id)
+      .then((loaded) => {
+        if (cancelled) return;
+        setVariants(loaded);
+        const colors = variantColors(loaded);
+        const sizes = variantSizes(loaded);
+        // Keep the shopper's pick across a store change; otherwise start on the
+        // first color in stock. A size is preselected only when it's the only
+        // option (coffee, shampoo), so shoe shoppers always pick their own.
+        setColor((current) =>
+          current && colors.some((c) => c.name === current)
+            ? current
+            : (loaded.find((v) => v.color && v.in_stock)?.color ?? colors[0]?.name ?? null),
+        );
+        setSize((current) =>
+          current && sizes.includes(current)
+            ? current
+            : colors.length === 0
+              ? (loaded.find((v) => v.size && v.in_stock)?.size ?? sizes[0] ?? null)
+              : null,
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setVariants([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, store?.store_id]);
 
   // Records that this product was opened in user history.
   useEffect(() => {
@@ -148,11 +198,33 @@ export default function ShopperProductScreen() {
   };
 
   const imageUrl = product ? productImageUrl(product) : null;
-  // Featured photo first, then the extra ones, so the gallery's first slide is
-  // exactly what every card and listing shows.
-  const galleryImages = product
-    ? [...(imageUrl ? [imageUrl] : []), ...extraImages]
-    : [];
+  const options = hasOptions(variants);
+  const usesColor = variantColors(variants).length > 0;
+  const usesSize = variantSizes(variants).length > 0;
+  // The variant the shopper picked, once every option it has is chosen
+  const chosen = options
+    ? (variants.find(
+        (v) => (!usesColor || v.color === color) && (!usesSize || v.size === size),
+      ) ?? null)
+    : (variants[0] ?? null);
+
+  // Photos follow the option that changes how it looks (color for shoes, size
+  // for coffee). The picked option's own photos come first and replace the
+  // featured image; without its own photos the featured image shows. Photos of
+  // other options are left out, so a 24 oz bag never shows the 12 oz package.
+  const galleryImages = useMemo(() => {
+    if (!product) return [];
+    const option = product.category ? PHOTO_OPTION[product.category] : null;
+    const picked = option === 'color' ? color : option === 'size' ? size : null;
+    const own = extraImages.filter(
+      (image) => option && picked && (image[option] ?? '').toLowerCase() === picked.toLowerCase(),
+    );
+    const shared = extraImages.filter((image) => !image.color && !image.size);
+    const lead = own.length > 0 ? own : imageUrl ? [{ image_url: imageUrl } as ProductImage] : [];
+    return [...lead, ...shared]
+      .map((image) => productImageUrl(image))
+      .filter((url): url is string => !!url);
+  }, [product, extraImages, imageUrl, color, size]);
 
   // The store has this product on record but no longer sells it. Shown as its
   // own state so a scan never implies a price or availability that isn't there.
@@ -161,6 +233,23 @@ export default function ShopperProductScreen() {
   const price = product
     ? storePriceLine(product, store?.store_id ?? null, store?.name ?? null)
     : null;
+  // With a size/color picked, its own price; otherwise "From $X" when sizes cost different amounts
+  const prices = new Set(variants.map((v) => variantPrice(v)).filter((p) => p !== null));
+  const chosenPrice = options && chosen && product?.store_inventory ? variantPrice(chosen) : null;
+  const priceText =
+    chosenPrice !== null
+      ? `$${chosenPrice.toFixed(2)}`
+      : price?.price && prices.size > 1
+        ? `From ${price.price}`
+        : (price?.price ?? '—');
+  const availability =
+    options && chosen && product?.store_inventory
+      ? chosen.in_stock
+        ? `In stock (${chosen.quantity})`
+        : 'Sold out here'
+      : product
+        ? storeStock(product)
+        : '';
 
    // New questions or results appear below the product, so scroll them to the top of the screen
   const scrollToPanel = () => {
@@ -198,7 +287,7 @@ export default function ShopperProductScreen() {
                 {product.name}
               </ThemedText>
               <ThemedText themeColor="textSecondary">
-                {[product.brand, product.product_type].filter(Boolean).join(' · ')}
+                {[product.brand, fitLabel(product.fit), product.product_type].filter(Boolean).join(' · ')}
               </ThemedText>
             </ThemedView>
 
@@ -233,8 +322,25 @@ export default function ShopperProductScreen() {
             {user ? (
               <ShoppingListStatus productId={product.product_id} refreshKey={listVersion} />
             ) : null}
+            {options && (
+              <VariantPicker
+                variants={variants}
+                color={color}
+                size={size}
+                onColor={(picked) => {
+                  setColor(picked);
+                  // Keep the size if the new color comes in it
+                  if (size && !variants.some((v) => v.color === picked && v.size === size)) setSize(null);
+                }}
+                onSize={setSize}
+                hasStore={!!product.store_inventory}
+              />
+            )}
+
             <AddToShoppingList
               productId={product.product_id}
+              variantId={options ? (chosen?.variant_id ?? null) : null}
+              variantLabel={options && chosen ? [chosen.color, chosen.size].filter(Boolean).join(' / ') : null}
               onAdded={() => setListVersion((version) => version + 1)}
             />
 
@@ -243,9 +349,9 @@ export default function ShopperProductScreen() {
                 <Fact label="Availability" value="Discontinued at this store" />
               ) : (
                 <>
-                  <Fact label="Price" value={price?.price ?? '—'} strong />
+                  <Fact label="Price" value={priceText} strong />
                   {product.store_inventory && (
-                    <Fact label="Availability" value={storeStock(product)} wide />
+                    <Fact label="Availability" value={availability} wide />
                   )}
                 </>
               )}

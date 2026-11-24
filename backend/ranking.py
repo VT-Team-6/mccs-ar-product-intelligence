@@ -655,6 +655,7 @@ def rebuild_engine() -> int:
                 p.brand,
                 p.product_type,
                 p.category,
+                p.fit,
                 ip.price,
                 s.average_rating AS rating,
                 p.description

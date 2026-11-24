@@ -30,6 +30,8 @@ export type Product = {
   product_type: string;
   // Decides which ranking criteria apply; null for older products
   category?: ProductCategory | null;
+  // Who a shoe is sized for; null for everything else
+  fit?: ProductFit | null;
   rating: number | null;
   description: string | null;
   image_url: string | null;
@@ -55,11 +57,25 @@ export const PRODUCT_CATEGORIES = [
 ] as const;
 export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number]["value"];
 
+// Who a shoe is sized for (shoes only). A men's 7 and a women's 7 are different
+// shoes, so each fit is its own product; unisex shoes are listed as men's.
+export const PRODUCT_FITS = [
+  { value: "mens", label: "Men's" },
+  { value: "womens", label: "Women's" },
+  { value: "kids", label: "Kids" },
+] as const;
+export type ProductFit = (typeof PRODUCT_FITS)[number]["value"];
+
+export function fitLabel(fit: ProductFit | null | undefined): string | null {
+  return PRODUCT_FITS.find((choice) => choice.value === fit)?.label ?? null;
+}
+
 export type ProductInput = {
   name: string;
   brand: string | null;
   product_type: string;
   category: ProductCategory;
+  fit: ProductFit | null;
   description: string | null;
   image_url?: string | null;
   // Only when adding: the store the product is for. It owns the product and the
@@ -221,6 +237,9 @@ export function productQrUrl(productId: number): string {
 export type ProductImage = {
   image_id: number;
   image_url: string;
+  // The color or size the photo shows (see constants/variants.ts); null for all
+  color?: string | null;
+  size?: string | null;
 };
 
 async function imageProblem(
@@ -259,12 +278,13 @@ export async function listProductImages(
 export async function addProductImage(
   productId: number,
   imageUrl: string,
+  option: { color?: string | null; size?: string | null } = {},
 ): Promise<ProductImage> {
   const response = await authenticatedFetch(
     `/api/admin/products/${productId}/images`,
     {
       method: "POST",
-      body: JSON.stringify({ image_url: imageUrl.trim() }),
+      body: JSON.stringify({ image_url: imageUrl.trim(), ...option }),
     },
   );
   if (response.status === 409) {
@@ -300,8 +320,11 @@ export type PickedImage = {
 export async function uploadProductImage(
   productId: number,
   picked: PickedImage,
+  option: { color?: string | null; size?: string | null } = {},
 ): Promise<ProductImage> {
   const form = new FormData();
+  if (option.color) form.append("color", option.color);
+  if (option.size) form.append("size", option.size);
   if (picked.file) {
     form.append("file", picked.file, picked.file.name);
   } else {

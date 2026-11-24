@@ -50,9 +50,12 @@ def get_list(conn: Connection, user_id: int, list_id: int) -> dict:
         """
         SELECT i.shopping_list_item_id, i.product_id,
                i.is_completed, i.added_at,
-               p.name, p.brand, p.product_type, p.image_url
+               p.name, p.brand, p.product_type, p.image_url,
+               i.variant_id,
+               v.color AS variant_color, v.size AS variant_size
         FROM shopping_list_items i
         JOIN products p ON p.product_id = i.product_id
+        LEFT JOIN product_variants v ON v.variant_id = i.variant_id
         WHERE i.shopping_list_id = %s
         ORDER BY i.is_completed ASC, i.added_at ASC,
                  i.shopping_list_item_id ASC
@@ -146,9 +149,14 @@ def activate_list(conn: Connection, user_id: int, list_id: int) -> dict:
     return get_list(conn, user_id, list_id)
 
 def add_item(
-    conn: Connection, user_id: int, list_id: int, product_id: int
+    conn: Connection, user_id: int, list_id: int, product_id: int,
+    variant_id: int | None = None,
 ) -> dict:
-    """Add a catalog product once, without resetting existing check-off."""
+    """Add a catalog product once, without resetting existing check-off.
+
+    variant_id is the color/size the shopper picked, or None for any. Adding a
+    product that's already on the list updates the picked color/size.
+    """
     _owned_list(conn, user_id, list_id)
 
     product = conn.execute(
@@ -160,15 +168,21 @@ def add_item(
     ).fetchone()
     if product is None:
         raise ShoppingListError("Product not found", 404)
+    if variant_id is not None and conn.execute(
+        "SELECT 1 FROM product_variants WHERE variant_id = %s AND product_id = %s",
+        (variant_id, product_id),
+    ).fetchone() is None:
+        raise ShoppingListError("That size or color isn't available for this product", 404)
 
     inserted = conn.execute(
         """
-        INSERT INTO shopping_list_items (shopping_list_id, product_id)
-        VALUES (%s, %s)
-        ON CONFLICT (shopping_list_id, product_id) DO NOTHING
+        INSERT INTO shopping_list_items (shopping_list_id, product_id, variant_id)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (shopping_list_id, product_id)
+            DO UPDATE SET variant_id = EXCLUDED.variant_id
         RETURNING shopping_list_item_id
         """,
-        (list_id, product_id),
+        (list_id, product_id, variant_id),
     ).fetchone()
 
     if inserted:

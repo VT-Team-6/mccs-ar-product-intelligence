@@ -80,23 +80,51 @@ def _notify(conn, recipients, store_id, kind, subject, body="", request_id=None)
 # --- alerts ----------------------------------------------------------------
 
 
+# The product's name, color and size, each on its own so nobody mixes up
+# "Samba (10)" with a quantity: messages read "Product: …", "Color: …", "Size: …"
+_ITEM_NAME = "p.name"
+
+
+def item_lines(item: dict, indent: str = "  ") -> list[str]:
+    """['Product: Adidas Samba OG', 'Color: Black', 'Size: 10'], skipping what doesn't apply."""
+    lines = [f"Product: {item['name']}"]
+    if item.get("color"):
+        lines.append(f"{indent}Color: {item['color']}")
+    if item.get("size"):
+        lines.append(f"{indent}Size: {item['size']}")
+    return lines
+
+
+def item_title(item: dict) -> str:
+    """One line for a subject: 'Adidas Samba OG (Color: Black, Size: 10)'."""
+    options = ", ".join(
+        f"{label}: {item[key]}" for label, key in (("Color", "color"), ("Size", "size")) if item.get(key)
+    )
+    return f"{item['name']} ({options})" if options else item["name"]
+
+
 def check_stock(conn: Connection, store_id: int, product_ids: list[int]) -> list[dict]:
     """Open or resolve alerts for these products after their stock, level or buyer changed.
 
-    A product is low when it's on sale and its quantity is at or below its
-    level. Returns the products that just went low (and were notified about).
+    Each color/size is checked on its own: it's low when the product is on
+    sale and that variant's stock is at or below the product's level, so a
+    sold-out size 10 is flagged even when other sizes are plentiful. Returns
+    the variants that just went low (and were notified about).
     """
     if not product_ids:
         return []
     rows = conn.execute(
-        "SELECT i.product_id, p.name, i.quantity, i.low_stock_threshold AS threshold,"
-        " (i.status = 'active' AND COALESCE(i.quantity, 0) <= i.low_stock_threshold) AS is_low,"
-        " a.alert_id"
+        f"SELECT i.product_id, v.variant_id, {_ITEM_NAME} AS name, v.color, v.size, vs.quantity,"
+        " i.low_stock_threshold AS threshold,"
+        " (i.status = 'active' AND COALESCE(vs.quantity, 0) <= i.low_stock_threshold) AS is_low,"
+        " i.status = 'active' AS on_sale, a.alert_id, a.kind, a.quantity AS alert_quantity"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"
-        " LEFT JOIN low_stock_alerts a ON a.product_id = i.product_id"
+        " JOIN product_variants v ON v.product_id = i.product_id"
+        " LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"
+        " LEFT JOIN low_stock_alerts a ON a.variant_id = v.variant_id"
         "   AND a.store_id = i.store_id AND a.status <> 'resolved'"
         " WHERE i.store_id = %s AND i.product_id = ANY(%s)"
-        " ORDER BY lower(p.name)",
+        " ORDER BY lower(p.name), v.color_order, v.size_order",
         (store_id, sorted(set(product_ids))),
     ).fetchall()
 
@@ -104,12 +132,19 @@ def check_stock(conn: Connection, store_id: int, product_ids: list[int]) -> list
     for row in rows:
         if row["is_low"] and row["alert_id"] is None:
             conn.execute(
-                "INSERT INTO low_stock_alerts (product_id, store_id, quantity, threshold)"
-                " VALUES (%s, %s, %s, %s)",
-                (row["product_id"], store_id, row["quantity"] or 0, row["threshold"]),
+                "INSERT INTO low_stock_alerts (product_id, variant_id, store_id, quantity, threshold)"
+                " VALUES (%s, %s, %s, %s, %s)",
+                (row["product_id"], row["variant_id"], store_id, row["quantity"] or 0, row["threshold"]),
             )
             went_low.append(row)
-        elif not row["is_low"] and row["alert_id"] is not None:
+        elif row["alert_id"] is None:
+            continue
+        elif row["kind"] == "manual":
+            # Ordered ahead of time: done once the order arrives (stock rises
+            # above what it was when ordered) or the product is off sale
+            if not row["on_sale"] or (row["quantity"] or 0) > row["alert_quantity"]:
+                back_up.append(row["alert_id"])
+        elif not row["is_low"]:
             back_up.append(row["alert_id"])
 
     if back_up:
@@ -140,11 +175,12 @@ def check_all_stores(conn: Connection) -> int:
 def _notify_low(conn: Connection, store_id: int, went_low: list[dict]) -> None:
     store = _store(conn, store_id)["name"]
     if len(went_low) == 1:
-        subject = f"{went_low[0]['name']} is low on stock at {store}"
+        subject = f"{item_title(went_low[0])} is low on stock at {store}"
     else:
-        subject = f"{_plural(len(went_low), 'product')} are low on stock at {store}"
+        subject = f"{_plural(len(went_low), 'item')} are low on stock at {store}"
     body = _lines([
-        f"• {row['name']}: {row['quantity'] or 0} left (low at {row['threshold']})"
+        "\n".join(["• " + item_lines(row)[0], *item_lines(row)[1:],
+                   f"  Left: {row['quantity'] or 0} (low at {row['threshold']})"])
         for row in went_low
     ])
     _notify(conn, store_managers(conn, store_id), store_id, "low_stock", subject, body)
@@ -154,7 +190,9 @@ def _notify_low(conn: Connection, store_id: int, went_low: list[dict]) -> None:
 
 # Each low product with its status and its latest order request, if any
 _PRODUCTS_SQL = """
-    SELECT a.alert_id, a.product_id, p.name, p.brand, i.quantity, i.low_stock_threshold,
+    SELECT a.alert_id, a.product_id, a.variant_id, """ + _ITEM_NAME + """ AS name,
+           v.color, v.size, p.brand,
+           COALESCE(vs.quantity, 0) AS quantity, i.low_stock_threshold,
            a.status, a.created_at,
            pb.user_id AS buyer_user_id, pb.email AS buyer_email,
            r.request_id, ri.quantity AS requested_quantity, ri.reason, ri.updated_at,
@@ -162,6 +200,8 @@ _PRODUCTS_SQL = """
       FROM low_stock_alerts a
       JOIN inventory i ON i.product_id = a.product_id AND i.store_id = a.store_id
       JOIN products p ON p.product_id = a.product_id
+      LEFT JOIN product_variants v ON v.variant_id = a.variant_id
+      LEFT JOIN variant_stock vs ON vs.variant_id = a.variant_id AND vs.store_id = a.store_id
       LEFT JOIN users pb ON pb.user_id = i.buyer_user_id AND pb.role = 'store_buyer'
                          AND EXISTS (SELECT 1 FROM user_stores us
                                      WHERE us.user_id = pb.user_id AND us.store_id = i.store_id)
@@ -179,7 +219,9 @@ _PRODUCTS_SQL = """
 def list_products(conn: Connection, store_id: int) -> list[dict]:
     """Every low product at the store with its reorder status, alphabetical."""
     stock._require_store(conn, store_id)
-    rows = conn.execute(_PRODUCTS_SQL + " ORDER BY lower(p.name)", (store_id,)).fetchall()
+    rows = conn.execute(
+        _PRODUCTS_SQL + " ORDER BY lower(p.name), v.color_order, v.size_order", (store_id,)
+    ).fetchall()
     for row in rows:
         row["quantity"] = row["quantity"] or 0
         row["suggested_quantity"] = suggested_quantity(row["quantity"], row["low_stock_threshold"])
@@ -214,6 +256,131 @@ def reorder_groups(conn: Connection, store_id: int) -> list[dict]:
     return list(groups.values())
 
 
+# --- reordering any product (not just low ones) ---------------------------
+
+# Most urgent first: a product's chip shows the first of these any size has
+STATUS_ORDER = ("open", "unavailable", "requested", "ordered")
+
+_BUYER_JOIN = """
+      LEFT JOIN users pb ON pb.user_id = i.buyer_user_id AND pb.role = 'store_buyer'
+                         AND EXISTS (SELECT 1 FROM user_stores us
+                                     WHERE us.user_id = pb.user_id AND us.store_id = i.store_id)
+"""
+
+
+def catalog(conn: Connection, store_id: int) -> dict:
+    """Every product on sale at the store, one row each, with how many of its
+    sizes/colors are low and every reorder status any of them has.
+
+    The Reorders list shows these: "Needs reorder" (the default) is products
+    with an open status, "All products" is everything, so a manager can order
+    ahead of time.
+    """
+    stock._require_store(conn, store_id)
+    rows = conn.execute(
+        """
+        SELECT p.product_id, p.name, p.brand, p.category, p.fit,
+               i.quantity, i.low_stock_threshold,
+               count(*)::INTEGER AS variant_count,
+               count(*) FILTER (WHERE COALESCE(vs.quantity, 0) <= i.low_stock_threshold)::INTEGER
+                   AS low_count,
+               COALESCE(array_agg(DISTINCT a.status) FILTER (WHERE a.status IS NOT NULL), '{}')
+                   AS statuses,
+               pb.user_id AS buyer_user_id, pb.email AS buyer_email
+          FROM inventory i
+          JOIN products p ON p.product_id = i.product_id
+          JOIN product_variants v ON v.product_id = i.product_id
+          LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id
+          LEFT JOIN low_stock_alerts a ON a.variant_id = v.variant_id
+                AND a.store_id = i.store_id AND a.status <> 'resolved'
+        """ + _BUYER_JOIN + """
+         WHERE i.store_id = %s AND i.status = 'active' AND p.deleted_at IS NULL
+         GROUP BY p.product_id, i.quantity, i.low_stock_threshold, pb.user_id, pb.email
+         ORDER BY lower(p.name), p.product_id
+        """,
+        (store_id,),
+    ).fetchall()
+    counts = {status: 0 for status in STATUS_ORDER}
+    for row in rows:
+        row["statuses"] = [s for s in STATUS_ORDER if s in row["statuses"]]
+        row["status"] = row["statuses"][0] if row["statuses"] else None
+        for status in row["statuses"]:
+            counts[status] += 1
+    counts["all"] = len(rows)
+    return {"products": rows, "counts": counts}
+
+
+def lines(conn: Connection, store_id: int, product_ids: list[int]) -> list[dict]:
+    """Every size/color of these products at the store, for the send screen:
+    stock, whether it's low, its reorder status and a suggested amount.
+
+    sendable is False while a size is already requested or ordered.
+    """
+    stock._require_store(conn, store_id)
+    rows = conn.execute(
+        """
+        SELECT p.product_id, p.name, p.brand, p.category, p.fit,
+               pb.user_id AS buyer_user_id, pb.email AS buyer_email,
+               v.variant_id, v.color, v.color_hex, v.size,
+               COALESCE(vs.quantity, 0) AS quantity, i.low_stock_threshold,
+               COALESCE(vs.quantity, 0) <= i.low_stock_threshold AS low,
+               a.alert_id, a.status
+          FROM inventory i
+          JOIN products p ON p.product_id = i.product_id
+          JOIN product_variants v ON v.product_id = i.product_id
+          LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id
+          LEFT JOIN low_stock_alerts a ON a.variant_id = v.variant_id
+                AND a.store_id = i.store_id AND a.status <> 'resolved'
+        """ + _BUYER_JOIN + """
+         WHERE i.store_id = %s AND i.status = 'active' AND p.deleted_at IS NULL
+           AND i.product_id = ANY(%s)
+         ORDER BY lower(p.name), p.product_id, v.color_order, v.size_order
+        """,
+        (store_id, product_ids),
+    ).fetchall()
+    for row in rows:
+        row["suggested_quantity"] = suggested_quantity(row["quantity"], row["low_stock_threshold"])
+        row["sendable"] = row["status"] is None or row["status"] in REORDERABLE
+    return rows
+
+
+def _alerts_for_variants(conn: Connection, store_id: int, variant_ids: list[int]) -> dict[int, int]:
+    """The alert to send for each size/color, opening a manual one for sizes
+    that aren't low. Refuses sizes already requested or ordered."""
+    if not variant_ids:
+        return {}
+    # Lock inventory first, like stock changes do
+    rows = conn.execute(
+        "SELECT v.variant_id, v.product_id, COALESCE(vs.quantity, 0) AS quantity,"
+        " i.low_stock_threshold, a.alert_id, a.status"
+        " FROM inventory i"
+        " JOIN product_variants v ON v.product_id = i.product_id"
+        " LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"
+        " LEFT JOIN low_stock_alerts a ON a.variant_id = v.variant_id"
+        "   AND a.store_id = i.store_id AND a.status <> 'resolved'"
+        " WHERE i.store_id = %s AND i.status = 'active' AND v.variant_id = ANY(%s)"
+        " ORDER BY i.product_id FOR NO KEY UPDATE OF i",
+        (store_id, variant_ids),
+    ).fetchall()
+    if len(rows) != len(set(variant_ids)):
+        raise stock.InventoryError("Some of these sizes aren't on sale at this store. Refresh and try again.",
+                                   status=409)
+    alert_for = {}
+    for row in rows:
+        if row["alert_id"] is not None:
+            if row["status"] not in REORDERABLE:
+                raise stock.InventoryError(
+                    "Some of these sizes were already sent to a buyer. Refresh and try again.", status=409)
+            alert_for[row["variant_id"]] = row["alert_id"]
+        else:
+            alert_for[row["variant_id"]] = conn.execute(
+                "INSERT INTO low_stock_alerts (product_id, variant_id, store_id, quantity, threshold, kind)"
+                " VALUES (%s, %s, %s, %s, %s, 'manual') RETURNING alert_id",
+                (row["product_id"], row["variant_id"], store_id, row["quantity"], row["low_stock_threshold"]),
+            ).fetchone()["alert_id"]
+    return alert_for
+
+
 def _claim_reorder_alerts(conn: Connection, store_id: int, alert_ids: list[int]) -> dict[int, dict]:
     """Claim every requested alert before inserting the order, or roll back."""
     # Stock changes lock inventory before alerts. Use the same order here,
@@ -228,7 +395,7 @@ def _claim_reorder_alerts(conn: Connection, store_id: int, alert_ids: list[int])
     rows = conn.execute(
         "UPDATE low_stock_alerts SET status = 'requested'"
         " WHERE alert_id = ANY(%s) AND status = ANY(%s)"
-        " RETURNING alert_id, product_id",
+        " RETURNING alert_id, product_id, variant_id",
         ([row["alert_id"] for row in inventory_alerts], list(REORDERABLE)),
     ).fetchall()
     found = {row["alert_id"]: row for row in rows}
@@ -244,7 +411,8 @@ def formal_message(store: dict, items: list[dict], note: str, sender: str | None
     """The Order Request text the buyer reads."""
     where = f"{store['name']} ({store['address']})" if store.get("address") else store["name"]
     lines = [
-        f"• {item['name']}: {item['quantity']} units ({item['current_quantity'] or 0} currently in stock)"
+        "\n".join(["• " + item_lines(item)[0], *item_lines(item)[1:],
+                   f"  Quantity: {item['quantity']} units ({item['current_quantity'] or 0} currently in stock)"])
         for item in items
     ]
     parts = [
@@ -275,6 +443,15 @@ def send_request(
     stock._require_store(conn, store_id)
     if buyer_user_id not in {b["user_id"] for b in low_stock.list_buyers(conn, store_id, everyone=True)}:
         raise stock.InventoryError("That person isn't a buyer at this store")
+    # Items name a low product's alert, or any size/color by variant_id
+    alert_for = _alerts_for_variants(
+        conn, store_id, [item["variant_id"] for item in items if not item.get("alert_id")]
+    )
+    items = [
+        {**item, "alert_id": item.get("alert_id") or alert_for[item["variant_id"]]} for item in items
+    ]
+    if len({item["alert_id"] for item in items}) != len(items):
+        raise stock.InventoryError("A size is in the request twice")
     alerts = _claim_reorder_alerts(conn, store_id, [item["alert_id"] for item in items])
 
     request_id = conn.execute(
@@ -286,9 +463,11 @@ def send_request(
     for item in items:
         alert = alerts[item["alert_id"]]
         conn.execute(
-            "INSERT INTO order_request_items (request_id, alert_id, product_id, quantity)"
-            " VALUES (%s, %s, %s, %s)",
-            (request_id, alert["alert_id"], alert["product_id"], item["quantity"]),
+            "INSERT INTO order_request_items (request_id, alert_id, product_id, variant_id, color, size, quantity)"
+            " SELECT %s, %s, %s, %s, v.color, v.size, %s"
+            " FROM (SELECT 1) one LEFT JOIN product_variants v ON v.variant_id = %s",
+            (request_id, alert["alert_id"], alert["product_id"], alert["variant_id"],
+             item["quantity"], alert["variant_id"]),
         )
     if remember_buyer:
         conn.execute(
@@ -311,16 +490,23 @@ def send_request(
 
 def _items(conn: Connection, request_id: int, store_id: int) -> list[dict]:
     return conn.execute(
-        "SELECT ri.product_id, p.name, p.brand, ri.quantity, ri.status, ri.reason, ri.updated_at,"
+        "SELECT ri.alert_id, ri.product_id, ri.variant_id,"
+        " p.name, ri.color, ri.size,"
+        " p.brand, ri.quantity, ri.status, ri.reason, ri.updated_at,"
         " ri.updated_by, actor.email AS updated_by_email,"
-        " i.quantity AS current_quantity, a.status = 'resolved' AS restocked"
+        " COALESCE(vs.quantity, i.quantity) AS current_quantity, a.status = 'resolved' AS restocked"
         " FROM order_request_items ri"
         " JOIN products p ON p.product_id = ri.product_id"
         " LEFT JOIN users actor ON actor.user_id = ri.updated_by"
         " JOIN low_stock_alerts a ON a.alert_id = ri.alert_id"
         " LEFT JOIN inventory i ON i.product_id = ri.product_id AND i.store_id = %s"
-        " WHERE ri.request_id = %s ORDER BY lower(p.name)",
-        (store_id, request_id),
+        " LEFT JOIN variant_stock vs ON vs.variant_id = ri.variant_id AND vs.store_id = %s"
+        " LEFT JOIN product_variants v ON v.variant_id = ri.variant_id"
+        # Sizes in the order they were set up (7, 8 ... 12), not as text (10, 11, 12, 7)
+        " WHERE ri.request_id = %s"
+        " ORDER BY lower(p.name), p.product_id, v.color_order NULLS LAST, v.size_order NULLS LAST,"
+        " ri.color, ri.size",
+        (store_id, store_id, request_id),
     ).fetchall()
 
 
@@ -434,20 +620,29 @@ def update_items(
     status: str,
     reason: str,
     user: dict,
+    alert_ids: list[int] | None = None,
 ) -> dict:
-    """The buyer marks some of a request's products ordered or unavailable.
+    """The buyer marks some of a request's items ordered or unavailable.
 
-    The products' reorder status follows, unless a product has since been sent
-    in a newer request. Every manager of the store is notified.
+    Items are picked by alert_ids (one per color/size). product_ids still
+    works and picks every color/size of those products. The items' reorder
+    status follows, unless an item has since been sent in a newer request.
+    Every manager of the store is notified.
     """
     request_id = request["request_id"]
-    in_request = {item["product_id"]: item for item in request["items"]}
-    missing = [p for p in product_ids if p not in in_request]
+    if alert_ids is None:
+        wanted = set(product_ids)
+        missing = sorted(wanted - {item["product_id"] for item in request["items"]})
+        if missing:
+            raise stock.InventoryError(f"Not in this order request: product {missing[0]}", status=404)
+        alert_ids = [item["alert_id"] for item in request["items"] if item["product_id"] in wanted]
+    in_request = {item["alert_id"]: item for item in request["items"]}
+    missing = [a for a in alert_ids if a not in in_request]
     if missing:
-        raise stock.InventoryError(f"Not in this order request: product {missing[0]}", status=404)
+        raise stock.InventoryError("That item isn't in this order request", status=404)
     if "manage_all_stores" not in user["permissions"]:
-        for product_id in product_ids:
-            item = in_request[product_id]
+        for alert_id in alert_ids:
+            item = in_request[alert_id]
             if item["restocked"]:
                 raise stock.InventoryError("This item has already been received", status=409)
             if item["status"] != "pending" and item["updated_by"] != user["user_id"]:
@@ -457,29 +652,36 @@ def update_items(
 
     conn.execute(
         "UPDATE order_request_items SET status = %s, reason = %s, updated_at = CURRENT_TIMESTAMP, updated_by = %s"
-        " WHERE request_id = %s AND product_id = ANY(%s)",
-        (status, reason.strip() if status == "unavailable" else "", user["user_id"], request_id, product_ids),
+        " WHERE request_id = %s AND alert_id = ANY(%s)",
+        (status, reason.strip() if status == "unavailable" else "", user["user_id"], request_id, alert_ids),
     )
     # The product's status follows its latest request only
     conn.execute(
         "UPDATE low_stock_alerts a SET status = %s"
         " FROM order_request_items ri"
-        " WHERE ri.alert_id = a.alert_id AND ri.request_id = %s AND ri.product_id = ANY(%s)"
+        " WHERE ri.alert_id = a.alert_id AND ri.request_id = %s AND ri.alert_id = ANY(%s)"
         " AND a.status <> 'resolved'"
         " AND NOT EXISTS (SELECT 1 FROM order_request_items newer"
         "                 WHERE newer.alert_id = a.alert_id AND newer.request_id > ri.request_id)",
         ({"ordered": "ordered", "unavailable": "unavailable"}.get(status, "requested"),
-         request_id, product_ids),
+         request_id, alert_ids),
     )
 
-    names = [in_request[p]["name"] for p in product_ids]
+    names = [in_request[a] for a in alert_ids]
     who = user.get("email") or "The buyer"
+
+    def listed(word: str) -> str:
+        return _lines([
+            "\n".join(["• " + item_lines(item)[0], *item_lines(item)[1:], f"  Status: {word}"])
+            for item in names
+        ])
+
     if status == "ordered":
         subject = f"{who} ordered {_plural(len(names), 'product')} for {request['store_name']}"
-        body = _lines([f"• {name}: ordered" for name in names])
+        body = listed("ordered")
     else:
         subject = f"{who} couldn't order {_plural(len(names), 'product')} for {request['store_name']}"
-        body = _lines([f"• {name}: unavailable" for name in names]) + f"\n\nReason: {reason.strip()}"
+        body = listed("unavailable") + f"\n\nReason: {reason.strip()}"
     _notify(conn, store_managers(conn, request["store_id"]), request["store_id"],
             "order_update", subject, body, request_id)
     return get_request(conn, request_id)

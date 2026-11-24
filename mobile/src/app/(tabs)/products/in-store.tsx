@@ -42,6 +42,7 @@ import {
 } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useStore } from '@/store/StoreContext';
+import { VariantLines } from '@/components/variant-lines';
 
 // What the last scan did, shown as a banner above the list
 type ScanNotice = {
@@ -278,8 +279,9 @@ function InStoreShoppingContent() {
           type="small"
           themeColor="textSecondary"
         >
-          {item.brand ?? item.product_type}
+          {[item.brand ?? item.product_type].filter(Boolean).join(' · ')}
         </ThemedText>
+        <VariantLines color={item.variant_color} size={item.variant_size} />
       </View>
     </Pressable>
   );

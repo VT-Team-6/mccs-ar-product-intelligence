@@ -106,7 +106,8 @@ def find_product(conn, product):
         """
         SELECT product_id
         FROM products
-        WHERE name = %s
+        -- seeds/007 moves a coffee/shampoo size out of the name into its sizes
+        WHERE name = regexp_replace(%s, ', [0-9.]+ (fl )?oz$', '')
           AND brand IS NOT DISTINCT FROM %s
           AND product_type = %s
           AND deleted_at IS NULL

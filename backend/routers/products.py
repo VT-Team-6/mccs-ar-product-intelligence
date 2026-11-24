@@ -31,6 +31,7 @@ _PRODUCT_SELECT = """
         p.brand,
         p.product_type,
         p.category,
+        p.fit,
         s.average_rating AS rating,
         p.description,
         p.image_url,
@@ -131,8 +132,8 @@ def create_product(
         row = conn.execute(
             """
             INSERT INTO products
-                (name, brand, product_type, category, description, image_url, created_by_store_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (name, brand, product_type, category, fit, description, image_url, created_by_store_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING product_id
             """,
             (
@@ -140,6 +141,8 @@ def create_product(
                 product.brand,
                 product.product_type,
                 product.category,
+                # Only shoes have a fit
+                product.fit if product.category == "shoes" else None,
                 product.description,
                 product.image_url,
                 owner,
@@ -171,6 +174,15 @@ def update_product(
 
     with get_connection() as conn:
         require_product_owner(conn, user, product_id)
+
+        # Only shoes have a fit: moving a product out of shoes clears it, and a
+        # fit on anything else is ignored
+        if "fit" in updates or "category" in updates:
+            category = updates.get("category") or conn.execute(
+                "SELECT category FROM products WHERE product_id = %s", (product_id,)
+            ).fetchone()["category"]
+            if category != "shoes":
+                updates["fit"] = None
 
         if updates:
             assignments = ", ".join(f"{column} = %s" for column in updates)

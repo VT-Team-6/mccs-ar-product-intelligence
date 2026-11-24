@@ -27,11 +27,14 @@ import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
   productId: number;
+  // The size/color picked on the product page; null for any
+  variantId?: number | null;
+  variantLabel?: string | null;
   // Called after the product is added, so the page can refresh its list status
   onAdded?: () => void;
 };
 
-export function AddToShoppingList({ productId, onAdded }: Props) {
+export function AddToShoppingList({ productId, variantId = null, variantLabel = null, onAdded }: Props) {
   const { user } = useAuth();
   const promptSignIn = useSignInPrompt();
   const [visible, setVisible] = useState(false);
@@ -112,6 +115,7 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
       const updated = await addShoppingListItem(
         listId,
         productId,
+        variantId,
       );
 
       setListItems((previous) => ({
@@ -119,7 +123,7 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
         [listId]: updated,
       }));
 
-      setMessage(`Added to ${updated.name}.`);
+      setMessage(variantLabel ? `Added ${variantLabel} to ${updated.name}.` : `Added to ${updated.name}.`);
       onAdded?.();
     } catch (problem) {
       setError(
@@ -161,7 +165,8 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
             style={[styles.dialog, { borderColor: theme.border }]}
           >
             <View style={styles.header}>
-              <ThemedText type="subtitle">
+              {/* The title wraps instead of pushing Close out of the box */}
+              <ThemedText type="subtitle" style={styles.title}>
                 Add to Shopping List
               </ThemedText>
 
@@ -217,10 +222,12 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
               keyboardShouldPersistTaps="handled"
             >
               {lists.map((list) => {
+                const onList = listItems[list.shopping_list_id]?.items.find(
+                  (item) => item.product_id === productId,
+                );
+                // On the list with the same size/color (or any size, when none is picked)
                 const alreadyAdded =
-                  listItems[list.shopping_list_id]?.items.some(
-                    (item) => item.product_id === productId,
-                  ) ?? false;
+                  !!onList && (variantId === null || (onList.variant_id ?? null) === variantId);
 
                 const saving =
                   savingListId === list.shopping_list_id;
@@ -266,7 +273,7 @@ export function AddToShoppingList({ productId, onAdded }: Props) {
                           <ActivityIndicator color="#fff" />
                         ) : (
                           <ThemedText style={styles.addButtonText}>
-                            Add
+                            {onList ? 'Switch' : 'Add'}
                           </ThemedText>
                         )}
                       </Pressable>
@@ -311,6 +318,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+  },
+  title: {
+    flex: 1,
   },
   listScroll: {
     flexGrow: 0,

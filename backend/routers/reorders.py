@@ -15,6 +15,8 @@ from auth import require_permission
 from database import get_connection
 from product_access import can_manage_store
 from schemas import (
+    ReorderCatalog,
+    ReorderLine,
     MarkRead,
     MessageList,
     OrderRequest,
@@ -57,6 +59,35 @@ def read_reorders(
                 "products": reorders.list_products(conn, store_id),
                 "counts": reorders.status_counts(conn, store_id),
             }
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+
+
+@manager_router.get("/catalog", response_model=ReorderCatalog)
+def read_reorder_catalog(
+    store_id: int = Query(gt=0),
+    user=Depends(require_permission("manage_inventory")),
+) -> dict:
+    """Every product on sale at the store, one row each, with its low sizes and reorder statuses."""
+    _require_store_access(user, store_id)
+    with get_connection() as conn:
+        try:
+            return reorders.catalog(conn, store_id)
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+
+
+@manager_router.get("/lines", response_model=list[ReorderLine])
+def read_reorder_lines(
+    store_id: int = Query(gt=0),
+    product_id: list[int] = Query(min_length=1, max_length=500),
+    user=Depends(require_permission("manage_inventory")),
+) -> list[dict]:
+    """Every size/color of these products, for the send screen."""
+    _require_store_access(user, store_id)
+    with get_connection() as conn:
+        try:
+            return reorders.lines(conn, store_id, product_id)
         except stock.InventoryError as error:
             raise _http_error(error) from error
 
@@ -167,8 +198,11 @@ def update_order_request_items(
         if "manage_all_stores" not in user["permissions"] and not _is_request_buyer(request, user):
             raise HTTPException(403, "Only the buyer can update this order request")
         try:
+            if body.alert_ids is None and not body.product_ids:
+                raise HTTPException(422, "Pick at least one item")
             return reorders.update_items(
-                conn, request, body.product_ids, body.status, body.reason, user
+                conn, request, body.product_ids, body.status, body.reason, user,
+                alert_ids=body.alert_ids,
             )
         except stock.InventoryError as error:
             raise _http_error(error) from error

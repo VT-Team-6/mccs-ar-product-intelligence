@@ -12,12 +12,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { listStoreBuyers, type StoreBuyer } from "@/api/inventory";
-import {
-  getReorderGroups,
-  sendOrderRequest,
-  type ReorderGroup,
-  type ReorderProduct,
-} from "@/api/reorders";
+import { fitLabel, type ProductFit } from "@/api/products";
+import { getReorderLines, sendOrderRequest, type ReorderLine } from "@/api/reorders";
 import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
 import { useAuth } from "@/auth/AuthContext";
 import { canAccessStore } from "@/auth/store-access";
@@ -26,48 +22,96 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { AppButton } from "@/components/ui/app-button";
 import { ScreenHeader } from "@/components/ui/screen-header";
-import { MaxContentWidth, Spacing, Radius } from "@/constants/theme";
+import { Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 const WHOLE_NUMBER = /^\d+$/;
 
-// A group's key: the buyer's id, or "none" for products with no buyer
-const groupKey = (group: ReorderGroup) => String(group.buyer_user_id ?? "none");
+const STATUS_LABEL: Record<string, string> = {
+  requested: "Requested",
+  ordered: "Ordered",
+};
 
-// Which number field is being typed in, for the bar above the keyboard
-type Typing = { kind: "item"; item: ReorderProduct } | { kind: "bulk"; key: string } | null;
+// The products picked on Reorders, each with its sizes/colors, grouped by the
+// products' buyer: each group goes to its buyer as one Order Request.
+type Product = { productId: number; lines: ReorderLine[] };
+type Group = { key: string; buyerId: number | null; buyerEmail: string | null; products: Product[] };
 
-// Low products that can be sent (needs reorder, or unavailable from a buyer),
-// grouped by buyer. Each group is sent to its buyer as one Order Request.
-// Opened from Reorders. /admin/reorders/send?storeId=1&storeName=...
-export default function ReorderScreen() {
-  const params = useLocalSearchParams<{ storeId: string; storeName?: string }>();
-  const storeId = Number(params.storeId);
-  const { profile, hasPermission } = useAuth();
-  if (!hasPermission("manage_inventory") || !canAccessStore(profile, storeId)) {
-    return <Redirect href="/admin/reorders" />;
+function groupLines(lines: ReorderLine[]): Group[] {
+  const groups = new Map<string, Group>();
+  for (const line of lines) {
+    const key = String(line.buyer_user_id ?? "none");
+    if (!groups.has(key))
+      groups.set(key, { key, buyerId: line.buyer_user_id, buyerEmail: line.buyer_email, products: [] });
+    const group = groups.get(key)!;
+    let product = group.products.find((p) => p.productId === line.product_id);
+    if (!product) {
+      product = { productId: line.product_id, lines: [] };
+      group.products.push(product);
+    }
+    product.lines.push(line);
   }
-  return <SendOrderForm storeId={storeId} storeName={params.storeName || "this store"} />;
+  // Products with no buyer last
+  return [...groups.values()].sort((a, b) => Number(a.buyerId === null) - Number(b.buyerId === null));
 }
 
-function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: string }) {
+// Low only shows the sizes that are low or that a buyer couldn't get
+const isLowRow = (line: ReorderLine) => line.low || line.status === "unavailable" || line.status === "open";
+
+// "Size 9", or the color for products that only come in colors
+const rowLabel = (line: ReorderLine) => (line.size ? `Size ${line.size}` : line.color ?? "Quantity");
+
+// Which number field is being typed in, for the bar above the keyboard
+type Typing = { kind: "line"; line: ReorderLine } | { kind: "same"; productId: number } | null;
+
+// Reorders -> check products -> Reorder. /admin/reorders/send?storeId=1&productIds=4,9
+export default function ReorderScreen() {
+  const params = useLocalSearchParams<{ storeId: string; storeName?: string; productIds?: string }>();
+  const storeId = Number(params.storeId);
+  const productIds = (params.productIds ?? "")
+    .split(",")
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+  const { profile, hasPermission } = useAuth();
+  if (!hasPermission("manage_inventory") || !canAccessStore(profile, storeId) || productIds.length === 0) {
+    return <Redirect href="/admin/reorders" />;
+  }
+  return (
+    <SendOrderForm
+      storeId={storeId}
+      storeName={params.storeName || "this store"}
+      productIds={productIds}
+    />
+  );
+}
+
+function SendOrderForm({
+  storeId,
+  storeName,
+  productIds,
+}: {
+  storeId: number;
+  storeName: string;
+  productIds: number[];
+}) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const [groups, setGroups] = useState<ReorderGroup[]>([]);
+  const [lines, setLines] = useState<ReorderLine[]>([]);
   const [buyers, setBuyers] = useState<StoreBuyer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busyGroup, setBusyGroup] = useState<string | null>(null);
 
-  // Per product: ticked or not, and the quantity typed. Per group: the note and
-  // the "set quantity for selected" number. For products with no buyer: who to
-  // send to, and whether to save them as those products' buyer.
-  const [unticked, setUnticked] = useState<Set<number>>(new Set());
+  // Per size: the quantity typed (empty = don't order). Per product: showing
+  // every size instead of just the low ones, the "same for all" number, and
+  // whether it was taken off this order. Per group: the note.
   const [quantities, setQuantities] = useState<Record<number, string>>({});
+  const [allSizes, setAllSizes] = useState<Set<number>>(new Set());
+  const [same, setSame] = useState<Record<number, string>>({});
+  const [removed, setRemoved] = useState<Set<number>>(new Set());
   const [notes, setNotes] = useState<Record<string, string>>({});
-  const [bulk, setBulk] = useState<Record<string, string>>({});
   const [pickedBuyer, setPickedBuyer] = useState<BuyerChoice>(null);
   const [rememberBuyer, setRememberBuyer] = useState(true);
 
@@ -84,26 +128,30 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
     setTyping(next);
   };
 
+  const idsKey = productIds.join(",");
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [loaded, storeBuyers] = await Promise.all([getReorderGroups(storeId), listStoreBuyers(storeId)]);
-      setGroups(loaded);
+      const ids = idsKey.split(",").map(Number);
+      const [loaded, storeBuyers] = await Promise.all([getReorderLines(storeId, ids), listStoreBuyers(storeId)]);
+      setLines(loaded);
       setBuyers(storeBuyers);
-      // Fill in suggested quantities for products we haven't seen yet
+      // Low sizes start at the suggested amount; the rest start empty
       setQuantities((previous) => {
         const next = { ...previous };
-        for (const group of loaded)
-          for (const item of group.items)
-            if (next[item.alert_id] === undefined) next[item.alert_id] = String(item.suggested_quantity);
+        for (const line of loaded) {
+          if (!line.sendable) delete next[line.variant_id];
+          else if (next[line.variant_id] === undefined && isLowRow(line))
+            next[line.variant_id] = String(line.suggested_quantity);
+        }
         return next;
       });
     } catch (problem) {
-      setError(problem instanceof Error ? problem.message : "Could not load the low-stock products.");
+      setError(problem instanceof Error ? problem.message : "Could not load the products.");
     } finally {
       setLoading(false);
     }
-  }, [storeId]);
+  }, [storeId, idsKey]);
 
   useFocusEffect(
     useCallback(() => {
@@ -111,73 +159,74 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
     }, [load]),
   );
 
-  const ticked = (group: ReorderGroup) => group.items.filter((item) => !unticked.has(item.alert_id));
+  const groups = groupLines(lines.filter((line) => !removed.has(line.product_id)));
 
-  const toggle = (alertId: number) =>
-    setUnticked((previous) => {
+  // The sizes showing for a product: low ones unless All sizes is on.
+  // A product with only one option always shows it.
+  const shownLines = (product: Product) =>
+    product.lines.length === 1 || allSizes.has(product.productId)
+      ? product.lines
+      : product.lines.filter(isLowRow);
+
+  // What a group would send: showing, sendable rows with a number
+  const toSend = (group: Group) =>
+    group.products.flatMap((product) =>
+      shownLines(product).filter((line) => line.sendable && (quantities[line.variant_id] ?? "").trim() !== ""),
+    );
+
+  const toggleAllSizes = (productId: number) =>
+    setAllSizes((previous) => {
       const next = new Set(previous);
-      if (next.has(alertId)) next.delete(alertId);
-      else next.add(alertId);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
       return next;
     });
 
-  const toggleAll = (group: ReorderGroup) => {
-    const allTicked = ticked(group).length === group.items.length;
-    setUnticked((previous) => {
-      const next = new Set(previous);
-      for (const item of group.items) {
-        if (allTicked) next.add(item.alert_id);
-        else next.delete(item.alert_id);
-      }
-      return next;
-    });
-  };
-
-  // Puts one quantity on every ticked product in the group
-  const applyBulk = (group: ReorderGroup) => {
-    const typed = (bulk[groupKey(group)] ?? "").trim();
+  // Puts one number on every showing size of a product
+  const applySame = (product: Product) => {
+    const typed = (same[product.productId] ?? "").trim();
     if (!WHOLE_NUMBER.test(typed) || Number(typed) === 0) {
-      setError("Enter a whole number above 0 to set for the selected products.");
+      setError("Enter a whole number above 0 to set for every size.");
       return;
     }
     Keyboard.dismiss();
     setError(null);
     setQuantities((previous) => {
       const next = { ...previous };
-      for (const item of ticked(group)) next[item.alert_id] = typed;
+      for (const line of shownLines(product)) if (line.sendable) next[line.variant_id] = typed;
       return next;
     });
   };
 
-  const send = async (group: ReorderGroup) => {
+  const send = async (group: Group) => {
     Keyboard.dismiss();
     setError(null);
     setMessage(null);
-    const noBuyer = group.buyer_user_id === null;
-    const buyerId = group.buyer_user_id ?? (typeof pickedBuyer === "number" ? pickedBuyer : null);
+    const noBuyer = group.buyerId === null;
+    const buyerId = group.buyerId ?? (typeof pickedBuyer === "number" ? pickedBuyer : null);
     if (buyerId === null) {
       setError("Pick a buyer to send these to.");
       return;
     }
-    const items = ticked(group);
-    for (const item of items) {
-      const typed = (quantities[item.alert_id] ?? "").trim();
+    const rows = toSend(group);
+    for (const line of rows) {
+      const typed = quantities[line.variant_id].trim();
       if (!WHOLE_NUMBER.test(typed) || Number(typed) === 0) {
-        setError(`Enter how many ${item.name} to order (a whole number above 0).`);
+        setError(`Enter a whole number above 0 for ${line.name} ${rowLabel(line)}, or clear it.`);
         return;
       }
     }
-    setBusyGroup(groupKey(group));
+    setBusyGroup(group.key);
     try {
       await sendOrderRequest(
         storeId,
         buyerId,
-        items.map((item) => ({ alert_id: item.alert_id, quantity: Number(quantities[item.alert_id]) })),
-        notes[groupKey(group)] ?? "",
+        rows.map((line) => ({ variant_id: line.variant_id, quantity: Number(quantities[line.variant_id]) })),
+        notes[group.key] ?? "",
         noBuyer && rememberBuyer,
       );
       const email = buyers.find((buyer) => buyer.user_id === buyerId)?.email ?? "the buyer";
-      setMessage(`Order request sent to ${email} for ${items.length} product${items.length === 1 ? "" : "s"}.`);
+      setMessage(`Order request sent to ${email} for ${rows.length} item${rows.length === 1 ? "" : "s"}.`);
       await load();
     } catch (problem) {
       setError(problem instanceof Error ? problem.message : "Could not send the order request.");
@@ -188,9 +237,141 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
 
   const inputColors = { color: theme.text, backgroundColor: theme.background };
 
+  const quantityField = (line: ReorderLine) => {
+    const key = `line-${line.variant_id}`;
+    return (
+      <TextInput
+        ref={keepRef(key)}
+        value={quantities[line.variant_id] ?? ""}
+        onChangeText={(text) => setQuantities((previous) => ({ ...previous, [line.variant_id]: text }))}
+        onFocus={() => startTyping(key, { kind: "line", line })}
+        onBlur={() => setTyping(null)}
+        caretHidden={barShowing}
+        keyboardType="number-pad"
+        placeholder="0"
+        placeholderTextColor={theme.textSecondary}
+        accessibilityLabel={`Order ${line.name} ${rowLabel(line)}`}
+        style={[styles.quantityInput, inputColors]}
+      />
+    );
+  };
+
+  // One size: "Size 9   0 in stock ● low   [ 6 ]"
+  const lineRow = (line: ReorderLine) => (
+    <View key={line.variant_id} style={styles.line}>
+      <ThemedText type="small" style={styles.lineName} numberOfLines={1}>
+        {rowLabel(line)}
+      </ThemedText>
+      <ThemedText type="small" themeColor="textSecondary" style={styles.lineStock} numberOfLines={1}>
+        {`${line.quantity} in stock`}
+        {line.low && <ThemedText type="small" style={{ color: theme.danger }}>{"  ● low"}</ThemedText>}
+      </ThemedText>
+      {line.sendable ? (
+        quantityField(line)
+      ) : (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.lineStatus}>
+          {STATUS_LABEL[line.status ?? ""] ?? "Sent"}
+        </ThemedText>
+      )}
+    </View>
+  );
+
+  const productCard = (product: Product) => {
+    const first = product.lines[0];
+    const shown = shownLines(product);
+    const showingAll = allSizes.has(product.productId);
+    const hasOptions = product.lines.length > 1;
+    const colors = [...new Set(shown.map((line) => line.color))];
+    const sameKey = `same-${product.productId}`;
+    return (
+      <View key={product.productId} style={[styles.product, { borderColor: theme.border }]}>
+        <View style={styles.productTop}>
+          <View style={styles.flex}>
+            <ThemedText type="smallBold">{first.name}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {[first.brand, fitLabel(first.fit as ProductFit | null)].filter(Boolean).join(" · ")}
+            </ThemedText>
+          </View>
+          <Pressable
+            onPress={() => setRemoved((previous) => new Set(previous).add(product.productId))}
+            hitSlop={8}
+            accessibilityLabel={`Take ${first.name} off this order`}
+          >
+            <ThemedText type="small" themeColor="textSecondary">Remove</ThemedText>
+          </Pressable>
+        </View>
+
+        {hasOptions && (
+          // A two-way switch: the picked side is a navy thumb inside a grey track
+          <View style={[styles.toggle, { backgroundColor: theme.backgroundElement }]}>
+            {[false, true].map((all) => {
+              const on = showingAll === all;
+              return (
+                <Pressable
+                  key={String(all)}
+                  onPress={() => !on && toggleAllSizes(product.productId)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on }}
+                  style={[styles.toggleSide, on && styles.toggleThumb]}
+                >
+                  <ThemedText
+                    type="small"
+                    themeColor={on ? undefined : "textSecondary"}
+                    style={[styles.toggleText, on && styles.thumbText]}
+                  >
+                    {all ? "All sizes" : "Low only"}
+                  </ThemedText>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
+        {shown.length === 0 ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            No low sizes. Tap All sizes to choose any size.
+          </ThemedText>
+        ) : (
+          colors.map((color) => (
+            <View key={color ?? "none"} style={styles.colorGroup}>
+              {color && shown.some((line) => line.size) && (
+                <ThemedText type="smallBold" themeColor="textSecondary">{color}</ThemedText>
+              )}
+              {shown.filter((line) => line.color === color).map(lineRow)}
+            </View>
+          ))
+        )}
+
+        {/* One number for every showing size */}
+        {hasOptions && shown.some((line) => line.sendable) && (
+          <View style={styles.sameRow}>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
+              {`Same for all ${shown.length} shown`}
+            </ThemedText>
+            <TextInput
+              ref={keepRef(sameKey)}
+              value={same[product.productId] ?? ""}
+              onChangeText={(text) => setSame((previous) => ({ ...previous, [product.productId]: text }))}
+              onFocus={() => startTyping(sameKey, { kind: "same", productId: product.productId })}
+              onBlur={() => setTyping(null)}
+              caretHidden={barShowing}
+              keyboardType="number-pad"
+              placeholder="Qty"
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.quantityInput, inputColors]}
+            />
+            <Pressable onPress={() => applySame(product)} hitSlop={8}>
+              <ThemedText type="linkPrimary">Apply</ThemedText>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    );
+  };
+
   return (
     <ThemedView style={styles.container}>
-            <ScreenHeader
+      <ScreenHeader
         title="Reorder"
         eyebrow="Reorders"
         subtitle={storeName}
@@ -200,44 +381,37 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
       <View style={styles.body}>
         <ScrollView
           style={styles.edgeToEdge}
-          contentContainerStyle={[[styles.content, { paddingBottom: insets.bottom + Spacing.six }], styles.edgePadding]}
+          contentContainerStyle={[styles.content, styles.edgePadding, { paddingBottom: insets.bottom + Spacing.six }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
           <ThemedText type="small" themeColor="textSecondary">
-            {`Low-stock products at ${storeName}, grouped by buyer. Each group is sent to its buyer as one Order Request.`}
+            Enter how many of each size to order; empty sizes aren&apos;t ordered. Each buyer gets one Order
+            Request.
           </ThemedText>
 
           {loading && <ActivityIndicator />}
           {error && <ThemedText type="small" style={{ color: theme.danger }}>{error}</ThemedText>}
           {message && <ThemedText type="smallBold">{message}</ThemedText>}
           {!loading && groups.length === 0 && (
-            <ThemedText themeColor="textSecondary">Nothing needs reordering right now.</ThemedText>
+            <ThemedText themeColor="textSecondary">No products left on this order.</ThemedText>
           )}
 
           {groups.map((group) => {
-            const key = groupKey(group);
-            const selected = ticked(group);
-            const allTicked = selected.length === group.items.length;
-            const busy = busyGroup === key;
-            const noBuyer = group.buyer_user_id === null;
+            const rows = toSend(group);
+            const busy = busyGroup === group.key;
+            const noBuyer = group.buyerId === null;
             const sendTo = noBuyer
               ? buyers.find((buyer) => buyer.user_id === pickedBuyer)?.email
-              : group.buyer_email;
-            const bulkKey = `bulk-${key}`;
+              : group.buyerEmail;
             return (
-              <ThemedView key={key} type="card" style={[styles.group, { borderColor: theme.border }]}>
-                <View style={styles.groupTop}>
-                  <ThemedText type="smallBold" style={styles.flex}>
-                    {noBuyer ? "No buyer assigned" : group.buyer_email}
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {`  ·  ${group.items.length} product${group.items.length === 1 ? "" : "s"}`}
-                    </ThemedText>
+              <ThemedView key={group.key} type="card" style={[styles.group, { borderColor: theme.border }]}>
+                <ThemedText type="smallBold">
+                  {noBuyer ? "No buyer assigned" : `To ${group.buyerEmail}`}
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {`  ·  ${group.products.length} product${group.products.length === 1 ? "" : "s"}`}
                   </ThemedText>
-                  <Pressable onPress={() => toggleAll(group)} hitSlop={8}>
-                    <ThemedText type="linkPrimary">{allTicked ? "Unselect all" : "Select all"}</ThemedText>
-                  </Pressable>
-                </View>
+                </ThemedText>
 
                 {noBuyer && (
                   <View style={styles.field}>
@@ -253,81 +427,16 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
                   </View>
                 )}
 
-                {/* One quantity for every ticked product */}
-                <View style={styles.bulkRow}>
-                  <ThemedText type="small" themeColor="textSecondary" style={styles.flex}>
-                    {`Set quantity for ${selected.length} selected`}
-                  </ThemedText>
-                  <TextInput
-                    ref={keepRef(bulkKey)}
-                    value={bulk[key] ?? ""}
-                    onChangeText={(text) => setBulk((previous) => ({ ...previous, [key]: text }))}
-                    onFocus={() => startTyping(bulkKey, { kind: "bulk", key })}
-                    onBlur={() => setTyping(null)}
-                    caretHidden={barShowing}
-                    keyboardType="number-pad"
-                    placeholder="Qty"
-                    placeholderTextColor={theme.textSecondary}
-                    style={[styles.quantityInput, inputColors]}
-                  />
-                  <Pressable
-                    onPress={() => applyBulk(group)}
-                    disabled={selected.length === 0}
-                    style={({ pressed }) => (pressed || selected.length === 0) && styles.pressed}
-                  >
-                    <ThemedText type="linkPrimary">Apply</ThemedText>
-                  </Pressable>
-                </View>
-
-                {group.items.map((item) => {
-                  const isTicked = !unticked.has(item.alert_id);
-                  const itemKey = `item-${item.alert_id}`;
-                  return (
-                    <View key={item.alert_id} style={[styles.item, !isTicked && styles.faded]}>
-                      <Pressable onPress={() => toggle(item.alert_id)} hitSlop={8}>
-                        <ThemedText type="small">{isTicked ? "☑" : "☐"}</ThemedText>
-                      </Pressable>
-                      <View style={styles.flex}>
-                        <ThemedText type="smallBold">{item.name}</ThemedText>
-                        <ThemedText type="small" themeColor="textSecondary">
-                          {`${item.quantity} left · low at ${item.low_stock_threshold}`}
-                        </ThemedText>
-                        {item.status === "unavailable" && (
-                          <ThemedText type="small" style={{ color: theme.danger }}>
-                            {`Unavailable from ${item.requested_from ?? "the buyer"}: ${item.reason || "no reason given"}`}
-                          </ThemedText>
-                        )}
-                      </View>
-                      <View style={styles.quantity}>
-                        <ThemedText type="small" themeColor="textSecondary">
-                          Order
-                        </ThemedText>
-                        <TextInput
-                          ref={keepRef(itemKey)}
-                          value={quantities[item.alert_id] ?? ""}
-                          onChangeText={(text) =>
-                            setQuantities((previous) => ({ ...previous, [item.alert_id]: text }))
-                          }
-                          onFocus={() => startTyping(itemKey, { kind: "item", item })}
-                          onBlur={() => setTyping(null)}
-                          caretHidden={barShowing}
-                          editable={isTicked}
-                          keyboardType="number-pad"
-                          style={[styles.quantityInput, inputColors]}
-                        />
-                      </View>
-                    </View>
-                  );
-                })}
+                {group.products.map(productCard)}
 
                 <View style={styles.field}>
                   <ThemedText type="small" themeColor="textSecondary">
                     Note for the buyer (optional)
                   </ThemedText>
                   <TextInput
-                    value={notes[key] ?? ""}
-                    onChangeText={(text) => setNotes((previous) => ({ ...previous, [key]: text }))}
-                    placeholder="e.g. Needed before the weekend sale."
+                    value={notes[group.key] ?? ""}
+                    onChangeText={(text) => setNotes((previous) => ({ ...previous, [group.key]: text }))}
+                    placeholder="e.g. Stocking up for Black Friday."
                     placeholderTextColor={theme.textSecondary}
                     multiline
                     style={[styles.note, inputColors]}
@@ -338,9 +447,9 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
                   <ActivityIndicator />
                 ) : (
                   <AppButton
-                    label={`Send order request (${selected.length})`}
+                    label={`Send order request (${rows.length} item${rows.length === 1 ? "" : "s"})`}
                     onPress={() => send(group)}
-                    disabled={selected.length === 0 || (noBuyer && !sendTo)}
+                    disabled={rows.length === 0 || (noBuyer && !sendTo)}
                   />
                 )}
               </ThemedView>
@@ -350,17 +459,17 @@ function SendOrderForm({ storeId, storeName }: { storeId: number; storeName: str
       </View>
       <KeyboardDoneBar
         label={
-          typing?.kind === "item"
-            ? `Order ${typing.item.name}`
-            : typing?.kind === "bulk"
-              ? "Quantity for selected"
+          typing?.kind === "line"
+            ? `Order ${typing.line.name} ${rowLabel(typing.line)}`
+            : typing?.kind === "same"
+              ? "Same for every size shown"
               : null
         }
         value={
-          typing?.kind === "item"
-            ? quantities[typing.item.alert_id] ?? ""
-            : typing?.kind === "bulk"
-              ? bulk[typing.key] ?? ""
+          typing?.kind === "line"
+            ? quantities[typing.line.variant_id] ?? ""
+            : typing?.kind === "same"
+              ? same[typing.productId] ?? ""
               : ""
         }
         field={typing ? typingField : null}
@@ -390,7 +499,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    gap: Spacing.two,
   },
   content: {
     gap: Spacing.three,
@@ -404,30 +512,65 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     borderWidth: 1,
   },
-  groupTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.two,
-  },
   field: {
     gap: Spacing.one,
   },
-  bulkRow: {
+  // A product inside a buyer's group: heading, toggle, sizes by color
+  product: {
+    gap: Spacing.two,
+    paddingTop: Spacing.three,
+    borderTopWidth: 1,
+  },
+  productTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
+  // Pulled left by its padding so "Low only" lines up with the product name
+  // and the sizes below
+  toggle: {
+    flexDirection: "row",
+    alignSelf: "flex-start",
+    padding: 2,
+    marginLeft: -(2 + Spacing.two),
+    borderRadius: Radius.small + 2,
+  },
+  toggleSide: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Radius.small,
+  },
+  toggleThumb: {
+    backgroundColor: Brand.navy,
+  },
+  toggleText: {
+    fontWeight: "600",
+  },
+  thumbText: {
+    color: "#ffffff",
+  },
+  colorGroup: {
+    gap: Spacing.one,
+  },
+  line: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
   },
-  item: {
+  lineName: {
+    width: 96,
+  },
+  lineStock: {
+    flex: 1,
+  },
+  lineStatus: {
+    width: 72,
+    textAlign: "center",
+  },
+  sameRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.two,
-  },
-  faded: {
-    opacity: 0.45,
-  },
-  quantity: {
-    alignItems: "flex-end",
-    gap: Spacing.half,
   },
   quantityInput: {
     width: 72,
@@ -442,14 +585,5 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.three,
     textAlignVertical: "top",
-  },
-  button: {
-    alignItems: "center",
-    paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-  },
-  pressed: {
-    opacity: 0.6,
   },
 });
