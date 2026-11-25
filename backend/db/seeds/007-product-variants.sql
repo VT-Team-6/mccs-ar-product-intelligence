@@ -8,8 +8,12 @@
 --
 -- A product's stock at each store is split across its sizes/colors (more in
 -- the middle sizes and the first color), so store totals don't change and
--- the smallest/largest sizes sell out first. Products 1-4 keep no options:
--- the tests use them as plain stock fixtures (see 003-inventory.sql).
+-- the smallest/largest sizes sell out first.
+-- Colors are on one showcase product per type (Air Force 1, JanSport
+-- SuperBreak, Sony WH-1000XM4C), each with photos per color (008-product-photos.sql);
+-- a color without its own photos would just show the main photo. Folgers
+-- Classic Roast and Dove Daily Moisture are the size showcases, with the sizes
+-- really sold.
 
 -- Products loaded by the seeds get their default variant and its stock
 -- (the trigger only covers products added after the migration ran).
@@ -38,19 +42,21 @@ DECLARE
 
     -- Products that come in more than one color: name -> {{color, hex}, ...}
     colors_for     JSONB := '{
-        "Nike Dunk Low":                   [["White/Black", "#F5F5F5"], ["Black", "#1A1A1A"]],
-        "Converse Chuck Taylor All Star":  [["Black", "#1A1A1A"], ["White", "#F5F5F5"], ["Red", "#B3261E"]],
-        "Vans Old Skool":                  [["Black/White", "#1A1A1A"], ["Navy", "#1F2A44"]],
+        "Nike Air Force 1 Low":             [["White", "#F5F5F5"], ["Black", "#1A1A1A"]],
         "JanSport SuperBreak One Backpack": [["Black", "#1A1A1A"], ["Navy", "#1F2A44"], ["Red", "#B3261E"]],
-        "Fjallraven Kanken No. 2 Backpack":   [["Black", "#1A1A1A"], ["Frost Green", "#8FBFA8"]],
-        "Sony WH-1000XM4 Wireless Headphones": [["Black", "#1A1A1A"], ["Silver", "#C9C9C9"]],
-        "Beats Solo3 Wireless Headphones":     [["Black", "#1A1A1A"], ["Red", "#B3261E"]]
+        "Sony WH-1000XM4C Wireless Headphones": [["Black", "#1A1A1A"], ["Lavender", "#B9A7D0"], ["Platinum Silver", "#C9C9C9"]]
     }';
+    -- Showcase products with their real sizes: name -> {{size, price x}, ...}.
+    -- Every other coffee/shampoo gets its own size plus a made-up double size.
+    real_sizes     JSONB := '{
+        "Folgers Classic Roast Ground Coffee, 11.3 oz": [["25.9 oz", 1], ["40.3 oz", 1.45]],
+        "Dove Daily Moisture Shampoo, 12 fl oz": [["8.5 fl oz", 1], ["28 fl oz", 2.5]]
+    }';
+    factor         NUMERIC;
     pair           JSONB;
 BEGIN
     FOR product IN
         SELECT p.product_id, p.name, p.category FROM products p
-         WHERE p.product_id > 4
          ORDER BY p.product_id
     LOOP
         size_list := NULL;
@@ -60,7 +66,12 @@ BEGIN
         ELSIF product.category IN ('coffee', 'shampoo') THEN
             unit := CASE WHEN product.category = 'coffee' THEN 'oz' ELSE 'fl oz' END;
             base_amount := substring(product.name FROM ', ([0-9.]+) (?:fl )?oz$')::NUMERIC;
-            IF base_amount IS NOT NULL THEN
+            IF real_sizes ? product.name THEN
+                size_list := ARRAY(SELECT value ->> 0 FROM jsonb_array_elements(real_sizes -> product.name));
+                UPDATE products
+                   SET name = regexp_replace(name, ', [0-9.]+ (fl )?oz$', '')
+                 WHERE product_id = product.product_id;
+            ELSIF base_amount IS NOT NULL THEN
                 -- 12 -> "12 oz", 12.5 -> "12.5 oz"; the bigger size is double
                 size_list := ARRAY[
                     regexp_replace(round(base_amount, 1)::TEXT, '\.0$', '') || ' ' || unit,
@@ -99,8 +110,11 @@ BEGIN
                 RETURNING variant_id INTO new_variant;
 
                 -- A bigger bag/bottle costs more (stock is split below)
-                IF product.category IN ('coffee', 'shampoo') AND si = 2 THEN
-                    UPDATE variant_stock SET price = round(price * 1.7, 2)
+                factor := COALESCE((real_sizes -> product.name -> (si - 1) ->> 1)::NUMERIC,
+                                   CASE WHEN product.category IN ('coffee', 'shampoo') AND si = 2
+                                        THEN 1.7 END);
+                IF factor IS NOT NULL AND factor <> 1 THEN
+                    UPDATE variant_stock SET price = round(price * factor, 2)
                      WHERE variant_id = new_variant;
                 END IF;
             END LOOP;

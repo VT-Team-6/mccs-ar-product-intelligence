@@ -52,15 +52,21 @@ is refused (`stock.py`), since stock is counted per size.
   without options.
 - **Low stock and reorders**: each size/color is checked against the product's
   level, so a sold-out size 10 is flagged even when other sizes are plentiful.
-  Reorder items read "Nike Dunk Low (Black / 10)".
+  Reorder items list "Product:", "Color:" and "Size:" on separate lines.
 - **QR codes** stay per product (a shelf tag); the shopper picks a size after scanning.
 
 ## Seed data (`seeds/007-product-variants.sql`)
 
-Shoes (except products 1–4, the tests' stock fixtures) get sizes 7–12 and a few get extra colors; each store's stock is split across the sizes so totals stay the same and the level becomes 1 per size; coffee and shampoo get
-the size from their name plus a double size at 1.7× the price, and the size moves out
-of the name; a few backpacks and headphones get colors. Existing photos of coffee and
-shampoo are tagged with their first size.
+Every shoe gets sizes 7–12; coffee and shampoo get the size from their name plus a
+double size at 1.7× the price, and the size moves out of the name. Each store's stock
+is split across the sizes so totals stay the same, and the low-stock level becomes 1
+per size. Colors are on one showcase product per type (Nike Air Force 1: White, Black;
+JanSport SuperBreak; Sony WH-1000XM4C), since each color needs its own photos. Existing
+photos of coffee and shampoo are tagged with their first size.
+
+The tests use products 1–4 as plain stock fixtures, so `conftest.apply_init_sql`
+gives them back a single default variant after seeding (`keep_options=True` keeps the
+seeded sizes, as the variant tests do).
 
 ## Fit (shoes only, `migrations/024-product-fit.sql`)
 

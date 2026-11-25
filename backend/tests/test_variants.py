@@ -31,7 +31,7 @@ def db_url():
             f"@{pg.get_container_host_ip()}:{pg.get_exposed_port(5432)}/{pg.dbname}"
         )
         with psycopg.connect(url, autocommit=True) as conn:
-            apply_init_sql(conn)
+            apply_init_sql(conn, keep_options=True)
         yield url
 
 
@@ -130,13 +130,13 @@ def test_a_new_product_has_one_default_variant_carrying_its_stock(client, db):
 
 def test_seeded_shoes_come_in_sizes_and_some_in_colors(client, db):
     shoe = db.execute(
-        "SELECT product_id FROM products WHERE name = 'Nike Dunk Low'"
+        "SELECT product_id FROM products WHERE name = 'Nike Air Force 1 Low'"
     ).fetchone()["product_id"]
 
     variants = _variants(client, shoe)
 
-    assert {v["color"] for v in variants} == {"White/Black", "Black"}
-    assert [v["size"] for v in variants if v["color"] == "White/Black"][:3] == ["7", "8", "9"]
+    assert {v["color"] for v in variants} == {"White", "Black"}
+    assert [v["size"] for v in variants if v["color"] == "White"][:3] == ["7", "8", "9"]
     total = sum(v["quantity"] for v in variants)
     assert _inventory(db, shoe)["quantity"] == total
 
@@ -555,3 +555,111 @@ def _active_alert(db, variant_id):
         "SELECT status FROM low_stock_alerts WHERE variant_id = %s AND status <> 'resolved'", (variant_id,)
     ).fetchone()
     return row and row["status"]
+
+
+# --- reorder messages are saved encrypted ------------------------------------
+
+
+def test_reorder_notes_reasons_and_notifications_are_saved_encrypted(client, db):
+    import reorders
+    import secure_text
+
+    manager = _sign_in(client, db)
+    buyer = _buyer(db)
+    product_id, sizes = _sized_shoe(client, db, {"9": 0, "10": 5})
+
+    sent = client.post("/api/reorders/send", json={
+        "store_id": 1, "buyer_user_id": buyer, "note": "Needed before Black Friday",
+        "items": [{"variant_id": sizes["9"], "quantity": 4}],
+    })
+    assert sent.status_code == 200, sent.text
+    request_id = db.execute("SELECT max(request_id) AS id FROM order_requests").fetchone()["id"]
+    request = reorders.get_request(db, request_id)
+    reorders.update_items(db, request, [], "unavailable", "Supplier is out until January",
+                          {"user_id": buyer, "email": "vb@example.com", "role": "store_buyer",
+                           "permissions": [], "store_ids": [1]},
+                          alert_ids=[item["alert_id"] for item in request["items"]])
+
+    # In the database: scrambled
+    raw_note = db.execute("SELECT note FROM order_requests WHERE request_id = %s", (request_id,)).fetchone()
+    raw_reason = db.execute(
+        "SELECT reason FROM order_request_items WHERE request_id = %s", (request_id,)
+    ).fetchone()
+    raw_messages = db.execute(
+        "SELECT subject, body FROM messages WHERE request_id = %s OR recipient_user_id = %s",
+        (request_id, manager["user_id"]),
+    ).fetchall()
+    assert raw_note["note"].startswith(secure_text.TOKEN_PREFIX)
+    assert "Black Friday" not in raw_note["note"]
+    assert raw_reason["reason"].startswith(secure_text.TOKEN_PREFIX)
+    assert raw_messages and all(m["subject"].startswith(secure_text.TOKEN_PREFIX) for m in raw_messages)
+
+    # Through the app: readable
+    shown = reorders.get_request(db, request_id)
+    assert shown["note"] == "Needed before Black Friday"
+    assert "Needed before Black Friday" in shown["message"]
+    assert {item["reason"] for item in shown["items"]} == {"Supplier is out until January"}
+    titles = [m["subject"] for m in reorders.list_messages(db, buyer)]
+    assert any("Order request" in title or "order" in title.lower() for title in titles)
+    update = db.execute(
+        "SELECT recipient_user_id FROM messages WHERE request_id = %s AND kind = 'order_update' LIMIT 1",
+        (request_id,),
+    ).fetchone()
+    bodies = " ".join(m["body"] for m in reorders.list_messages(db, update["recipient_user_id"]))
+    assert "Supplier is out until January" in bodies
+
+
+def test_messages_saved_before_encryption_get_encrypted_once(db):
+    import secure_text
+
+    user_id = db.execute("SELECT min(user_id) AS id FROM users").fetchone()["id"]
+    db.execute(
+        "INSERT INTO messages (recipient_user_id, kind, subject, body) VALUES (%s, 'low_stock', %s, %s)",
+        (user_id, "Old plain title", "Old plain body"),
+    )
+
+    assert secure_text.encrypt_existing(db) >= 2
+    assert secure_text.encrypt_existing(db) == 0  # already done: nothing changes
+    row = db.execute("SELECT subject, body FROM messages ORDER BY message_id DESC LIMIT 1").fetchone()
+    assert secure_text.decrypt(row["subject"]) == "Old plain title"
+    assert secure_text.decrypt(row["body"]) == "Old plain body"
+
+
+def test_a_message_from_another_key_shows_a_notice_not_an_error():
+    from cryptography.fernet import Fernet
+
+    import secure_text
+
+    other = Fernet(Fernet.generate_key()).encrypt(b"secret").decode()
+    assert secure_text.decrypt(other) == secure_text.UNREADABLE
+    assert secure_text.encrypt("") == "" and secure_text.decrypt("") == ""
+
+
+def test_without_a_key_the_shared_development_key_is_used(monkeypatch):
+    import secure_text
+
+    monkeypatch.delenv("MESSAGE_KEY", raising=False)
+    secure_text._keys.cache_clear()
+    try:
+        token = secure_text.encrypt("hello")
+        from cryptography.fernet import Fernet
+
+        assert Fernet(secure_text.DEVELOPMENT_KEY).decrypt(token.encode()) == b"hello"
+    finally:
+        secure_text._keys.cache_clear()
+
+
+def test_showcase_products_have_their_real_options(db):
+    def options(name):
+        return db.execute(
+            "SELECT v.color, v.size, vs.price FROM product_variants v JOIN products p USING (product_id)"
+            " JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = 1"
+            " WHERE p.name = %s ORDER BY v.color_order, v.size_order", (name,),
+        ).fetchall()
+
+    folgers = options("Folgers Classic Roast Ground Coffee")
+    assert [row["size"] for row in folgers] == ["25.9 oz", "40.3 oz"]
+    assert folgers[1]["price"] > folgers[0]["price"]
+    assert [row["size"] for row in options("Dove Daily Moisture Shampoo")] == ["8.5 fl oz", "28 fl oz"]
+    sony = options("Sony WH-1000XM4C Wireless Headphones")
+    assert [row["color"] for row in sony] == ["Black", "Lavender", "Platinum Silver"]

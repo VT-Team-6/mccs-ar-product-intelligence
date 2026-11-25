@@ -28,9 +28,10 @@ type Props = {
 // The product's photos on its detail page.
 //
 // The featured image is shown exactly where a single product photo used to be, so a
-// product with one photo looks unchanged. When there are more, arrows sit over
-// the photo and the counter underneath says which one is showing. Tapping the
-// photo opens it full screen, where it can be swiped left and right.
+// product with one photo looks unchanged. When there are more, they can be
+// swiped left and right, arrows sit over the photo, and the counter underneath
+// says which one is showing. Tapping the photo opens it full screen, where it
+// can be swiped too; both stay on the same photo.
 export function ProductImageGallery({ imageUrls, productName }: Props) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -38,6 +39,9 @@ export function ProductImageGallery({ imageUrls, productName }: Props) {
   const [index, setIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const pagerRef = useRef<ScrollView>(null);
+  // The swipeable strip on the page, and how wide its photo frame is
+  const stripRef = useRef<ScrollView>(null);
+  const [frameWidth, setFrameWidth] = useState(0);
 
   const total = imageUrls.length;
   // A shorter list (e.g. after the admin removed a photo) must not leave the
@@ -46,8 +50,24 @@ export function ProductImageGallery({ imageUrls, productName }: Props) {
 
   const goTo = (next: number) => {
     if (total === 0) return;
-    setIndex((next + total) % total);
+    const page = (next + total) % total;
+    setIndex(page);
+    stripRef.current?.scrollTo({ x: page * frameWidth, animated: true });
   };
+
+  // A new set of photos (another color or size picked) starts at the first
+  const photosKey = imageUrls.join('|');
+  useEffect(() => {
+    setIndex(0);
+    stripRef.current?.scrollTo({ x: 0, animated: false });
+  }, [photosKey]);
+
+  // Back from full screen, the strip shows the photo the viewer ended on
+  useEffect(() => {
+    if (expanded || frameWidth === 0) return;
+    stripRef.current?.scrollTo({ x: current * frameWidth, animated: false });
+    // Only when the viewer closes or the frame is measured
+  }, [expanded, frameWidth]);
 
   // The full-screen viewer opens on the photo that was tapped. It is scrolled
   // after it appears rather than given a contentOffset, because a ScrollView
@@ -70,19 +90,33 @@ export function ProductImageGallery({ imageUrls, productName }: Props) {
 
   return (
     <>
-      <View style={styles.heroWrapper}>
-        <Pressable
-          onPress={() => setExpanded(true)}
-          accessibilityRole="button"
-          accessibilityLabel={`Open ${productName} photo ${current + 1} of ${total}`}
-          style={styles.heroPress}>
-          <Image
-            source={{ uri: imageUrls[current] }}
-            style={[styles.hero, styles.whiteBackground]}
-            contentFit="contain"
-            transition={150}
-          />
-        </Pressable>
+      <View
+        style={styles.heroWrapper}
+        onLayout={(event) => setFrameWidth(event.nativeEvent.layout.width)}>
+        <ScrollView
+          ref={stripRef}
+          horizontal
+          pagingEnabled
+          scrollEnabled={total > 1}
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={(event) => setIndex(pageOf(event, frameWidth, total))}
+          style={styles.strip}>
+          {imageUrls.map((uri, position) => (
+            <Pressable
+              key={`${uri}:${position}`}
+              onPress={() => setExpanded(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${productName} photo ${position + 1} of ${total}`}
+              style={{ width: frameWidth || undefined }}>
+              <Image
+                source={{ uri }}
+                style={[styles.hero, styles.square]}
+                contentFit="contain"
+                transition={150}
+              />
+            </Pressable>
+          ))}
+        </ScrollView>
 
         {total > 1 && (
           <>
@@ -238,12 +272,15 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
   },
-  heroPress: {
-    width: '100%',
-  },
-  // Product photos have see-through backgrounds, so they sit on white in both light and dark mode
-  whiteBackground: {
+  // The strip is the rounded white frame; the photos in it are square, so no
+  // page background shows between two photos while swiping (dark mode)
+  strip: {
+    borderRadius: Spacing.three,
+    overflow: 'hidden',
     backgroundColor: '#ffffff',
+  },
+  square: {
+    borderRadius: 0,
   },
   arrow: {
     position: 'absolute',

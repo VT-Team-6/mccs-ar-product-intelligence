@@ -19,6 +19,7 @@ order request (send_request). The buyer marks products ordered or unavailable
 from psycopg import Connection
 
 import low_stock
+import secure_text
 import stock
 
 # How many products a notification lists before "and N more"
@@ -73,7 +74,8 @@ def _notify(conn, recipients, store_id, kind, subject, body="", request_id=None)
         conn.execute(
             "INSERT INTO messages (recipient_user_id, store_id, kind, subject, body, request_id)"
             " VALUES (%s, %s, %s, %s, %s, %s)",
-            (recipient, store_id, kind, subject[:200], body, request_id),
+            # Saved encrypted; list_messages decrypts them
+            (recipient, store_id, kind, secure_text.encrypt(subject[:200]), secure_text.encrypt(body), request_id),
         )
 
 
@@ -225,7 +227,7 @@ def list_products(conn: Connection, store_id: int) -> list[dict]:
     for row in rows:
         row["quantity"] = row["quantity"] or 0
         row["suggested_quantity"] = suggested_quantity(row["quantity"], row["low_stock_threshold"])
-    return rows
+    return secure_text.decrypt_rows(rows, "reason")
 
 
 def status_counts(conn: Connection, store_id: int) -> dict:
@@ -457,7 +459,7 @@ def send_request(
     request_id = conn.execute(
         "INSERT INTO order_requests (store_id, buyer_user_id, sent_by, note)"
         " VALUES (%s, %s, %s, %s) RETURNING request_id",
-        (store_id, buyer_user_id, sent_by, note.strip()),
+        (store_id, buyer_user_id, sent_by, secure_text.encrypt(note.strip())),
     ).fetchone()["request_id"]
 
     for item in items:
@@ -489,6 +491,10 @@ def send_request(
 
 
 def _items(conn: Connection, request_id: int, store_id: int) -> list[dict]:
+    return secure_text.decrypt_rows(_items_rows(conn, request_id, store_id), "reason")
+
+
+def _items_rows(conn: Connection, request_id: int, store_id: int) -> list[dict]:
     return conn.execute(
         "SELECT ri.alert_id, ri.product_id, ri.variant_id,"
         " p.name, ri.color, ri.size,"
@@ -542,6 +548,7 @@ def get_request(conn: Connection, request_id: int) -> dict | None:
     ).fetchone()
     if request is None:
         return None
+    request["note"] = secure_text.decrypt(request["note"])
     request["items"] = _items(conn, request_id, request["store_id"])
     request["summary"] = summarize(request["items"])
     request["needs_reassignment"] = request["summary"]["pending"] > 0 and not request["buyer_is_eligible"]
@@ -653,7 +660,13 @@ def update_items(
     conn.execute(
         "UPDATE order_request_items SET status = %s, reason = %s, updated_at = CURRENT_TIMESTAMP, updated_by = %s"
         " WHERE request_id = %s AND alert_id = ANY(%s)",
-        (status, reason.strip() if status == "unavailable" else "", user["user_id"], request_id, alert_ids),
+        (
+            status,
+            secure_text.encrypt(reason.strip()) if status == "unavailable" else "",
+            user["user_id"],
+            request_id,
+            alert_ids,
+        ),
     )
     # The product's status follows its latest request only
     conn.execute(
@@ -725,12 +738,13 @@ _VISIBLE_MESSAGES = """FROM messages n JOIN users u ON u.user_id = n.recipient_u
 
 
 def list_messages(conn: Connection, user_id: int, limit: int = 50) -> list[dict]:
-    return conn.execute(
+    rows = conn.execute(
         "SELECT n.message_id, n.kind, n.subject, n.body, n.store_id, n.request_id, n.created_at,"
         " n.read_at IS NOT NULL AS read " + _VISIBLE_MESSAGES
         + " ORDER BY n.created_at DESC, n.message_id DESC LIMIT %s",
         (user_id, limit),
     ).fetchall()
+    return secure_text.decrypt_rows(rows, "subject", "body")
 
 
 def unread_by_store(conn: Connection, user_id: int) -> dict[int, int]:

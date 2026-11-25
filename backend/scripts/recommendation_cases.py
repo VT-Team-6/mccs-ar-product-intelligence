@@ -229,7 +229,7 @@ CASES: list[Case] = [
          grades=[(3, ptype("Rain Boot", "Kids Rain Boot")), (2, all_of(SHOES, words("waterproof"))), (1, SHOES)]),
     Case("like a dress shoe", product="Allen Edmonds Park Avenue",
          grades=[(3, ptype("Dress Shoe", "Loafer")), (2, ptype("Moccasin", "Flat", "Boat Shoe")), (1, SHOES)]),
-    Case("like noise cancelling headphones", product="Sony WH-1000XM4 Wireless Headphones",
+    Case("like noise cancelling headphones", product="Sony WH-1000XM4C Wireless Headphones",
          grades=[(3, all_of(HEADPHONES, NOISE_CANCELLING, OVER_EAR)), (2, all_of(HEADPHONES, OVER_EAR)), (1, HEADPHONES)]),
     Case("like AirPods", product="Apple AirPods (2nd Generation)",
          grades=[(3, all_of(HEADPHONES, EARBUDS, words("wireless"))), (2, all_of(HEADPHONES, EARBUDS)), (1, HEADPHONES)]),
@@ -247,7 +247,7 @@ CASES: list[Case] = [
     # --- product plus text -----------------------------------------------------
     Case("rain boot but for kids", product="Hunter Original Tall Rain Boots", text="for my kid",
          grades=[(3, ptype("Kids Rain Boot")), (2, ptype("Rain Boot")), (1, SHOES)]),
-    Case("headphones but earbuds", product="Sony WH-1000XM4 Wireless Headphones", text="earbuds instead",
+    Case("headphones but earbuds", product="Sony WH-1000XM4C Wireless Headphones", text="earbuds instead",
          grades=[(3, all_of(HEADPHONES, EARBUDS, NOISE_CANCELLING)), (2, all_of(HEADPHONES, EARBUDS)), (1, HEADPHONES)]),
     Case("coffee but decaf", product="Starbucks Pike Place Ground Coffee, 12 oz", text="decaf",
          grades=[(3, all_of(COFFEE, words("decaf"))), (1, COFFEE)]),
