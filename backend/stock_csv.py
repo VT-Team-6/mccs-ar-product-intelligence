@@ -111,7 +111,7 @@ def preview(conn: Connection, store_id: int, text: str, *, lock_inventory: bool 
     sold = conn.execute(
         "SELECT v.variant_id, upper(v.sku) AS sku, i.product_id, p.name, p.brand,"
         " v.color, v.size,"
-        " COALESCE(vs.quantity, 0) AS quantity, i.low_stock_threshold"
+        " COALESCE(vs.quantity, 0) AS quantity, COALESCE(vs.low_stock_threshold, i.low_stock_threshold) AS low_stock_threshold"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"
         " JOIN product_variants v ON v.product_id = i.product_id"
         " LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"

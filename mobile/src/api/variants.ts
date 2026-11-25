@@ -18,7 +18,13 @@ export type Variant = {
 };
 
 // A variant on the staff inventory screen
-export type StoreVariant = Variant & { label: string; low_stock: boolean };
+export type StoreVariant = Variant & {
+  label: string;
+  low_stock: boolean;
+  // The level this color/size uses, and its own level (null = the product's)
+  low_stock_threshold: number;
+  own_low_stock_threshold: number | null;
+};
 
 export type VariantColor = { name: string; hex: string | null; hex2?: string | null };
 export type VariantOptions = {
@@ -119,6 +125,24 @@ export async function setVariantOptions(productId: number, options: VariantOptio
 export async function getStoreVariants(storeId: number, productId: number): Promise<StoreVariant[]> {
   const response = await authenticatedFetch(`/api/admin/inventory/${storeId}/products/${productId}/variants`);
   if (!response.ok) throw await problem(response, "Could not load the sizes and colors");
+  return response.json();
+}
+
+// Sets the product's low-stock level and/or each color/size's own level at a
+// store. A null level clears it, so that size uses the product's level again.
+export async function setLowStockLevels(
+  storeId: number,
+  productId: number,
+  change: {
+    low_stock_threshold?: number;
+    levels: { variant_id: number; low_stock_threshold: number | null }[];
+  },
+): Promise<StoreVariant[]> {
+  const response = await authenticatedFetch(
+    `/api/admin/inventory/${storeId}/products/${productId}/low-stock-levels`,
+    { method: "PUT", body: JSON.stringify(change) },
+  );
+  if (!response.ok) throw await problem(response, "Could not save the low-stock levels");
   return response.json();
 }
 

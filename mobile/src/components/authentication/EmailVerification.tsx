@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -7,6 +7,9 @@ import {
   View,
 } from "react-native";
 import { resendSignUpCode } from "aws-amplify/auth";
+
+import { Brand, Colors } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 type VerifyProps = {
   email: string;
@@ -17,6 +20,9 @@ export default function EmailVerification({
   email,
   onBackToLogin,
 }: VerifyProps) {
+  const theme = useTheme();
+  // Colors follow the app theme, so the screen switches with light/dark mode
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -63,7 +69,7 @@ export default function EmailVerification({
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator />
+            <ActivityIndicator color="#ffffff" />
           ) : (
             <Text style={styles.primaryButtonText}>
               Resend verification email
@@ -79,86 +85,87 @@ export default function EmailVerification({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    backgroundColor: "#f8f8f8",
-  },
+const makeStyles = (theme: (typeof Colors)["light" | "dark"]) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: "center",
+      paddingHorizontal: 24,
+      backgroundColor: theme.background,
+    },
 
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-  },
+    card: {
+      width: "100%",
+      maxWidth: 420,
+      alignSelf: "center",
+    },
 
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 16,
-    color: "#181818",
-  },
+    title: {
+      fontSize: 22,
+      fontWeight: "700",
+      textAlign: "center",
+      marginBottom: 16,
+      color: theme.text,
+    },
 
-  description: {
-    fontSize: 13,
-    textAlign: "center",
-    color: "#666666",
-    marginBottom: 8,
-  },
+    description: {
+      fontSize: 13,
+      textAlign: "center",
+      color: theme.textSecondary,
+      marginBottom: 8,
+    },
 
-  email: {
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-    color: "#222222",
-    marginBottom: 18,
-  },
+    email: {
+      fontSize: 14,
+      fontWeight: "600",
+      textAlign: "center",
+      color: theme.text,
+      marginBottom: 18,
+    },
 
-  success: {
-    fontSize: 12,
-    textAlign: "center",
-    color: "#2f6f3e",
-    marginBottom: 12,
-  },
+    success: {
+      fontSize: 12,
+      textAlign: "center",
+      color: theme.success,
+      marginBottom: 12,
+    },
 
-  error: {
-    fontSize: 12,
-    textAlign: "center",
-    color: "#b00020",
-    marginBottom: 12,
-  },
+    error: {
+      fontSize: 12,
+      textAlign: "center",
+      color: theme.danger,
+      marginBottom: 12,
+    },
 
-  primaryButton: {
-    height: 44,
-    borderRadius: 5,
-    backgroundColor: "#111111",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 10,
-  },
+    primaryButton: {
+      height: 44,
+      borderRadius: 5,
+      backgroundColor: Brand.navy,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 10,
+    },
 
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
+    primaryButtonText: {
+      color: "#ffffff",
+      fontSize: 14,
+      fontWeight: "600",
+    },
 
-  secondaryButton: {
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
-  },
+    secondaryButton: {
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 8,
+    },
 
-  secondaryButtonText: {
-    color: "#333333",
-    fontSize: 13,
-    fontWeight: "500",
-  },
+    secondaryButtonText: {
+      color: theme.link,
+      fontSize: 13,
+      fontWeight: "500",
+    },
 
-  disabled: {
-    opacity: 0.6,
-  },
-});
+    disabled: {
+      opacity: 0.6,
+    },
+  });

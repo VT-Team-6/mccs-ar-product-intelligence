@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter, type Href } from "expo-router";
 import { SymbolView } from "expo-symbols";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -24,13 +24,14 @@ import {
   recordRecentSearch,
   type RecentSearch,
 } from "@/api/me";
-import { searchProducts, type Product } from "@/api/products";
+import { PRODUCT_CATEGORIES, searchProducts, type Product } from "@/api/products";
 import { useAuth } from "@/auth/AuthContext";
 import { AskChestyButton } from "@/components/ask-chesty-button";
 import { ProductCard } from "@/components/product-card";
 import { RecentlyViewed } from "@/components/recently-viewed";
 import { ThemedText } from "@/components/themed-text";
 import { BackButton } from "@/components/ui/back-button";
+import { ChoiceChip } from "@/components/ui/choice-chip";
 import { SEARCH_BAR_HEIGHT, SEARCH_BAR_TOP } from "@/constants/search";
 import { Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -65,6 +66,43 @@ export default function FindScreen() {
   const [error, setError] = useState<string | null>(null);
   // Goes up by one each time "Try again" is pressed, which runs the search again
   const [attempt, setAttempt] = useState(0);
+  // Filters under the search bar: in stock at the chosen store, a category,
+  // then a type within it (Sneaker, Boot). Tapping a chosen one clears it.
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [category, setCategory] = useState<string | null>(null);
+  const [productType, setProductType] = useState<string | null>(null);
+
+  // A new search starts with no filters
+  useEffect(() => {
+    setInStockOnly(false);
+    setCategory(null);
+    setProductType(null);
+  }, [query]);
+
+  // Only the categories, and the types in the chosen category, the results have
+  const categories = useMemo(
+    () => PRODUCT_CATEGORIES.filter((choice) => results.some((product) => product.category === choice.value)),
+    [results],
+  );
+  const types = useMemo(
+    () =>
+      category
+        ? [...new Set(results.filter((p) => p.category === category).map((p) => p.product_type).filter(Boolean))].sort()
+        : [],
+    [results, category],
+  );
+  const shown = results.filter(
+    (product) =>
+      (!inStockOnly || product.store_inventory?.in_stock) &&
+      (!category || product.category === category) &&
+      (!productType || product.product_type === productType),
+  );
+  const filtering = inStockOnly || category !== null;
+  const clearFilters = () => {
+    setInStockOnly(false);
+    setCategory(null);
+    setProductType(null);
+  };
 
   const loadRecent = useCallback(() => {
     if (!profile) return;
@@ -242,10 +280,72 @@ export default function FindScreen() {
       </View>
       <View style={styles.stripe} />
 
+      {/* Filters, once there are results */}
+      {query !== "" && results.length > 0 && (store || categories.length > 1 || types.length > 0) && (
+        <View style={[styles.filters, { borderColor: theme.border }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.filterLabel}>
+              <SymbolView
+                name={{ ios: "line.3.horizontal.decrease.circle", android: "filter_list", web: "filter_list" }}
+                size={18}
+                tintColor={theme.textSecondary}
+              />
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Filter:
+              </ThemedText>
+            </View>
+            {store && (
+              <ChoiceChip
+                size="small"
+                label="At My Store"
+                selected={inStockOnly}
+                onPress={() => setInStockOnly((was) => !was)}
+              />
+            )}
+            {categories.map((choice) => (
+              <ChoiceChip
+                size="small"
+                key={choice.value}
+                label={choice.label}
+                selected={category === choice.value}
+                onPress={() => {
+                  setCategory((was) => (was === choice.value ? null : choice.value));
+                  setProductType(null);
+                }}
+              />
+            ))}
+          </ScrollView>
+          {/* Types within the chosen category, e.g. Sneaker / Boot for Shoes */}
+          {types.length > 1 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterRow}
+              keyboardShouldPersistTaps="handled"
+            >
+              {types.map((type) => (
+                <ChoiceChip
+                  size="small"
+                  key={type}
+                  label={type}
+                  selected={productType === type}
+                  onPress={() => setProductType((was) => (was === type ? null : type))}
+                />
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      )}
+
       <View style={styles.screen}>
         {query !== "" ? (
           <FlatList
-            data={results}
+            data={shown}
             keyExtractor={(product) => String(product.product_id)}
             renderItem={({ item }) => <ProductCard product={item} onPress={() => openProduct(item)} />}
             // Full width, so the scroll bar sits at the screen's edge
@@ -255,7 +355,9 @@ export default function FindScreen() {
             keyboardDismissMode="on-drag"
             ListHeaderComponent={
               !loading && !error && results.length > 0 ? (
-                <ThemedText themeColor="textSecondary">{`Results for "${query}"`}</ThemedText>
+                <ThemedText themeColor="textSecondary">
+                  {`${shown.length} ${shown.length === 1 ? "result" : "results"} for "${query}"`}
+                </ThemedText>
               ) : null
             }
             ListEmptyComponent={
@@ -266,6 +368,13 @@ export default function FindScreen() {
                   <ThemedText themeColor="textSecondary">{error}</ThemedText>
                   <Pressable onPress={() => setAttempt((count) => count + 1)} hitSlop={8}>
                     <ThemedText type="linkPrimary">Try again</ThemedText>
+                  </Pressable>
+                </View>
+              ) : results.length > 0 && filtering ? (
+                <View style={styles.message}>
+                  <ThemedText themeColor="textSecondary">No results match these filters.</ThemedText>
+                  <Pressable onPress={clearFilters} hitSlop={8}>
+                    <ThemedText type="linkPrimary">Clear filters</ThemedText>
                   </Pressable>
                 </View>
               ) : (
@@ -409,6 +518,23 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: "center",
     justifyContent: "center",
+  },
+  // The filter chips scroll sideways under the search bar
+  filters: {
+    paddingVertical: Spacing.two,
+    gap: Spacing.two,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  filterLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.one,
+  },
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    paddingHorizontal: Spacing.four,
   },
   results: {
     paddingHorizontal: Spacing.four,

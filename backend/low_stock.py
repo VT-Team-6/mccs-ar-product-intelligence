@@ -88,3 +88,52 @@ def update_settings(
         (*params, store_id, ids),
     )
     return len(ids)
+
+
+def set_variant_levels(
+    conn: Connection,
+    store_id: int,
+    product_id: int,
+    low_stock_threshold: int | None,
+    levels: list[dict],
+) -> None:
+    """Set a product's low-stock level and/or its colors'/sizes' own levels at a store.
+
+    Each entry in levels is {variant_id, low_stock_threshold}; a None level
+    clears it so that size uses the product's level again. Every variant must
+    belong to the product, or nothing is changed. The caller re-checks alerts.
+    """
+    stock._require_store(conn, store_id)
+    entry = conn.execute(
+        "SELECT 1 FROM inventory WHERE store_id = %s AND product_id = %s FOR NO KEY UPDATE",
+        (store_id, product_id),
+    ).fetchone()
+    if entry is None:
+        raise stock.InventoryError(f"Not in this store's inventory: product {product_id}", status=404)
+
+    wanted = {level["variant_id"]: level["low_stock_threshold"] for level in levels}
+    if wanted:
+        owned = {
+            row["variant_id"]
+            for row in conn.execute(
+                "SELECT variant_id FROM product_variants WHERE product_id = %s AND variant_id = ANY(%s)",
+                (product_id, list(wanted)),
+            ).fetchall()
+        }
+        if owned != set(wanted):
+            raise stock.InventoryError("Some of these sizes aren't part of this product. Refresh and try again.")
+
+    if low_stock_threshold is not None:
+        conn.execute(
+            "UPDATE inventory SET low_stock_threshold = %s, updated_at = CURRENT_TIMESTAMP"
+            " WHERE store_id = %s AND product_id = %s",
+            (low_stock_threshold, store_id, product_id),
+        )
+    for variant_id, level in wanted.items():
+        # A size with no stock row yet gets one at 0, so it can hold its level
+        conn.execute(
+            "INSERT INTO variant_stock (variant_id, store_id, quantity, low_stock_threshold)"
+            " VALUES (%s, %s, 0, %s)"
+            " ON CONFLICT (variant_id, store_id) DO UPDATE SET low_stock_threshold = EXCLUDED.low_stock_threshold",
+            (variant_id, store_id, level),
+        )

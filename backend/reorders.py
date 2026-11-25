@@ -54,9 +54,22 @@ def _lines(lines: list[str]) -> str:
     return "\n".join(shown)
 
 
-def suggested_quantity(quantity: int, threshold: int) -> int:
-    """How many to ask for: enough to get back to twice the low-stock level."""
+# Starting amount for each size/color of a product with options; the manager
+# checks it and changes it on the send screen before anything goes out
+PER_SIZE_DEFAULT = 10
+
+
+def suggested_quantity(quantity: int, threshold: int, has_options: bool = False) -> int:
+    """How many to ask for. A size/color starts at a flat 10 (per-size low-stock
+    levels are small, so the formula would suggest 1 or 2); a product without
+    options gets enough to get back to twice its low-stock level."""
+    if has_options:
+        return PER_SIZE_DEFAULT
     return max(1, 2 * threshold - quantity)
+
+
+def _has_options(row: dict) -> bool:
+    return bool(row.get("size") or row.get("color"))
 
 
 def store_managers(conn: Connection, store_id: int) -> list[int]:
@@ -117,8 +130,8 @@ def check_stock(conn: Connection, store_id: int, product_ids: list[int]) -> list
         return []
     rows = conn.execute(
         f"SELECT i.product_id, v.variant_id, {_ITEM_NAME} AS name, v.color, v.size, vs.quantity,"
-        " i.low_stock_threshold AS threshold,"
-        " (i.status = 'active' AND COALESCE(vs.quantity, 0) <= i.low_stock_threshold) AS is_low,"
+        " COALESCE(vs.low_stock_threshold, i.low_stock_threshold) AS threshold,"
+        " (i.status = 'active' AND COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold)) AS is_low,"
         " i.status = 'active' AS on_sale, a.alert_id, a.kind, a.quantity AS alert_quantity"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"
         " JOIN product_variants v ON v.product_id = i.product_id"
@@ -194,7 +207,7 @@ def _notify_low(conn: Connection, store_id: int, went_low: list[dict]) -> None:
 _PRODUCTS_SQL = """
     SELECT a.alert_id, a.product_id, a.variant_id, """ + _ITEM_NAME + """ AS name,
            v.color, v.size, p.brand,
-           COALESCE(vs.quantity, 0) AS quantity, i.low_stock_threshold,
+           COALESCE(vs.quantity, 0) AS quantity, COALESCE(vs.low_stock_threshold, i.low_stock_threshold) AS low_stock_threshold,
            a.status, a.created_at,
            pb.user_id AS buyer_user_id, pb.email AS buyer_email,
            r.request_id, ri.quantity AS requested_quantity, ri.reason, ri.updated_at,
@@ -226,7 +239,9 @@ def list_products(conn: Connection, store_id: int) -> list[dict]:
     ).fetchall()
     for row in rows:
         row["quantity"] = row["quantity"] or 0
-        row["suggested_quantity"] = suggested_quantity(row["quantity"], row["low_stock_threshold"])
+        row["suggested_quantity"] = suggested_quantity(
+            row["quantity"], row["low_stock_threshold"], _has_options(row)
+        )
     return secure_text.decrypt_rows(rows, "reason")
 
 
@@ -284,7 +299,7 @@ def catalog(conn: Connection, store_id: int) -> dict:
         SELECT p.product_id, p.name, p.brand, p.category, p.fit,
                i.quantity, i.low_stock_threshold,
                count(*)::INTEGER AS variant_count,
-               count(*) FILTER (WHERE COALESCE(vs.quantity, 0) <= i.low_stock_threshold)::INTEGER
+               count(*) FILTER (WHERE COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold))::INTEGER
                    AS low_count,
                COALESCE(array_agg(DISTINCT a.status) FILTER (WHERE a.status IS NOT NULL), '{}')
                    AS statuses,
@@ -324,8 +339,8 @@ def lines(conn: Connection, store_id: int, product_ids: list[int]) -> list[dict]
         SELECT p.product_id, p.name, p.brand, p.category, p.fit,
                pb.user_id AS buyer_user_id, pb.email AS buyer_email,
                v.variant_id, v.color, v.color_hex, v.size,
-               COALESCE(vs.quantity, 0) AS quantity, i.low_stock_threshold,
-               COALESCE(vs.quantity, 0) <= i.low_stock_threshold AS low,
+               COALESCE(vs.quantity, 0) AS quantity, COALESCE(vs.low_stock_threshold, i.low_stock_threshold) AS low_stock_threshold,
+               COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold) AS low,
                a.alert_id, a.status
           FROM inventory i
           JOIN products p ON p.product_id = i.product_id
@@ -341,7 +356,9 @@ def lines(conn: Connection, store_id: int, product_ids: list[int]) -> list[dict]
         (store_id, product_ids),
     ).fetchall()
     for row in rows:
-        row["suggested_quantity"] = suggested_quantity(row["quantity"], row["low_stock_threshold"])
+        row["suggested_quantity"] = suggested_quantity(
+            row["quantity"], row["low_stock_threshold"], _has_options(row)
+        )
         row["sendable"] = row["status"] is None or row["status"] in REORDERABLE
     return rows
 
@@ -354,7 +371,7 @@ def _alerts_for_variants(conn: Connection, store_id: int, variant_ids: list[int]
     # Lock inventory first, like stock changes do
     rows = conn.execute(
         "SELECT v.variant_id, v.product_id, COALESCE(vs.quantity, 0) AS quantity,"
-        " i.low_stock_threshold, a.alert_id, a.status"
+        " COALESCE(vs.low_stock_threshold, i.low_stock_threshold) AS low_stock_threshold, a.alert_id, a.status"
         " FROM inventory i"
         " JOIN product_variants v ON v.product_id = i.product_id"
         " LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"

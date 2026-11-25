@@ -36,6 +36,8 @@ export type StoreStockEntry = {
   // How many colors/sizes it comes in, and how many are low
   variant_count?: number;
   low_variant_count?: number;
+  // How many colors/sizes have their own low-stock level
+  custom_level_count?: number;
 };
 
 type StoreStockPage = {

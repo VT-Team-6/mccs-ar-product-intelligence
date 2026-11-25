@@ -746,3 +746,57 @@ def test_one_scan_checks_off_every_color_of_the_product(client, db):
 
     assert scanned["status"] == "checked_off"
     assert all(item["is_completed"] for item in scanned["list"]["items"] if item["product_id"] == shoe)
+
+
+def test_each_size_starts_at_ten_on_the_send_screen(client, db):
+    _sign_in(client, db)
+    product_id, _ = _sized_shoe(client, db, {"9": 0, "10": 1})
+
+    lines = client.get(f"/api/reorders/lines?store_id=1&product_id={product_id}").json()
+
+    assert [(l["size"], l["suggested_quantity"]) for l in lines] == [("9", 10), ("10", 10)]
+
+
+def _levels(client, product_id, body, store_id=1):
+    return client.put(f"/api/admin/inventory/{store_id}/products/{product_id}/low-stock-levels", json=body)
+
+
+def test_a_size_can_have_its_own_low_stock_level(client, db):
+    _sign_in(client, db)
+    product_id, sizes = _sized_shoe(client, db, {"9": 4, "10": 4})  # product level is 1
+
+    saved = _levels(client, product_id, {"levels": [{"variant_id": sizes["9"], "low_stock_threshold": 5}]})
+
+    assert saved.status_code == 200, saved.text
+    assert [(v["size"], v["low_stock_threshold"], v["own_low_stock_threshold"], v["low_stock"])
+            for v in saved.json()] == [("9", 5, 5, True), ("10", 1, None, False)]
+    lines = client.get(f"/api/reorders/lines?store_id=1&product_id={product_id}").json()
+    assert [(l["size"], l["low"], l["status"]) for l in lines] == [("9", True, "open"), ("10", False, None)]
+    page = client.get("/api/admin/inventory", params={"store_id": 1, "limit": 200}).json()
+    row = next(i for i in page["items"] if i["product_id"] == product_id)
+    assert (row["low_variant_count"], row["custom_level_count"]) == (1, 1)
+
+
+def test_clearing_a_size_level_goes_back_to_the_product_level(client, db):
+    _sign_in(client, db)
+    product_id, sizes = _sized_shoe(client, db, {"9": 4})
+    _levels(client, product_id, {"levels": [{"variant_id": sizes["9"], "low_stock_threshold": 5}]})
+
+    saved = _levels(client, product_id, {"low_stock_threshold": 2,
+                                         "levels": [{"variant_id": sizes["9"], "low_stock_threshold": None}]})
+
+    assert [(v["low_stock_threshold"], v["own_low_stock_threshold"], v["low_stock"]) for v in saved.json()] == [
+        (2, None, False)]
+    status = db.execute("SELECT status FROM low_stock_alerts WHERE variant_id = %s ORDER BY alert_id DESC",
+                        (sizes["9"],)).fetchone()["status"]
+    assert status == "resolved"
+
+
+def test_size_levels_must_belong_to_the_product(client, db):
+    _sign_in(client, db)
+    product_id, _ = _sized_shoe(client, db, {"9": 4})
+    _, other_sizes = _sized_shoe(client, db, {"9": 4})
+
+    refused = _levels(client, product_id, {"levels": [{"variant_id": other_sizes["9"], "low_stock_threshold": 5}]})
+
+    assert refused.status_code == 422

@@ -2,12 +2,13 @@
 
 * public_router     - a product's colors/sizes with stock at a store, for the product page
 * admin_router      - set a product's colors and sizes (product owners)
-* inventory_router  - each color/size's stock and price at a store (store staff)
+* inventory_router  - each color/size's stock, price and low-stock level at a store (store staff)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 import auth
+import low_stock
 import reorders
 import stock
 import store_selection
@@ -15,7 +16,7 @@ import variants
 from auth import require_permission
 from database import get_connection
 from product_access import can_manage_store, require_product_owner
-from schemas import StoreVariant, Variant, VariantOptions, VariantStockWrite
+from schemas import StoreVariant, Variant, VariantLowStockLevels, VariantOptions, VariantStockWrite
 
 public_router = APIRouter(prefix="/api/products", tags=["variants"])
 admin_router = APIRouter(prefix="/api/admin/products", tags=["admin-variants"])
@@ -159,3 +160,25 @@ def write_variant_stock(
         except stock.InventoryError as error:
             raise _http_error(error) from error
         return next(row for row in rows if row["variant_id"] == variant_id)
+
+
+@inventory_router.put("/{store_id}/products/{product_id}/low-stock-levels", response_model=list[StoreVariant])
+def write_low_stock_levels(
+    store_id: int,
+    product_id: int,
+    body: VariantLowStockLevels,
+    user=Depends(require_permission("manage_inventory")),
+) -> list[dict]:
+    """Set the product's low-stock level and each color/size's own level at the store."""
+    if not can_manage_store(user, store_id):
+        raise HTTPException(403, "You don't manage this store")
+    with get_connection() as conn:
+        try:
+            low_stock.set_variant_levels(
+                conn, store_id, product_id, body.low_stock_threshold,
+                [level.model_dump() for level in body.levels],
+            )
+            reorders.check_stock(conn, store_id, [product_id])
+            return variants.store_variants(conn, store_id, product_id)
+        except stock.InventoryError as error:
+            raise _http_error(error) from error

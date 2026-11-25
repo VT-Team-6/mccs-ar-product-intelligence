@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +10,9 @@ import {
 
 import { signUp } from "aws-amplify/auth";
 
+import { Brand, Colors } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+
 type RegisterProps = {
   onBackToLogin: () => void;
   onToVerification: (email: string) => void;
@@ -19,6 +22,9 @@ export default function RegisterForm({
   onBackToLogin,
   onToVerification,
 }: RegisterProps) {
+  const theme = useTheme();
+  // Colors follow the app theme, so the screen switches with light/dark mode
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -71,7 +77,7 @@ export default function RegisterForm({
       <TextInput
         style={styles.input}
         placeholder="username@example.com"
-        placeholderTextColor="#999999"
+        placeholderTextColor={theme.textSecondary}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -83,7 +89,7 @@ export default function RegisterForm({
       <TextInput
         style={styles.input}
         placeholder="••••••••"
-        placeholderTextColor="#999999"
+        placeholderTextColor={theme.textSecondary}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -93,7 +99,7 @@ export default function RegisterForm({
       <TextInput
         style={styles.input}
         placeholder="••••••••"
-        placeholderTextColor="#999999"
+        placeholderTextColor={theme.textSecondary}
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         secureTextEntry
@@ -107,7 +113,7 @@ export default function RegisterForm({
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator />
+          <ActivityIndicator color="#ffffff" />
         ) : (
           <Text style={styles.primaryButtonText}>Create account</Text>
         )}
@@ -124,100 +130,101 @@ export default function RegisterForm({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-  },
+const makeStyles = (theme: (typeof Colors)["light" | "dark"]) =>
+  StyleSheet.create({
+    card: {
+      width: "100%",
+      maxWidth: 420,
+      alignSelf: "center",
+    },
 
-  logoPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    backgroundColor: "#eeeeee",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    marginBottom: 12,
-  },
+    logoPlaceholder: {
+      width: 52,
+      height: 52,
+      borderRadius: 10,
+      backgroundColor: theme.backgroundElement,
+      alignItems: "center",
+      justifyContent: "center",
+      alignSelf: "center",
+      marginBottom: 12,
+    },
 
-  logoText: {
-    fontSize: 10,
-    color: "#999999",
-  },
+    logoText: {
+      fontSize: 10,
+      color: theme.textSecondary,
+    },
 
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    color: "#181818",
-  },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      textAlign: "center",
+      color: theme.text,
+    },
 
-  subtitle: {
-    marginTop: 4,
-    marginBottom: 24,
-    fontSize: 12,
-    textAlign: "center",
-    color: "#777777",
-  },
+    subtitle: {
+      marginTop: 4,
+      marginBottom: 24,
+      fontSize: 12,
+      textAlign: "center",
+      color: theme.textSecondary,
+    },
 
-  label: {
-    fontSize: 11,
-    color: "#555555",
-    marginBottom: 5,
-  },
+    label: {
+      fontSize: 11,
+      color: theme.textSecondary,
+      marginBottom: 5,
+    },
 
-  input: {
-    height: 42,
-    borderWidth: 1,
-    borderColor: "#cccccc",
-    borderRadius: 5,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    fontSize: 14,
-    color: "#181818",
-  },
+    input: {
+      height: 42,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 5,
+      backgroundColor: theme.card,
+      paddingHorizontal: 12,
+      marginBottom: 12,
+      fontSize: 14,
+      color: theme.text,
+    },
 
-  error: {
-    fontSize: 12,
-    color: "#b00020",
-    marginBottom: 10,
-  },
+    error: {
+      fontSize: 12,
+      color: theme.danger,
+      marginBottom: 10,
+    },
 
-  primaryButton: {
-    height: 44,
-    borderRadius: 5,
-    backgroundColor: "#111111",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    primaryButton: {
+      height: 44,
+      borderRadius: 5,
+      backgroundColor: Brand.navy,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  disabledButton: {
-    opacity: 0.6,
-  },
+    disabledButton: {
+      opacity: 0.6,
+    },
 
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
+    primaryButtonText: {
+      color: "#ffffff",
+      fontSize: 14,
+      fontWeight: "600",
+    },
 
-  switchContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 12,
-  },
+    switchContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      marginTop: 12,
+    },
 
-  switchText: {
-    fontSize: 11,
-    color: "#777777",
-  },
+    switchText: {
+      fontSize: 11,
+      color: theme.textSecondary,
+    },
 
-  switchLink: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#222222",
-  },
-});
+    switchLink: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: theme.link,
+    },
+  });

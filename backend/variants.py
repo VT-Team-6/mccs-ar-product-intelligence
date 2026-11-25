@@ -88,6 +88,7 @@ def list_variants(conn: Connection, product_id: int, store_id: int | None = None
         ).fetchall()
     return conn.execute(
         f"SELECT {_VARIANT_COLUMNS}, vs.quantity, vs.price,"
+        " vs.low_stock_threshold AS own_low_stock_threshold,"
         " COALESCE(vs.quantity > 0 AND i.status = 'active', FALSE) AS in_stock"
         " FROM product_variants v"
         " LEFT JOIN variant_stock vs ON vs.variant_id = v.variant_id AND vs.store_id = %s"
@@ -316,7 +317,10 @@ def store_variants(conn: Connection, store_id: int, product_id: int) -> list[dic
     rows = list_variants(conn, product_id, store_id)
     for row in rows:
         row["label"] = label(row)
-        row["low_stock"] = entry["status"] == "active" and (row["quantity"] or 0) <= entry["low_stock_threshold"]
+        # Its own level if it has one, else the product's
+        own = row["own_low_stock_threshold"]
+        row["low_stock_threshold"] = own if own is not None else entry["low_stock_threshold"]
+        row["low_stock"] = entry["status"] == "active" and (row["quantity"] or 0) <= row["low_stock_threshold"]
     return rows
 
 

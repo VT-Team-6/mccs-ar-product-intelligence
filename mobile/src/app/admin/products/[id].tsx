@@ -14,6 +14,7 @@ import { useAuth } from "@/auth/AuthContext";
 import {
   canEditProduct,
   deleteProduct,
+  fitLabel,
   getProduct,
   productImageUrl,
   type Product,
@@ -220,7 +221,8 @@ export default function ProductScreen() {
                 {product.name}
               </ThemedText>
               <ThemedText themeColor="textSecondary">
-                {[product.brand, product.product_type]
+                {/* e.g. "Nike · Sneaker · Men's" */}
+                {[product.brand, product.product_type, fitLabel(product.fit)]
                   .filter(Boolean)
                   .join(" · ")}
               </ThemedText>

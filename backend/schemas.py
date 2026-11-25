@@ -333,6 +333,8 @@ class StaffStoreStockEntry(StoreStockEntry):
     # How many colors/sizes it comes in, and how many are low
     variant_count: int = 1
     low_variant_count: int = 0
+    # How many colors/sizes have their own low-stock level
+    custom_level_count: int = 0
 
 
 class StaffStoreStock(BaseModel):
@@ -802,6 +804,9 @@ class StoreVariant(Variant):
 
     label: str
     low_stock: bool
+    # The level this color/size uses, and its own level (None = the product's)
+    low_stock_threshold: int
+    own_low_stock_threshold: int | None = None
 
 
 class VariantColor(BaseModel):
@@ -825,6 +830,23 @@ class VariantOptions(BaseModel):
     colors: list[VariantColor] = Field(default_factory=list, max_length=12)
     sizes: list[str] = Field(default_factory=list, max_length=30)
     skip: list[VariantCombination] = Field(default_factory=list, max_length=400)
+
+
+class VariantLowStockLevel(BaseModel):
+    variant_id: int = Field(gt=0)
+    # None clears its own level so it uses the product's again
+    low_stock_threshold: int | None = Field(default=None, ge=0, le=100_000)
+
+
+class VariantLowStockLevels(BaseModel):
+    """A product's low-stock level and each color/size's own level at a store.
+
+    low_stock_threshold left out keeps the product's level; levels lists only
+    the colors/sizes being changed.
+    """
+
+    low_stock_threshold: int | None = Field(default=None, ge=0, le=100_000)
+    levels: list[VariantLowStockLevel] = Field(default_factory=list, max_length=500)
 
 
 class VariantStockWrite(BaseModel):
