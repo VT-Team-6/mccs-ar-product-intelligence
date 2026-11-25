@@ -245,14 +245,20 @@ export default function ShopperProductScreen() {
     ? storePriceLine(product, store?.store_id ?? null, store?.name ?? null)
     : null;
   // With a size/color picked, its own price; otherwise "From $X" when sizes cost different amounts
-  const prices = new Set(variants.map((v) => variantPrice(v)).filter((p) => p !== null));
+  // With only a color picked, the prices of that color's sizes
+  const pool = options && color && !chosen ? variants.filter((v) => v.color === color) : variants;
+  const poolPrices = [...new Set(pool.map((v) => variantPrice(v)).filter((p): p is number => p !== null))];
   const chosenPrice = options && chosen && product?.store_inventory ? variantPrice(chosen) : null;
   const priceText =
     chosenPrice !== null
       ? `$${chosenPrice.toFixed(2)}`
-      : price?.price && prices.size > 1
-        ? `From ${price.price}`
-        : (price?.price ?? '—');
+      : !price?.price
+        ? (price?.price ?? '—')
+        : poolPrices.length === 1
+          ? `$${poolPrices[0].toFixed(2)}`
+          : poolPrices.length > 1
+            ? `From $${Math.min(...poolPrices).toFixed(2)}`
+            : price.price;
   const availability =
     options && chosen && product?.store_inventory
       ? chosen.in_stock
@@ -368,7 +374,7 @@ export default function ShopperProductScreen() {
                 <Fact label="Availability" value="Discontinued at this store" />
               ) : (
                 <>
-                  <Fact label="Price" value={priceText} strong />
+                  <Fact label="Price" value={priceText} />
                   {product.store_inventory && (
                     <Fact label="Availability" value={availability} wide />
                   )}

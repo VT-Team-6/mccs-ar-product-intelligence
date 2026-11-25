@@ -131,7 +131,7 @@ def check_stock(conn: Connection, store_id: int, product_ids: list[int]) -> list
     rows = conn.execute(
         f"SELECT i.product_id, v.variant_id, {_ITEM_NAME} AS name, v.color, v.size, vs.quantity,"
         " COALESCE(vs.low_stock_threshold, i.low_stock_threshold) AS threshold,"
-        " (i.status = 'active' AND COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold)) AS is_low,"
+        " (i.status = 'active' AND COALESCE(vs.status, 'active') = 'active' AND COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold)) AS is_low,"
         " i.status = 'active' AS on_sale, a.alert_id, a.kind, a.quantity AS alert_quantity"
         " FROM inventory i JOIN products p ON p.product_id = i.product_id"
         " JOIN product_variants v ON v.product_id = i.product_id"
@@ -299,7 +299,7 @@ def catalog(conn: Connection, store_id: int) -> dict:
         SELECT p.product_id, p.name, p.brand, p.category, p.fit,
                i.quantity, i.low_stock_threshold,
                count(*)::INTEGER AS variant_count,
-               count(*) FILTER (WHERE COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold))::INTEGER
+               count(*) FILTER (WHERE COALESCE(vs.status, 'active') = 'active' AND COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold))::INTEGER
                    AS low_count,
                COALESCE(array_agg(DISTINCT a.status) FILTER (WHERE a.status IS NOT NULL), '{}')
                    AS statuses,
@@ -351,6 +351,8 @@ def lines(conn: Connection, store_id: int, product_ids: list[int]) -> list[dict]
         """ + _BUYER_JOIN + """
          WHERE i.store_id = %s AND i.status = 'active' AND p.deleted_at IS NULL
            AND i.product_id = ANY(%s)
+           -- Discontinued colors/sizes can't be reordered
+           AND COALESCE(vs.status, 'active') = 'active'
          ORDER BY lower(p.name), p.product_id, v.color_order, v.size_order
         """,
         (store_id, product_ids),
@@ -378,6 +380,7 @@ def _alerts_for_variants(conn: Connection, store_id: int, variant_ids: list[int]
         " LEFT JOIN low_stock_alerts a ON a.variant_id = v.variant_id"
         "   AND a.store_id = i.store_id AND a.status <> 'resolved'"
         " WHERE i.store_id = %s AND i.status = 'active' AND v.variant_id = ANY(%s)"
+        " AND COALESCE(vs.status, 'active') = 'active'"
         " ORDER BY i.product_id FOR NO KEY UPDATE OF i",
         (store_id, variant_ids),
     ).fetchall()

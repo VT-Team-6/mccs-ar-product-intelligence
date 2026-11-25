@@ -21,7 +21,13 @@ import {
   type LowStockChange,
   type StoreBuyer,
 } from "@/api/inventory";
-import { getStoreVariants, updateVariantStock, variantPrice, type StoreVariant } from "@/api/variants";
+import {
+  getStoreVariants,
+  setVariantStatus,
+  updateVariantStock,
+  variantPrice,
+  type StoreVariant,
+} from "@/api/variants";
 import { useAuth } from "@/auth/AuthContext";
 import { canAccessStore } from "@/auth/store-access";
 import { BuyerPicker, type BuyerChoice } from "@/components/buyer-picker";
@@ -29,8 +35,9 @@ import { KeyboardDoneBar } from "@/components/keyboard-done-bar";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { AppButton } from "@/components/ui/app-button";
+import { ColorSwatch } from "@/components/ui/color-swatch";
 import { ScreenHeader } from "@/components/ui/screen-header";
-import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 // A price like 89 or 89.99: no negatives, at most two decimals
@@ -51,6 +58,22 @@ type StockRouteParams = {
   lowStockAt?: string;
   buyerId?: string;
 };
+
+type ColorGroup = { color: string | null; hex: string | null; hex2: string | null; sizes: StoreVariant[] };
+
+// Sizes grouped under their color, in display order
+function colorGroups(variants: StoreVariant[]): ColorGroup[] {
+  const groups: ColorGroup[] = [];
+  for (const variant of variants) {
+    let group = groups.find((g) => g.color === variant.color);
+    if (!group) {
+      group = { color: variant.color, hex: variant.color_hex, hex2: variant.color_hex_2 ?? null, sizes: [] };
+      groups.push(group);
+    }
+    group.sizes.push(variant);
+  }
+  return groups;
+}
 
 export default function EditStockScreen() {
   const params = useLocalSearchParams<StockRouteParams>();
@@ -119,6 +142,68 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, productId]);
   const pricesDiffer = new Set(variants.map((v) => variantPrice(v))).size > 1;
+
+  // Selling / discontinued for a color (all its sizes) or, without colors, one
+  // size. Saved right away, not with Save.
+  const canSetStatus = canManageInventory && !pending;
+  const hasColors = variants.some((v) => v.color);
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  const changeStatus = async (key: string, sizes: StoreVariant[], status: "active" | "discontinued") => {
+    setStatusBusy(key);
+    setError(null);
+    try {
+      const loaded = await setVariantStatus(
+        storeId,
+        productId,
+        sizes.map((v) => v.variant_id),
+        status,
+      );
+      setVariants(loaded);
+    } catch (problem) {
+      setError(problem instanceof Error ? problem.message : "Could not change the status.");
+    } finally {
+      setStatusBusy(null);
+    }
+  };
+  const isDiscontinued = (sizes: StoreVariant[]) => sizes.every((v) => v.status === "discontinued");
+
+  // The "stock for all" box for each color, and filling it into that color's sizes
+  const [colorStock, setColorStock] = useState<Record<string, string>>({});
+  const setStockForColor = (group: ColorGroup) => {
+    const key = group.color ?? "";
+    const value = (colorStock[key] ?? "").trim();
+    if (!value) return;
+    if (!WHOLE_NUMBER.test(value)) {
+      setError("Stock must be a whole number, 0 or more.");
+      return;
+    }
+    setError(null);
+    setRows((current) => {
+      const next = { ...current };
+      for (const size of group.sizes) next[size.variant_id] = { ...next[size.variant_id], quantity: value };
+      return next;
+    });
+    setColorStock((current) => ({ ...current, [key]: "" }));
+  };
+
+  // The "price for all" box for each color, and filling it into that color's sizes
+  const [colorPrice, setColorPrice] = useState<Record<string, string>>({});
+  const setPriceForColor = (group: ColorGroup) => {
+    const key = group.color ?? "";
+    const value = (colorPrice[key] ?? "").trim();
+    if (!value) return;
+    if (!PRICE.test(value)) {
+      setError("Enter a price like 89 or 89.99.");
+      return;
+    }
+    setError(null);
+    setRows((current) => {
+      const next = { ...current };
+      for (const size of group.sizes) next[size.variant_id] = { ...next[size.variant_id], price: value };
+      return next;
+    });
+    setColorPrice((current) => ({ ...current, [key]: "" }));
+  };
 
   // "Changes saved" fades after a few seconds
   useEffect(() => {
@@ -308,41 +393,157 @@ function EditStockForm({ params }: { params: StockRouteParams }) {
               <ThemedText type="small" themeColor="textSecondary">
                 {`${variants.reduce((total, v) => total + Number(rows[v.variant_id]?.quantity || 0), 0)} in stock across ${variants.length}`}
               </ThemedText>
-              {variants.map((variant) => {
-                const row = rows[variant.variant_id] ?? { quantity: "0", price: "" };
-                const setRow = (change: Partial<typeof row>) =>
-                  setRows((current) => ({ ...current, [variant.variant_id]: { ...row, ...change } }));
+              {/* Grouped by color, like the reorder screen: the color, a price
+                  for all its sizes, then each size's stock and price */}
+              {colorGroups(variants).map((group) => {
+                const key = group.color ?? "";
+                const colorOff = hasColors && isDiscontinued(group.sizes);
                 return (
-                  <View key={variant.variant_id} style={[styles.variantRow, { borderColor: theme.border }]}>
-                    <View style={styles.variantName}>
-                      <ThemedText type="smallBold" numberOfLines={1}>{variant.label || "Standard"}</ThemedText>
-                      <ThemedText type="small" themeColor={variant.low_stock ? "danger" : "textSecondary"} numberOfLines={1}>
-                        {variant.low_stock ? "Low stock" : variant.sku}
+                  <ThemedView key={key || "sizes"} type="backgroundElement" style={styles.colorCard}>
+                    <View style={styles.colorHeader}>
+                      {group.color && group.hex && <ColorSwatch hex={group.hex} hex2={group.hex2} size={20} />}
+                      <ThemedText type="smallBold" style={styles.variantName}>
+                        {group.color ?? "Sizes"}
                       </ThemedText>
+                      {canSetStatus && hasColors && (
+                        <StatusSwitch
+                          discontinued={colorOff}
+                          busy={statusBusy === `color-${key}`}
+                          onChange={(status) => changeStatus(`color-${key}`, group.sizes, status)}
+                        />
+                      )}
                     </View>
-                    {canEditStock ? (
-                      <TextInput
-                        value={row.quantity}
-                        onChangeText={(text) => setRow({ quantity: text })}
-                        keyboardType="number-pad"
-                        accessibilityLabel={`${variant.label} stock`}
-                        style={[inputStyle, styles.variantQuantity]}
-                      />
-                    ) : (
-                      <ThemedText>{row.quantity}</ThemedText>
+                    {colorOff && (
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {`Discontinued here: shoppers don't see ${group.color}, and it isn't reordered.`}
+                      </ThemedText>
                     )}
-                    {canManageInventory && (
-                      <TextInput
-                        value={row.price}
-                        onChangeText={(text) => setRow({ price: text })}
-                        keyboardType="decimal-pad"
-                        placeholder="Price"
-                        placeholderTextColor={theme.textSecondary}
-                        accessibilityLabel={`${variant.label} price`}
-                        style={[inputStyle, styles.variantPrice]}
-                      />
+
+                    {canEditStock && group.sizes.length > 1 && (
+                      <View style={styles.colorAllRow}>
+                        <ThemedText type="small" themeColor="textSecondary" style={styles.variantName}>
+                          {`Stock for all ${group.color ?? "sizes"}`}
+                        </ThemedText>
+                        <TextInput
+                          value={colorStock[key] ?? ""}
+                          onChangeText={(text) => setColorStock((current) => ({ ...current, [key]: text }))}
+                          onSubmitEditing={() => setStockForColor(group)}
+                          keyboardType="number-pad"
+                          returnKeyType="done"
+                          placeholder="Qty"
+                          placeholderTextColor={theme.textSecondary}
+                          accessibilityLabel={`Stock for every ${group.color ?? ""} size`}
+                          style={[inputStyle, styles.variantPrice, { backgroundColor: theme.background }]}
+                        />
+                        <Pressable
+                          onPress={() => setStockForColor(group)}
+                          disabled={!colorStock[key]?.trim()}
+                          hitSlop={8}
+                          style={({ pressed }) => [!colorStock[key]?.trim() && styles.dim, pressed && styles.pressed]}
+                        >
+                          <ThemedText type="linkPrimary">Set all</ThemedText>
+                        </Pressable>
+                      </View>
                     )}
-                  </View>
+
+                    {canManageInventory && group.sizes.length > 1 && (
+                      <View style={styles.colorAllRow}>
+                        <ThemedText type="small" themeColor="textSecondary" style={styles.variantName}>
+                          {`Price for all ${group.color ?? "sizes"}`}
+                        </ThemedText>
+                        <TextInput
+                          value={colorPrice[key] ?? ""}
+                          onChangeText={(text) => setColorPrice((current) => ({ ...current, [key]: text }))}
+                          onSubmitEditing={() => setPriceForColor(group)}
+                          keyboardType="decimal-pad"
+                          returnKeyType="done"
+                          placeholder="$"
+                          placeholderTextColor={theme.textSecondary}
+                          accessibilityLabel={`Price for every ${group.color ?? ""} size`}
+                          style={[inputStyle, styles.variantPrice, { backgroundColor: theme.background }]}
+                        />
+                        <Pressable
+                          onPress={() => setPriceForColor(group)}
+                          disabled={!colorPrice[key]?.trim()}
+                          hitSlop={8}
+                          style={({ pressed }) => [!colorPrice[key]?.trim() && styles.dim, pressed && styles.pressed]}
+                        >
+                          <ThemedText type="linkPrimary">Set all</ThemedText>
+                        </Pressable>
+                      </View>
+                    )}
+
+                    <View style={styles.columnLabels}>
+                      <ThemedText type="small" themeColor="textSecondary" style={styles.variantName}>
+                        {group.sizes.some((v) => v.size) ? "Size" : "Option"}
+                      </ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary" style={styles.variantQuantityLabel}>
+                        Stock
+                      </ThemedText>
+                      {canManageInventory && (
+                        <ThemedText type="small" themeColor="textSecondary" style={styles.variantPriceLabel}>
+                          Price ($)
+                        </ThemedText>
+                      )}
+                    </View>
+
+                    {group.sizes.map((variant) => {
+                      const row = rows[variant.variant_id] ?? { quantity: "0", price: "" };
+                      const setRow = (change: Partial<typeof row>) =>
+                        setRows((current) => ({ ...current, [variant.variant_id]: { ...row, ...change } }));
+                      return (
+                        <View
+                          key={variant.variant_id}
+                          style={[
+                            styles.variantRow,
+                            { borderColor: theme.border },
+                            variant.status === "discontinued" && styles.dim,
+                          ]}
+                        >
+                          <View style={styles.variantName}>
+                            <ThemedText type="smallBold" numberOfLines={1}>
+                              {variant.size ?? variant.label ?? "Standard"}
+                            </ThemedText>
+                            {variant.low_stock && (
+                              <ThemedText type="small" themeColor="danger" numberOfLines={1}>
+                                Low stock
+                              </ThemedText>
+                            )}
+                            {/* Without colors, each size is sold or discontinued on its own */}
+                            {canSetStatus && !hasColors && (
+                              <StatusSwitch
+                                discontinued={variant.status === "discontinued"}
+                                busy={statusBusy === `size-${variant.variant_id}`}
+                                onChange={(status) => changeStatus(`size-${variant.variant_id}`, [variant], status)}
+                              />
+                            )}
+                          </View>
+                          {canEditStock ? (
+                            <TextInput
+                              value={row.quantity}
+                              onChangeText={(text) => setRow({ quantity: text })}
+                              keyboardType="number-pad"
+                              accessibilityLabel={`${variant.label} stock`}
+                              style={[inputStyle, styles.variantQuantity, { backgroundColor: theme.background }]}
+                            />
+                          ) : (
+                            <ThemedText style={styles.variantQuantityLabel}>{row.quantity}</ThemedText>
+                          )}
+                          {canManageInventory && (
+                            <TextInput
+                              value={row.price}
+                              onChangeText={(text) => setRow({ price: text })}
+                              keyboardType="decimal-pad"
+                              placeholder="Price"
+                              placeholderTextColor={theme.textSecondary}
+                              accessibilityLabel={`${variant.label} price`}
+                              style={[inputStyle, styles.variantPrice, { backgroundColor: theme.background }]}
+                            />
+                          )}
+                        </View>
+                      );
+                    })}
+                  </ThemedView>
                 );
               })}
             </View>
@@ -472,9 +673,88 @@ function Button({ label, onPress, quiet = false }: { label: string; onPress: () 
   return <AppButton label={label} onPress={onPress} variant={quiet ? "secondary" : "primary"} />;
 }
 
+// Selling / Discontinued: the picked side is filled navy
+function StatusSwitch({
+  discontinued,
+  busy,
+  onChange,
+}: {
+  discontinued: boolean;
+  busy: boolean;
+  onChange: (status: "active" | "discontinued") => void;
+}) {
+  const theme = useTheme();
+  return (
+    <View style={[styles.statusSwitch, { borderColor: theme.border }, busy && styles.dim]}>
+      {(["active", "discontinued"] as const).map((status) => {
+        const on = (status === "discontinued") === discontinued;
+        return (
+          <Pressable
+            key={status}
+            onPress={() => !on && !busy && onChange(status)}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: on }}
+            style={[styles.statusSide, on && { backgroundColor: Brand.navy }]}
+          >
+            <ThemedText type="small" style={on ? styles.statusOn : { color: theme.textSecondary }}>
+              {status === "active" ? "Selling" : "Discontinued"}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   // Lists reach the screen edges so the scroll bar sits at the edge, while
   // their content keeps the page's side margins
+  colorCard: {
+    padding: Spacing.three,
+    borderRadius: Radius.medium,
+    gap: Spacing.two,
+  },
+  statusSwitch: {
+    flexDirection: "row",
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderRadius: Radius.small,
+    overflow: "hidden",
+  },
+  statusSide: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+  },
+  statusOn: {
+    color: "#ffffff",
+    fontWeight: "700",
+  },
+  colorHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  colorAllRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+  },
+  columnLabels: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  variantQuantityLabel: {
+    width: 72,
+    textAlign: "center",
+  },
+  variantPriceLabel: {
+    width: 92,
+  },
+  dim: {
+    opacity: 0.4,
+  },
   variantRow: {
     flexDirection: "row",
     alignItems: "center",

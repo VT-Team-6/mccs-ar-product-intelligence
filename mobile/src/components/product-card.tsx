@@ -20,6 +20,8 @@ export type ProductCardProps = {
   // The current like state, when the caller has one. Omit to hide the heart.
   isLiked?: boolean;
   onToggleLike?: () => void;
+  // false hides the brand/fit/type line and the rating (History keeps rows short)
+  showDetails?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -33,6 +35,7 @@ export function ProductCard({
   badge,
   isLiked,
   onToggleLike,
+  showDetails = true,
   style,
 }: ProductCardProps) {
   const details = [product.brand, fitLabel(product.fit), product.product_type].filter(Boolean).join(' · ');
@@ -73,10 +76,12 @@ export function ProductCard({
             </ThemedText>
           )}
           <ThemedText type="smallBold">{product.name}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {details}
-          </ThemedText>
-          {product.rating !== null && (
+          {showDetails && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {details}
+            </ThemedText>
+          )}
+          {showDetails && product.rating !== null && (
             <ThemedText type="small" themeColor="textSecondary">
               {`${product.rating.toFixed(1)} rating`}
             </ThemedText>

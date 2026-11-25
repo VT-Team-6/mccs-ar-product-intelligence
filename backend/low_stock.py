@@ -137,3 +137,32 @@ def set_variant_levels(
             " ON CONFLICT (variant_id, store_id) DO UPDATE SET low_stock_threshold = EXCLUDED.low_stock_threshold",
             (variant_id, store_id, level),
         )
+
+
+def set_variant_status(
+    conn: Connection, store_id: int, product_id: int, variant_ids: list[int], status: str
+) -> None:
+    """Discontinue, or sell again, some of a product's colors/sizes at a store.
+
+    Every variant must belong to the product, or nothing is changed. The
+    caller re-checks alerts (a discontinued size's open alert is resolved).
+    """
+    stock._require_store(conn, store_id)
+    if conn.execute(
+        "SELECT 1 FROM inventory WHERE store_id = %s AND product_id = %s FOR NO KEY UPDATE",
+        (store_id, product_id),
+    ).fetchone() is None:
+        raise stock.InventoryError(f"Not in this store's inventory: product {product_id}", status=404)
+    ids = sorted(set(variant_ids))
+    owned = conn.execute(
+        "SELECT count(*) AS n FROM product_variants WHERE product_id = %s AND variant_id = ANY(%s)",
+        (product_id, ids),
+    ).fetchone()["n"]
+    if owned != len(ids):
+        raise stock.InventoryError("Some of these sizes aren't part of this product. Refresh and try again.")
+    conn.execute(
+        "INSERT INTO variant_stock (variant_id, store_id, quantity, status)"
+        " SELECT unnest(%s::INTEGER[]), %s, 0, %s"
+        " ON CONFLICT (variant_id, store_id) DO UPDATE SET status = EXCLUDED.status",
+        (ids, store_id, status),
+    )

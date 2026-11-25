@@ -24,6 +24,8 @@ export type StoreVariant = Variant & {
   // The level this color/size uses, and its own level (null = the product's)
   low_stock_threshold: number;
   own_low_stock_threshold: number | null;
+  // Selling ("active") or discontinued at this store
+  status?: "active" | "discontinued";
 };
 
 export type VariantColor = { name: string; hex: string | null; hex2?: string | null };
@@ -143,6 +145,21 @@ export async function setLowStockLevels(
     { method: "PUT", body: JSON.stringify(change) },
   );
   if (!response.ok) throw await problem(response, "Could not save the low-stock levels");
+  return response.json();
+}
+
+// Discontinues, or sells again, some of a product's colors/sizes at a store
+export async function setVariantStatus(
+  storeId: number,
+  productId: number,
+  variantIds: number[],
+  status: "active" | "discontinued",
+): Promise<StoreVariant[]> {
+  const response = await authenticatedFetch(
+    `/api/admin/inventory/${storeId}/products/${productId}/variant-status`,
+    { method: "PUT", body: JSON.stringify({ variant_ids: variantIds, status }) },
+  );
+  if (!response.ok) throw await problem(response, "Could not change the status");
   return response.json();
 }
 

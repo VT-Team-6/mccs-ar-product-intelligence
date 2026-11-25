@@ -800,3 +800,32 @@ def test_size_levels_must_belong_to_the_product(client, db):
     refused = _levels(client, product_id, {"levels": [{"variant_id": other_sizes["9"], "low_stock_threshold": 5}]})
 
     assert refused.status_code == 422
+
+
+def test_a_color_can_be_discontinued_at_a_store(client, db):
+    _sign_in(client, db)
+    shoe = db.execute("SELECT product_id FROM products WHERE name = 'Nike Air Force 1 Low'").fetchone()["product_id"]
+    rows = client.get(f"/api/admin/inventory/1/products/{shoe}/variants").json()
+    black = [v["variant_id"] for v in rows if v["color"] == "Black"]
+    total_before = db.execute("SELECT quantity FROM inventory WHERE product_id = %s AND store_id = 1",
+                              (shoe,)).fetchone()["quantity"]
+    black_stock = sum(v["quantity"] or 0 for v in rows if v["color"] == "Black")
+
+    saved = client.put(f"/api/admin/inventory/1/products/{shoe}/variant-status",
+                       json={"variant_ids": black, "status": "discontinued"})
+
+    assert saved.status_code == 200, saved.text
+    assert {v["status"] for v in saved.json() if v["color"] == "Black"} == {"discontinued"}
+    assert not any(v["low_stock"] for v in saved.json() if v["color"] == "Black")
+    shopper = client.get(f"/api/products/{shoe}/variants", params={"store_id": 1}).json()
+    assert "Black" not in {v["color"] for v in shopper}
+    total = db.execute("SELECT quantity FROM inventory WHERE product_id = %s AND store_id = 1",
+                       (shoe,)).fetchone()["quantity"]
+    assert total == total_before - black_stock
+    lines = client.get(f"/api/reorders/lines?store_id=1&product_id={shoe}").json()
+    assert "Black" not in {l["color"] for l in lines}
+
+    client.put(f"/api/admin/inventory/1/products/{shoe}/variant-status",
+               json={"variant_ids": black, "status": "active"})
+    shopper = client.get(f"/api/products/{shoe}/variants", params={"store_id": 1}).json()
+    assert "Black" in {v["color"] for v in shopper}

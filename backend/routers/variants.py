@@ -16,7 +16,14 @@ import variants
 from auth import require_permission
 from database import get_connection
 from product_access import can_manage_store, require_product_owner
-from schemas import StoreVariant, Variant, VariantLowStockLevels, VariantOptions, VariantStockWrite
+from schemas import (
+    StoreVariant,
+    Variant,
+    VariantLowStockLevels,
+    VariantOptions,
+    VariantStatusWrite,
+    VariantStockWrite,
+)
 
 public_router = APIRouter(prefix="/api/products", tags=["variants"])
 admin_router = APIRouter(prefix="/api/admin/products", tags=["admin-variants"])
@@ -52,7 +59,11 @@ def read_variants(
     with get_connection() as conn:
         _require_product(conn, product_id)
         resolved = store_selection.resolve_store_id(conn, user["user_id"] if user else None, store_id)
-        rows = variants.list_variants(conn, product_id, resolved)
+        # Colors/sizes the store discontinued aren't offered to shoppers
+        rows = [
+            row for row in variants.list_variants(conn, product_id, resolved)
+            if row.get("store_status", "active") == "active"
+        ]
         # Shoppers never see a price for a product the store hasn't approved
         if resolved is not None:
             status = conn.execute(
@@ -178,6 +189,25 @@ def write_low_stock_levels(
                 conn, store_id, product_id, body.low_stock_threshold,
                 [level.model_dump() for level in body.levels],
             )
+            reorders.check_stock(conn, store_id, [product_id])
+            return variants.store_variants(conn, store_id, product_id)
+        except stock.InventoryError as error:
+            raise _http_error(error) from error
+
+
+@inventory_router.put("/{store_id}/products/{product_id}/variant-status", response_model=list[StoreVariant])
+def write_variant_status(
+    store_id: int,
+    product_id: int,
+    body: VariantStatusWrite,
+    user=Depends(require_permission("manage_inventory")),
+) -> list[dict]:
+    """Discontinue, or sell again, some of the product's colors/sizes at the store."""
+    if not can_manage_store(user, store_id):
+        raise HTTPException(403, "You don't manage this store")
+    with get_connection() as conn:
+        try:
+            low_stock.set_variant_status(conn, store_id, product_id, body.variant_ids, body.status)
             reorders.check_stock(conn, store_id, [product_id])
             return variants.store_variants(conn, store_id, product_id)
         except stock.InventoryError as error:

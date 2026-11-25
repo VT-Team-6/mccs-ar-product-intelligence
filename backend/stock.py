@@ -152,7 +152,7 @@ def list_store_stock(
         " LEFT JOIN users b ON b.user_id = i.buyer_user_id"
         " CROSS JOIN LATERAL ("
         "   SELECT count(*) AS variant_count,"
-        "          count(*) FILTER (WHERE COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold)) AS low_count,"
+        "          count(*) FILTER (WHERE COALESCE(vs.status, 'active') = 'active' AND COALESCE(vs.quantity, 0) <= COALESCE(vs.low_stock_threshold, i.low_stock_threshold)) AS low_count,"
         "          count(vs.low_stock_threshold) AS custom_level_count"
         "   FROM product_variants v LEFT JOIN variant_stock vs"
         "     ON vs.variant_id = v.variant_id AND vs.store_id = i.store_id"

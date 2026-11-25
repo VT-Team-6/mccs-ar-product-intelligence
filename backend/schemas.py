@@ -807,6 +807,8 @@ class StoreVariant(Variant):
     # The level this color/size uses, and its own level (None = the product's)
     low_stock_threshold: int
     own_low_stock_threshold: int | None = None
+    # selling ("active") or discontinued at this store
+    status: Literal["active", "discontinued"] = "active"
 
 
 class VariantColor(BaseModel):
@@ -847,6 +849,13 @@ class VariantLowStockLevels(BaseModel):
 
     low_stock_threshold: int | None = Field(default=None, ge=0, le=100_000)
     levels: list[VariantLowStockLevel] = Field(default_factory=list, max_length=500)
+
+
+class VariantStatusWrite(BaseModel):
+    """Discontinue (or sell again) some of a product's colors/sizes at a store."""
+
+    variant_ids: list[int] = Field(min_length=1, max_length=500)
+    status: Literal["active", "discontinued"]
 
 
 class VariantStockWrite(BaseModel):

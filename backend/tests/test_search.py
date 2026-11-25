@@ -229,3 +229,13 @@ def test_search_out_of_stock_flag(client):
     (result,) = response.json()
     assert result["store_inventory"]["quantity"] == 0
     assert result["store_inventory"]["in_stock"] is False
+
+
+def test_search_matches_category(client):
+    response = client.get("/api/search", params={"q": "shoes"})
+    assert response.status_code == 200
+    names = {product["name"] for product in response.json()}
+    assert {"Nike Air Force 1 Low", "Crocs Classic Clogs"} <= names
+    assert all(product["category"] == "shoes" or "shoe" in (product["description"] or "").lower()
+               or "shoe" in product["name"].lower() or "shoe" in product["product_type"].lower()
+               for product in response.json())

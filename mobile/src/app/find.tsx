@@ -54,7 +54,8 @@ export default function FindScreen() {
   const { profile } = useAuth();
   // Results are priced at the chosen store, so they reload when it changes
   const { store } = useStore();
-  const { q } = useLocalSearchParams<{ q?: string }>();
+  // ?category=shoes opens with that filter on (Home's Explore "See more")
+  const { q, category: startCategory } = useLocalSearchParams<{ q?: string; category?: string }>();
   const query = (q ?? "").trim();
 
   const [text, setText] = useState(query);
@@ -72,12 +73,12 @@ export default function FindScreen() {
   const [category, setCategory] = useState<string | null>(null);
   const [productType, setProductType] = useState<string | null>(null);
 
-  // A new search starts with no filters
+  // A new search starts with no filters, or the category it was opened with
   useEffect(() => {
     setInStockOnly(false);
-    setCategory(null);
+    setCategory(startCategory || null);
     setProductType(null);
-  }, [query]);
+  }, [query, startCategory]);
 
   // Only the categories, and the types in the chosen category, the results have
   const categories = useMemo(
@@ -165,7 +166,8 @@ export default function FindScreen() {
     if (!trimmed) return;
     Keyboard.dismiss();
     setText(trimmed);
-    router.setParams({ q: trimmed });
+    // A typed search drops the category it may have been opened with
+    router.setParams({ q: trimmed, category: "" });
   };
 
   // Clearing the box goes back to the recent searches

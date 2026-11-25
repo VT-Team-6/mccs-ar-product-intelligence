@@ -21,7 +21,7 @@ def search_products(
     Optional auth, same rule as product details: saved store for a signed-in
     shopper, explicit ?store_id= for anyone, null inventory otherwise.
     """
-    # Match the text against name, brand, type, and description (ignoring upper/lower case).
+    # Match the text against name, brand, type, category ("shoes") and description (ignoring upper/lower case).
     # % and _ are wildcards in SQL, so escape them to search for them literally.
     text = q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     pattern = f"%{text}%"
@@ -36,9 +36,10 @@ def search_products(
                 (p.name ILIKE %s OR
                  p.brand ILIKE %s OR
                  p.product_type ILIKE %s OR
+                 p.category ILIKE %s OR
                  p.description ILIKE %s)
                 AND (i.product_id IS NULL OR i.status = 'active')
             ORDER BY p.name
             """),
-            (pattern, pattern, pattern, pattern),
+            (pattern, pattern, pattern, pattern, pattern),
         ).fetchall()
