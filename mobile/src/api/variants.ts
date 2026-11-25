@@ -8,6 +8,8 @@ export type Variant = {
   product_id: number;
   color: string | null;
   color_hex: string | null;
+  // Second swatch color of a two-tone colorway ("White/Black")
+  color_hex_2?: string | null;
   size: string | null;
   sku: string;
   quantity: number | null;
@@ -18,7 +20,7 @@ export type Variant = {
 // A variant on the staff inventory screen
 export type StoreVariant = Variant & { label: string; low_stock: boolean };
 
-export type VariantColor = { name: string; hex: string | null };
+export type VariantColor = { name: string; hex: string | null; hex2?: string | null };
 export type VariantOptions = {
   colors: VariantColor[];
   sizes: string[];
@@ -50,7 +52,11 @@ export function variantColors(variants: Variant[]): VariantColor[] {
   const seen = new Map<string, VariantColor>();
   for (const variant of variants) {
     if (variant.color && !seen.has(variant.color)) {
-      seen.set(variant.color, { name: variant.color, hex: variant.color_hex });
+      seen.set(variant.color, {
+        name: variant.color,
+        hex: variant.color_hex,
+        hex2: variant.color_hex_2 ?? null,
+      });
     }
   }
   return [...seen.values()];

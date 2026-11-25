@@ -150,6 +150,8 @@ class LikedProduct(Product):
     """A product in the user's Likes tab, with when they liked it."""
 
     liked_at: datetime
+    # The color it was liked in; image_url is then that color's first photo
+    liked_color: str | None = None
 
 
 class LikedProductPage(BaseModel):
@@ -786,6 +788,8 @@ class Variant(BaseModel):
     product_id: int
     color: str | None
     color_hex: str | None
+    # Second swatch color of a two-tone colorway
+    color_hex_2: str | None = None
     size: str | None
     sku: str
     quantity: int | None = None
@@ -803,6 +807,8 @@ class StoreVariant(Variant):
 class VariantColor(BaseModel):
     name: str = Field(min_length=1, max_length=40)
     hex: str | None = Field(default=None, max_length=7)
+    # A second swatch color for a two-tone colorway ("White/Black")
+    hex2: str | None = Field(default=None, max_length=7)
 
 
 class VariantCombination(BaseModel):

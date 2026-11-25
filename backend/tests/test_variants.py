@@ -135,7 +135,8 @@ def test_seeded_shoes_come_in_sizes_and_some_in_colors(client, db):
 
     variants = _variants(client, shoe)
 
-    assert {v["color"] for v in variants} == {"White", "Black"}
+    assert {v["color"] for v in variants} == {"White", "Black", "White/Black"}
+    assert {v["color_hex_2"] for v in variants if v["color"] == "White/Black"} == {"#1A1A1A"}
     assert [v["size"] for v in variants if v["color"] == "White"][:3] == ["7", "8", "9"]
     total = sum(v["quantity"] for v in variants)
     assert _inventory(db, shoe)["quantity"] == total
@@ -663,3 +664,85 @@ def test_showcase_products_have_their_real_options(db):
     assert [row["size"] for row in options("Dove Daily Moisture Shampoo")] == ["8.5 fl oz", "28 fl oz"]
     sony = options("Sony WH-1000XM4C Wireless Headphones")
     assert [row["color"] for row in sony] == ["Black", "Lavender", "Platinum Silver"]
+
+
+def test_a_two_tone_color_keeps_both_swatch_colors(client, db):
+    _sign_in(client, db)
+    product_id = _new_product(db)
+
+    variants = _set_options(client, product_id, colors=[
+        {"name": "White", "hex": "#F5F5F5"},
+        {"name": "White/Black", "hex": "#F5F5F5", "hex2": "#1A1A1A"},
+    ], sizes=["9"])
+
+    assert {(v["color"], v["color_hex"], v["color_hex_2"]) for v in variants} == {
+        ("White", "#F5F5F5", None), ("White/Black", "#F5F5F5", "#1A1A1A"),
+    }
+    bad = client.put(f"/api/admin/products/{product_id}/variants", json={
+        "colors": [{"name": "Odd", "hex2": "#1A1A1A"}], "sizes": ["9"],
+    })
+    assert bad.status_code == 422
+
+
+def test_a_like_remembers_its_color_and_shows_that_colors_photo(client, db):
+    user = _sign_in(client, db)
+    shoe = db.execute("SELECT product_id FROM products WHERE name = 'Nike Air Force 1 Low'").fetchone()["product_id"]
+    db.execute(
+        "INSERT INTO product_images (product_id, image_url, color) VALUES (%s, '/static/af1-black-1.jpg', 'Black')",
+        (shoe,),
+    )
+
+    assert client.put(f"/api/me/liked-products/{shoe}?color=Black").status_code == 200
+    liked = next(i for i in client.get("/api/me/liked-products").json()["items"] if i["product_id"] == shoe)
+    assert liked["liked_color"] == "Black"
+    assert liked["image_url"] == "/static/af1-black-1.jpg"
+
+    # Liked again in another color: the color switches, still one like
+    client.put(f"/api/me/liked-products/{shoe}?color=White")
+    rows = db.execute(
+        "SELECT color FROM user_product_likes WHERE user_id = %s AND product_id = %s", (user["user_id"], shoe)
+    ).fetchall()
+    assert [r["color"] for r in rows] == ["White"]
+
+
+def test_the_shopping_list_keeps_each_color_and_size_with_a_quantity(client, db):
+    _sign_in(client, db)
+    shoe = db.execute("SELECT product_id FROM products WHERE name = 'Nike Air Force 1 Low'").fetchone()["product_id"]
+    by_pick = {
+        (v["color"], v["size"]): v["variant_id"] for v in client.get(f"/api/products/{shoe}/variants").json()
+    }
+    list_id = client.post("/api/me/shopping-lists", json={"name": "Shoes"}).json()["shopping_list_id"]
+    items = f"/api/me/shopping-lists/{list_id}/items"
+
+    client.post(items, json={"product_id": shoe, "variant_id": by_pick[("White", "10")], "quantity": 2})
+    client.post(items, json={"product_id": shoe, "variant_id": by_pick[("Black", "9")]})
+    client.post(items, json={"product_id": shoe, "color": "White/Black"})
+    # The same pick again adds to its row, never past 99
+    client.post(items, json={"product_id": shoe, "variant_id": by_pick[("White", "10")], "quantity": 98})
+    rows = client.get(f"/api/me/shopping-lists/{list_id}").json()["items"]
+
+    picks = {(r["variant_color"], r["variant_size"]): r for r in rows}
+    assert set(picks) == {("White", "10"), ("Black", "9"), ("White/Black", None)}
+    assert picks[("White", "10")]["quantity"] == 99
+    assert picks[("White/Black", None)]["quantity"] == 1
+    assert client.post(items, json={"product_id": shoe, "color": "Purple"}).status_code == 404
+
+    black = picks[("Black", "9")]["shopping_list_item_id"]
+    changed = client.patch(f"{items}/{black}", json={"quantity": 3}).json()["items"]
+    assert next(r for r in changed if r["shopping_list_item_id"] == black)["quantity"] == 3
+    left = client.delete(f"{items}/{black}").json()["items"]
+    assert {(r["variant_color"], r["variant_size"]) for r in left} == {("White", "10"), ("White/Black", None)}
+
+
+def test_one_scan_checks_off_every_color_of_the_product(client, db):
+    _sign_in(client, db)
+    shoe = db.execute("SELECT product_id FROM products WHERE name = 'Nike Air Force 1 Low'").fetchone()["product_id"]
+    list_id = client.post("/api/me/shopping-lists", json={"name": "Store run"}).json()["shopping_list_id"]
+    client.put(f"/api/me/shopping-lists/{list_id}/activate")
+    for color in ("White", "Black"):
+        client.post(f"/api/me/shopping-lists/{list_id}/items", json={"product_id": shoe, "color": color})
+
+    scanned = client.post("/api/me/shopping-lists/active/scan", json={"product_id": shoe}).json()
+
+    assert scanned["status"] == "checked_off"
+    assert all(item["is_completed"] for item in scanned["list"]["items"] if item["product_id"] == shoe)

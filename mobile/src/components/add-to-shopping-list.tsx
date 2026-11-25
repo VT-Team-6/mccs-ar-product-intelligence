@@ -14,6 +14,8 @@ import {
   addShoppingListItem,
   getShoppingList,
   listShoppingLists,
+  MAX_LIST_QUANTITY,
+  samePick,
   type ShoppingList,
   type ShoppingListSummary,
 } from '@/api/shopping-lists';
@@ -22,6 +24,7 @@ import { useAuth } from '@/auth/AuthContext';
 import { useSignInPrompt } from '@/auth/use-sign-in-prompt';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { QuantityField } from '@/components/ui/quantity-field';
 import { Brand, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -29,12 +32,14 @@ type Props = {
   productId: number;
   // The size/color picked on the product page; null for any
   variantId?: number | null;
+  // A color picked without a size (saved as that color, any size)
+  color?: string | null;
   variantLabel?: string | null;
   // Called after the product is added, so the page can refresh its list status
   onAdded?: () => void;
 };
 
-export function AddToShoppingList({ productId, variantId = null, variantLabel = null, onAdded }: Props) {
+export function AddToShoppingList({ productId, variantId = null, color = null, variantLabel = null, onAdded }: Props) {
   const { user } = useAuth();
   const promptSignIn = useSignInPrompt();
   const [visible, setVisible] = useState(false);
@@ -46,6 +51,8 @@ export function AddToShoppingList({ productId, variantId = null, variantLabel = 
   const [savingListId, setSavingListId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  // How many to add
+  const [quantity, setQuantity] = useState(1);
   const theme = useTheme();
   const router = useRouter();
 
@@ -102,6 +109,7 @@ export function AddToShoppingList({ productId, variantId = null, variantLabel = 
     }
     setMessage(null);
     setError(null);
+    setQuantity(1);
     setVisible(true);
   };
 
@@ -112,18 +120,20 @@ export function AddToShoppingList({ productId, variantId = null, variantLabel = 
     setError(null);
 
     try {
-      const updated = await addShoppingListItem(
-        listId,
-        productId,
-        variantId,
-      );
+      const before = listItems[listId]?.items.find((item) => samePick(item, productId, variantId, color));
+      const updated = await addShoppingListItem(listId, productId, variantId, color, quantity);
 
       setListItems((previous) => ({
         ...previous,
         [listId]: updated,
       }));
 
-      setMessage(variantLabel ? `Added ${variantLabel} to ${updated.name}.` : `Added to ${updated.name}.`);
+      // "Added 2 Black / 10 to Weekend." or, when it was already there, "(now 3)"
+      const now = updated.items.find((item) => samePick(item, productId, variantId, color))?.quantity ?? quantity;
+      const what = [quantity > 1 ? String(quantity) : null, variantLabel].filter(Boolean).join(' ');
+      setMessage(
+        `Added ${what ? `${what} ` : ''}to ${updated.name}${before ? ` (now ${now})` : ''}.`,
+      );
       onAdded?.();
     } catch (problem) {
       setError(
@@ -183,8 +193,45 @@ export function AddToShoppingList({ productId, variantId = null, variantLabel = 
             </View>
 
             <ThemedText themeColor="textSecondary">
-              Choose which shopping list should receive this product.
+              {variantLabel
+                ? `Choose which shopping list should get ${variantLabel}.`
+                : 'Choose which shopping list should receive this product.'}
             </ThemedText>
+
+            {/* How many to add: − 1 + */}
+            <View style={styles.quantityRow}>
+              <ThemedText type="smallBold">Quantity</ThemedText>
+              <View style={[styles.stepper, { borderColor: theme.border }]}>
+                <Pressable
+                  onPress={() => setQuantity((n) => Math.max(1, n - 1))}
+                  disabled={quantity <= 1}
+                  accessibilityRole="button"
+                  accessibilityLabel="One fewer"
+                  hitSlop={6}
+                  style={[styles.stepButton, quantity <= 1 && styles.disabled]}
+                >
+                  <ThemedText type="subtitle" style={styles.stepText}>−</ThemedText>
+                </Pressable>
+                <QuantityField
+                  value={quantity}
+                  onChange={setQuantity}
+                  max={MAX_LIST_QUANTITY}
+                  live
+                  accessibilityLabel="Quantity"
+                  style={styles.stepCount}
+                />
+                <Pressable
+                  onPress={() => setQuantity((n) => Math.min(MAX_LIST_QUANTITY, n + 1))}
+                  disabled={quantity >= MAX_LIST_QUANTITY}
+                  accessibilityRole="button"
+                  accessibilityLabel="One more"
+                  hitSlop={6}
+                  style={[styles.stepButton, quantity >= MAX_LIST_QUANTITY && styles.disabled]}
+                >
+                  <ThemedText type="subtitle" style={styles.stepText}>+</ThemedText>
+                </Pressable>
+              </View>
+            </View>
 
             {loading && <ActivityIndicator />}
 
@@ -222,12 +269,10 @@ export function AddToShoppingList({ productId, variantId = null, variantLabel = 
               keyboardShouldPersistTaps="handled"
             >
               {lists.map((list) => {
-                const onList = listItems[list.shopping_list_id]?.items.find(
-                  (item) => item.product_id === productId,
+                // This product with the same pick already on that list
+                const onList = listItems[list.shopping_list_id]?.items.find((item) =>
+                  samePick(item, productId, variantId, color),
                 );
-                // On the list with the same size/color (or any size, when none is picked)
-                const alreadyAdded =
-                  !!onList && (variantId === null || (onList.variant_id ?? null) === variantId);
 
                 const saving =
                   savingListId === list.shopping_list_id;
@@ -242,21 +287,19 @@ export function AddToShoppingList({ productId, variantId = null, variantLabel = 
                         {list.name}
                       </ThemedText>
 
-                      {list.is_active && (
+                      {(list.is_active || onList) && (
                         <ThemedText
                           type="small"
                           themeColor="textSecondary"
                         >
-                          Active list
+                          {[list.is_active ? 'Active list' : null, onList ? `On it: ${onList.quantity ?? 1}` : null]
+                            .filter(Boolean)
+                            .join(' · ')}
                         </ThemedText>
                       )}
                     </View>
 
-                    {alreadyAdded ? (
-                      <ThemedText style={styles.successText}>
-                        ✓ Added
-                      </ThemedText>
-                    ) : (
+                    {(
                       <Pressable
                         disabled={savingListId !== null}
                         onPress={() =>
@@ -273,7 +316,7 @@ export function AddToShoppingList({ productId, variantId = null, variantLabel = 
                           <ActivityIndicator color="#fff" />
                         ) : (
                           <ThemedText style={styles.addButtonText}>
-                            {onList ? 'Switch' : 'Add'}
+                            Add
                           </ThemedText>
                         )}
                       </Pressable>
@@ -325,6 +368,31 @@ const styles = StyleSheet.create({
   listScroll: {
     flexGrow: 0,
   },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: Radius.medium,
+  },
+  stepButton: {
+    width: 40,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepText: {
+    fontSize: 22,
+    lineHeight: 26,
+  },
+  stepCount: {
+    minWidth: 28,
+    textAlign: 'center',
+  },
   listRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -355,11 +423,10 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
+  // The message wraps inside the box, with "View list ›" under it
   messageRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
+    alignItems: 'flex-start',
+    gap: Spacing.one,
   },
   emptyState: {
     gap: Spacing.three,

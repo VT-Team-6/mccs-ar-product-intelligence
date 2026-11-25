@@ -48,7 +48,7 @@ MAX_SIZES = 30
 HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 _VARIANT_COLUMNS = """
-    v.variant_id, v.product_id, v.color, v.color_hex, v.size, v.sku,
+    v.variant_id, v.product_id, v.color, v.color_hex, v.color_hex_2, v.size, v.sku,
     v.color_order, v.size_order
 """
 
@@ -134,7 +134,7 @@ def set_options(
 ) -> list[dict]:
     """Replace a product's colors and sizes.
 
-    colors: [{"name": "Black", "hex": "#1A1A1A"}], sizes: ["9", "9.5"], in
+    colors: [{"name": "Black", "hex": "#1A1A1A", "hex2": None}], sizes: ["9", "9.5"], in
     display order. Every color comes in every size except the combinations in
     skip ([{"color": "Black", "size": "6"}]).
 
@@ -144,7 +144,15 @@ def set_options(
     refused, so a shampoo can't get colors.
     """
     allowed = options_for(category)
-    colors = [{"name": _clean(c.get("name")), "hex": (c.get("hex") or "").strip() or None} for c in colors]
+    # hex2 is a second swatch color for a two-tone colorway ("White/Black")
+    colors = [
+        {
+            "name": _clean(c.get("name")),
+            "hex": (c.get("hex") or "").strip() or None,
+            "hex2": (c.get("hex2") or "").strip() or None,
+        }
+        for c in colors
+    ]
     sizes = [_clean(s) for s in sizes]
     if colors and "color" not in allowed:
         raise stock.InventoryError(f"{(category or 'This category').capitalize()} don't come in colors")
@@ -159,8 +167,11 @@ def set_options(
             raise stock.InventoryError("Every color needs a name")
         if len(color["name"]) > 40:
             raise stock.InventoryError("Color names can be up to 40 characters")
-        if color["hex"] and not HEX.match(color["hex"]):
-            raise stock.InventoryError(f"'{color['hex']}' isn't a color code like #1A1A1A")
+        for code in (color["hex"], color["hex2"]):
+            if code and not HEX.match(code):
+                raise stock.InventoryError(f"'{code}' isn't a color code like #1A1A1A")
+        if color["hex2"] and not color["hex"]:
+            raise stock.InventoryError("A two-tone color needs its first swatch color too")
     for size in sizes:
         if not size:
             raise stock.InventoryError("Sizes can't be blank")
@@ -176,7 +187,7 @@ def set_options(
         (_clean(s.get("color")).lower() or None, _clean(s.get("size")).lower() or None)
         for s in (skip or [])
     }
-    wanted = []  # (color, hex, size, color_order, size_order)
+    wanted = []  # (color, hex, hex2, size, color_order, size_order)
     for ci, color in enumerate(colors or [None], start=1):
         for si, size in enumerate(sizes or [None], start=1):
             key = ((color or {}).get("name", "").lower() or None, (size or "").lower() or None)
@@ -185,6 +196,7 @@ def set_options(
             wanted.append((
                 color["name"] if color else None,
                 color["hex"] if color else None,
+                color["hex2"] if color else None,
                 size,
                 ci if color else 0,
                 si if size else 0,
@@ -203,14 +215,14 @@ def set_options(
     }
 
     keep: set[int] = set()
-    for color, hex_code, size, color_order, size_order in wanted:
+    for color, hex_code, hex_code_2, size, color_order, size_order in wanted:
         key = ((color or "").lower() or None, (size or "").lower() or None)
         row = existing.get(key)
         if row:
             conn.execute(
-                "UPDATE product_variants SET color = %s, color_hex = %s, size = %s,"
+                "UPDATE product_variants SET color = %s, color_hex = %s, color_hex_2 = %s, size = %s,"
                 " color_order = %s, size_order = %s WHERE variant_id = %s",
-                (color, hex_code, size, color_order, size_order, row["variant_id"]),
+                (color, hex_code, hex_code_2, size, color_order, size_order, row["variant_id"]),
             )
             keep.add(row["variant_id"])
             continue
@@ -222,9 +234,9 @@ def set_options(
             n += 1
         new = conn.execute(
             "INSERT INTO product_variants"
-            " (product_id, color, color_hex, size, color_order, size_order, sku)"
-            " VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING variant_id",
-            (product_id, color, hex_code, size, color_order, size_order, sku),
+            " (product_id, color, color_hex, color_hex_2, size, color_order, size_order, sku)"
+            " VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING variant_id",
+            (product_id, color, hex_code, hex_code_2, size, color_order, size_order, sku),
         ).fetchone()
         keep.add(new["variant_id"])
 

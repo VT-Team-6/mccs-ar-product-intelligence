@@ -21,8 +21,10 @@ import {
   createShoppingList,
   getShoppingList,
   listShoppingLists,
+  MAX_LIST_QUANTITY,
   removeShoppingListItem,
   setShoppingListItemCompleted,
+  setShoppingListItemQuantity,
   type ShoppingList,
   type ShoppingListItem,
   type ShoppingListSummary,
@@ -47,6 +49,7 @@ import { Image } from 'expo-image';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { addShoppingListItem } from '@/api/shopping-lists';
 import { VariantLines } from '@/components/variant-lines';
+import { QuantityField } from '@/components/ui/quantity-field';
 
 export default function ShoppingListScreen() {
   const { user } = useAuth();
@@ -174,7 +177,7 @@ function ShoppingListContent() {
     try {
       const updated = await setShoppingListItemCompleted(
         current.shopping_list_id,
-        item.product_id,
+        item.shopping_list_item_id,
         completed,
       );
       setCurrent(updated);
@@ -195,10 +198,24 @@ function ShoppingListContent() {
     try {
       const updated = await removeShoppingListItem(
         current.shopping_list_id,
-        item.product_id,
+        item.shopping_list_item_id,
       );
       setCurrent(updated);
       setLists(await listShoppingLists());
+    } catch (problem) {
+      setError(messageOf(problem));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // − / + on a row; 1 is the least (Remove takes it off)
+  const changeQuantity = async (item: ShoppingListItem, quantity: number) => {
+    if (!current || busy || quantity < 1 || quantity > MAX_LIST_QUANTITY) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setCurrent(await setShoppingListItemQuantity(current.shopping_list_id, item.shopping_list_item_id, quantity));
     } catch (problem) {
       setError(messageOf(problem));
     } finally {
@@ -318,9 +335,12 @@ function ShoppingListContent() {
         onPress={() =>
           router.push({
             pathname: '/product/[id]',
+            // Opens on the color/size on the list
             params: {
               id: String(item.product_id),
               from: '/products/shopping-list',
+              ...(item.variant_color ? { color: item.variant_color } : {}),
+              ...(item.variant_size ? { size: item.variant_size } : {}),
             },
           })
         }
@@ -339,7 +359,42 @@ function ShoppingListContent() {
           {[item.brand, item.product_type].filter(Boolean).join(' · ')}
         </ThemedText>
         <VariantLines color={item.variant_color} size={item.variant_size} />
+        {!!item.variant_color && !item.variant_size && item.variant_id == null && (
+          <ThemedText type="small" themeColor="textSecondary">Size: any</ThemedText>
+        )}
       </Pressable>
+
+      {/* How many: − 2 + */}
+      <View style={[styles.rowStepper, { borderColor: theme.border }]}>
+        <Pressable
+          disabled={busy || (item.quantity ?? 1) <= 1}
+          onPress={() => void changeQuantity(item, (item.quantity ?? 1) - 1)}
+          accessibilityRole="button"
+          accessibilityLabel={`One fewer ${item.name}`}
+          hitSlop={6}
+          style={[styles.rowStep, (item.quantity ?? 1) <= 1 && styles.dimmed]}
+        >
+          <ThemedText type="smallBold">−</ThemedText>
+        </Pressable>
+        <QuantityField
+          value={item.quantity ?? 1}
+          onChange={(quantity) => void changeQuantity(item, quantity)}
+          max={MAX_LIST_QUANTITY}
+          disabled={busy}
+          accessibilityLabel={`How many ${item.name}`}
+          style={styles.rowCount}
+        />
+        <Pressable
+          disabled={busy || (item.quantity ?? 1) >= MAX_LIST_QUANTITY}
+          onPress={() => void changeQuantity(item, (item.quantity ?? 1) + 1)}
+          accessibilityRole="button"
+          accessibilityLabel={`One more ${item.name}`}
+          hitSlop={6}
+          style={[styles.rowStep, (item.quantity ?? 1) >= MAX_LIST_QUANTITY && styles.dimmed]}
+        >
+          <ThemedText type="smallBold">+</ThemedText>
+        </Pressable>
+      </View>
 
       <Pressable
         disabled={busy}
@@ -936,5 +991,24 @@ const styles = StyleSheet.create({
   },
   addedText: {
     color: Brand.success,
+  },
+  rowStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: Radius.medium,
+  },
+  rowStep: {
+    width: 28,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowCount: {
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  dimmed: {
+    opacity: 0.35,
   },
 });

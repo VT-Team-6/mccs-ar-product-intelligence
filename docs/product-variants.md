@@ -60,7 +60,7 @@ is refused (`stock.py`), since stock is counted per size.
 Every shoe gets sizes 7–12; coffee and shampoo get the size from their name plus a
 double size at 1.7× the price, and the size moves out of the name. Each store's stock
 is split across the sizes so totals stay the same, and the low-stock level becomes 1
-per size. Colors are on one showcase product per type (Nike Air Force 1: White, Black;
+per size. Colors are on one showcase product per type (Nike Air Force 1: White, Black, and two-tone White/Black;
 JanSport SuperBreak; Sony WH-1000XM4C), since each color needs its own photos. Existing
 photos of coffee and shampoo are tagged with their first size.
 

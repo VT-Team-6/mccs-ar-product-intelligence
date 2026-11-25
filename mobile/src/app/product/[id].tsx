@@ -44,7 +44,14 @@ export default function ShopperProductScreen() {
   // The [id] in this file's name: /product/2 gives id = "2".
   // "from" is the page to return to, such as /search?q=nike (optional).
   // "via" is "recommendation" when opened from a recommendation card.
-  const { id, from, via } = useLocalSearchParams<{ id: string; from?: string; via?: string }>();
+  // color/size: open on that option (from Likes or the shopping list)
+  const { id, from, via, color: openColor, size: openSize } = useLocalSearchParams<{
+    id: string;
+    from?: string;
+    via?: string;
+    color?: string;
+    size?: string;
+  }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -134,12 +141,16 @@ export default function ShopperProductScreen() {
         setColor((current) =>
           current && colors.some((c) => c.name === current)
             ? current
-            : (loaded.find((v) => v.color && v.in_stock)?.color ?? colors[0]?.name ?? null),
+            : openColor && colors.some((c) => c.name === openColor)
+              ? openColor
+              : (loaded.find((v) => v.color && v.in_stock)?.color ?? colors[0]?.name ?? null),
         );
         setSize((current) =>
           current && sizes.includes(current)
             ? current
-            : colors.length === 0
+            : openSize && sizes.includes(openSize)
+              ? openSize
+              : colors.length === 0
               ? (loaded.find((v) => v.size && v.in_stock)?.size ?? sizes[0] ?? null)
               : null,
         );
@@ -185,7 +196,7 @@ export default function ShopperProductScreen() {
     setError(null);
     try {
       if (liked) {
-        await likeProduct(product.product_id, store?.store_id);
+        await likeProduct(product.product_id, store?.store_id, color);
       } else {
         await unlikeProduct(product.product_id, store?.store_id);
       }
@@ -340,7 +351,15 @@ export default function ShopperProductScreen() {
             <AddToShoppingList
               productId={product.product_id}
               variantId={options ? (chosen?.variant_id ?? null) : null}
-              variantLabel={options && chosen ? [chosen.color, chosen.size].filter(Boolean).join(' / ') : null}
+              // A color picked without a size is saved as that color, any size
+              color={options && !chosen && usesColor ? color : null}
+              variantLabel={
+                options && chosen
+                  ? [chosen.color, chosen.size].filter(Boolean).join(' / ')
+                  : options && usesColor && color
+                    ? `${color}${usesSize ? ', any size' : ''}`
+                    : null
+              }
               onAdded={() => setListVersion((version) => version + 1)}
             />
 

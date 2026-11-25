@@ -42,7 +42,7 @@ DECLARE
 
     -- Products that come in more than one color: name -> {{color, hex}, ...}
     colors_for     JSONB := '{
-        "Nike Air Force 1 Low":             [["White", "#F5F5F5"], ["Black", "#1A1A1A"]],
+        "Nike Air Force 1 Low":             [["White", "#F5F5F5"], ["Black", "#1A1A1A"], ["White/Black", "#F5F5F5", "#1A1A1A"]],
         "JanSport SuperBreak One Backpack": [["Black", "#1A1A1A"], ["Navy", "#1F2A44"], ["Red", "#B3261E"]],
         "Sony WH-1000XM4C Wireless Headphones": [["Black", "#1A1A1A"], ["Lavender", "#B9A7D0"], ["Platinum Silver", "#C9C9C9"]]
     }';
@@ -53,6 +53,7 @@ DECLARE
         "Dove Daily Moisture Shampoo, 12 fl oz": [["8.5 fl oz", 1], ["28 fl oz", 2.5]]
     }';
     factor         NUMERIC;
+    color_hex_2    TEXT;
     pair           JSONB;
 BEGIN
     FOR product IN
@@ -96,13 +97,15 @@ BEGIN
             ci := ci + 1;
             color_name := pair ->> 0;
             color_hex := pair ->> 1;
+            -- A third value is the second swatch color of a two-tone colorway
+            color_hex_2 := pair ->> 2;
             si := 0;
             FOREACH size_name IN ARRAY COALESCE(size_list, ARRAY[NULL::TEXT]) LOOP
                 si := si + 1;
                 INSERT INTO product_variants
-                    (product_id, color, color_hex, size, color_order, size_order, sku)
+                    (product_id, color, color_hex, color_hex_2, size, color_order, size_order, sku)
                 VALUES (
-                    product.product_id, color_name, color_hex, size_name, ci, si,
+                    product.product_id, color_name, color_hex, color_hex_2, size_name, ci, si,
                     upper(concat_ws('-', 'P' || product.product_id,
                         regexp_replace(color_name, '[^A-Za-z0-9]+', '', 'g'),
                         regexp_replace(size_name, '[^A-Za-z0-9.]+', '', 'g')))

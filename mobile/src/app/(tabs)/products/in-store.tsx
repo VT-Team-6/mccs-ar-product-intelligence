@@ -131,7 +131,7 @@ function InStoreShoppingContent() {
     try {
       const updated = await setShoppingListItemCompleted(
         list.shopping_list_id,
-        item.product_id,
+        item.shopping_list_item_id,
         !item.is_completed,
       );
 
@@ -204,8 +204,12 @@ function InStoreShoppingContent() {
     if (!list || busy) return;
     setBusy(true);
     try {
-      await addShoppingListItem(list.shopping_list_id, productId);
-      const updated = await setShoppingListItemCompleted(list.shopping_list_id, productId, true);
+      const added = await addShoppingListItem(list.shopping_list_id, productId);
+      // The row just added: this product with no color or size picked
+      const row = added.items.find((i) => i.product_id === productId && !i.variant_id && !i.variant_color);
+      const updated = row
+        ? await setShoppingListItemCompleted(list.shopping_list_id, row.shopping_list_item_id, true)
+        : added;
       setList(updated);
       setNotice({ tone: 'success', text: `✓ Added ${productName} and checked it off` });
     } catch (problem) {
@@ -272,7 +276,8 @@ function InStoreShoppingContent() {
               : undefined
           }
         >
-          {item.name}
+          {/* "2 × Nike Air Force 1 Low" when more than one */}
+          {(item.quantity ?? 1) > 1 ? `${item.quantity} × ${item.name}` : item.name}
         </ThemedText>
 
         <ThemedText

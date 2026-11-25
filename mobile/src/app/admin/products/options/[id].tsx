@@ -18,7 +18,10 @@ import { ThemedView } from "@/components/themed-view";
 import { AppButton } from "@/components/ui/app-button";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ColorSwatch } from "@/components/ui/color-swatch";
 import { COLOR_PRESETS, optionsFor, sizePresetsFor } from "@/constants/variants";
+import { colorForName, colorsForTwoTone, SWATCH_PALETTE } from "@/constants/color-names";
 import { useTheme } from "@/hooks/use-theme";
 import { confirmAction } from "@/utils/confirm";
 
@@ -44,7 +47,14 @@ export default function ProductOptionsScreen() {
   // Combinations that don't exist, by comboKey
   const [skipped, setSkipped] = useState<Set<string>>(new Set());
   const [colorName, setColorName] = useState("");
+  // The new color's swatch: filled in from its name when it's a known color
+  // ("Lavender", "White/Black"), or tapped from the palette. Codes are behind a
+  // link for anyone with an exact one; a color with no swatch still adds.
   const [colorHex, setColorHex] = useState("");
+  const [colorHex2, setColorHex2] = useState("");
+  const [twoTone, setTwoTone] = useState(false);
+  const [pickedSwatch, setPickedSwatch] = useState(false);
+  const [showCodes, setShowCodes] = useState(false);
   const [sizeName, setSizeName] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -109,21 +119,51 @@ export default function ProductOptionsScreen() {
     setSizeName("");
   };
 
-  const addColor = (name: string, hex: string | null) => {
+  const addColor = (name: string, hex: string | null, hex2: string | null = null) => {
     const clean = name.trim().replace(/\s+/g, " ");
     if (!clean) return;
     if (colors.some((c) => c.name.toLowerCase() === clean.toLowerCase())) {
       setProblem(`${clean} is already a color`);
       return;
     }
-    if (hex && !HEX.test(hex)) {
+    if ((hex && !HEX.test(hex)) || (hex2 && !HEX.test(hex2))) {
       setProblem("Swatch colors look like #1A1A1A");
       return;
     }
+    if (hex2 && !hex) {
+      setProblem("Add the first swatch color too");
+      return;
+    }
     setProblem(null);
-    setColors((current) => [...current, { name: clean, hex: hex || null }]);
+    setColors((current) => [...current, { name: clean, hex: hex || null, hex2: hex2 || null }]);
     setColorName("");
     setColorHex("");
+    setColorHex2("");
+    setTwoTone(false);
+    setPickedSwatch(false);
+    setShowCodes(false);
+  };
+
+  // Typing a name fills in the swatch until a dot is tapped by hand
+  const typeColorName = (text: string) => {
+    setColorName(text);
+    if (pickedSwatch) return;
+    const both = colorsForTwoTone(text);
+    if (both) {
+      setTwoTone(true);
+      setColorHex(both[0]);
+      setColorHex2(both[1]);
+    } else {
+      setTwoTone(false);
+      setColorHex(colorForName(text) ?? "");
+      setColorHex2("");
+    }
+  };
+
+  const pickSwatch = (which: 1 | 2, hex: string) => {
+    setPickedSwatch(true);
+    if (which === 1) setColorHex(hex);
+    else setColorHex2(hex);
   };
 
   const toggleCombo = (color: string, size: string) =>
@@ -216,7 +256,11 @@ export default function ProductOptionsScreen() {
         )}
 
         {product && allowed.length > 0 && (
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            style={styles.edgeToEdge}
+            contentContainerStyle={[styles.content, styles.edgePadding]}
+            keyboardShouldPersistTaps="handled"
+          >
             <ThemedText themeColor="textSecondary">
               {allowed.length === 2
                 ? "Add the colors and sizes this product comes in. Every color comes in every size unless you switch a combination off below."
@@ -236,7 +280,7 @@ export default function ProductOptionsScreen() {
                   <View style={styles.wrap}>
                     {colors.map((color) => (
                       <View key={color.name} style={[styles.chip, styles.picked, { borderColor: theme.link }]}>
-                        <Swatch hex={color.hex} />
+                        <Swatch hex={color.hex} hex2={color.hex2} />
                         <ThemedText type="smallBold">{color.name}</ThemedText>
                         <Pressable
                           onPress={() => setColors((current) => current.filter((c) => c !== color))}
@@ -267,32 +311,123 @@ export default function ProductOptionsScreen() {
                         </Pressable>
                       ))}
                     </View>
+                    <ThemedText type="small" themeColor="textSecondary">Or type any color:</ThemedText>
                     <View style={styles.addRow}>
                       <TextInput
                         value={colorName}
-                        onChangeText={setColorName}
-                        placeholder="Other color, e.g. Frost Green"
+                        onChangeText={typeColorName}
+                        placeholder="e.g. Frost Green or White/Black"
                         placeholderTextColor={theme.textSecondary}
                         maxLength={40}
                         style={[styles.input, styles.grow, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
-                      />
-                      <TextInput
-                        value={colorHex}
-                        onChangeText={setColorHex}
-                        placeholder="#8FBFA8"
-                        placeholderTextColor={theme.textSecondary}
-                        autoCapitalize="characters"
-                        maxLength={7}
-                        style={[styles.input, styles.hex, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
                       />
                       <AppButton
                         label="Add"
                         size="small"
                         variant="secondary"
-                        onPress={() => addColor(colorName, colorHex.trim() || null)}
+                        onPress={() =>
+                          addColor(colorName, colorHex.trim() || null, twoTone ? colorHex2.trim() || null : null)
+                        }
                         disabled={!colorName.trim()}
                       />
                     </View>
+                    {colorName.trim() !== "" && (
+                      <View style={styles.swatchForm}>
+                        <View style={styles.swatchPreview}>
+                          {colorHex ? (
+                            <ColorSwatch hex={colorHex} hex2={twoTone ? colorHex2 || null : null} size={28} />
+                          ) : (
+                            <View style={[styles.noSwatch, { borderColor: theme.border }]}>
+                              <ThemedText type="smallBold">{colorName.trim().slice(0, 1).toUpperCase()}</ThemedText>
+                            </View>
+                          )}
+                          <ThemedText type="small" themeColor="textSecondary" style={styles.grow}>
+                            {colorHex
+                              ? pickedSwatch
+                                ? "Swatch picked. Tap another dot to change it."
+                                : "Swatch filled in from the name. Tap a dot to change it."
+                              : "No matching color: tap the closest dot, or add it as is (shows its first letter)."}
+                          </ThemedText>
+                        </View>
+                        {/* A real checkbox (the same one Order Requests use); the label taps it too */}
+                        <Pressable
+                          onPress={() => setTwoTone((on) => !on)}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: twoTone }}
+                          style={styles.twoToneRow}
+                        >
+                          <Checkbox
+                            checked={twoTone}
+                            onPress={() => setTwoTone((on) => !on)}
+                            label="Two-tone"
+                          />
+                          <ThemedText type="small" style={styles.grow}>
+                            Two-tone (two colors, like White/Black)
+                          </ThemedText>
+                        </Pressable>
+                        {[1, 2].filter((which) => which === 1 || twoTone).map((which) => (
+                          <View key={which} style={styles.paletteGroup}>
+                            {twoTone && (
+                              <ThemedText type="small" themeColor="textSecondary">
+                                {which === 1 ? "First color" : "Second color"}
+                              </ThemedText>
+                            )}
+                            <View style={styles.palette}>
+                              {SWATCH_PALETTE.map((hex) => {
+                                const on = (which === 1 ? colorHex : colorHex2).toUpperCase() === hex;
+                                return (
+                                  <Pressable
+                                    key={hex}
+                                    onPress={() => pickSwatch(which as 1 | 2, hex)}
+                                    accessibilityRole="radio"
+                                    accessibilityState={{ selected: on }}
+                                    accessibilityLabel={`Swatch ${hex}`}
+                                    style={[styles.paletteRing, { borderColor: on ? theme.link : "transparent" }]}
+                                  >
+                                    <ColorSwatch hex={hex} size={26} />
+                                  </Pressable>
+                                );
+                              })}
+                            </View>
+                          </View>
+                        ))}
+                        <Pressable onPress={() => setShowCodes((shown) => !shown)} hitSlop={8}>
+                          <ThemedText type="linkPrimary">{showCodes ? "Hide color codes" : "Use a color code"}</ThemedText>
+                        </Pressable>
+                        {showCodes && (
+                          <View style={styles.addRow}>
+                            <TextInput
+                              value={colorHex}
+                              onChangeText={(text) => {
+                                setPickedSwatch(true);
+                                setColorHex(text);
+                              }}
+                              placeholder="#8FBFA8"
+                              placeholderTextColor={theme.textSecondary}
+                              autoCapitalize="characters"
+                              maxLength={7}
+                              accessibilityLabel="Swatch color code"
+                              style={[styles.input, styles.grow, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
+                            />
+                            {twoTone && (
+                              <TextInput
+                                value={colorHex2}
+                                onChangeText={(text) => {
+                                  setPickedSwatch(true);
+                                  setColorHex2(text);
+                                }}
+                                placeholder="#1A1A1A"
+                                placeholderTextColor={theme.textSecondary}
+                                autoCapitalize="characters"
+                                maxLength={7}
+                                accessibilityLabel="Second swatch color code"
+                                style={[styles.input, styles.grow, { color: theme.text, backgroundColor: theme.backgroundSelected }]}
+                              />
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    )}
                   </>
                 )}
               </ThemedView>
@@ -374,7 +509,7 @@ export default function ProductOptionsScreen() {
                 {colors.map((color) => (
                   <View key={color.name} style={styles.comboRow}>
                     <View style={styles.comboColor}>
-                      <Swatch hex={color.hex} />
+                      <Swatch hex={color.hex} hex2={color.hex2} />
                       <ThemedText type="smallBold" numberOfLines={1}>{color.name}</ThemedText>
                     </View>
                     <View style={styles.wrap}>
@@ -434,11 +569,10 @@ export default function ProductOptionsScreen() {
   );
 }
 
-// A round dot in the color, with a ring so white shows on white
-function Swatch({ hex }: { hex: string | null }) {
-  const theme = useTheme();
+// A round dot in the color (split for two-tone), with a ring so white shows on white
+function Swatch({ hex, hex2 }: { hex: string | null; hex2?: string | null }) {
   if (!hex) return null;
-  return <View style={[styles.swatch, { backgroundColor: hex, borderColor: theme.border }]} />;
+  return <ColorSwatch hex={hex} hex2={hex2} size={14} />;
 }
 
 const styles = StyleSheet.create({
@@ -452,6 +586,9 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
   },
   content: { gap: Spacing.three, paddingBottom: Spacing.five },
+  // Scroll bar at the screen edge; content keeps the page margins
+  edgeToEdge: { marginHorizontal: -Spacing.four },
+  edgePadding: { paddingHorizontal: Spacing.four },
   section: { gap: Spacing.two, padding: Spacing.three, borderRadius: Radius.medium },
   wrap: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one + Spacing.half, flexShrink: 1 },
   chip: {
@@ -467,8 +604,14 @@ const styles = StyleSheet.create({
   picked: { gap: Spacing.two },
   off: { opacity: 0.55 },
   struck: { textDecorationLine: "line-through" },
-  swatch: { width: 14, height: 14, borderRadius: 7, borderWidth: 1 },
   addRow: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
+  swatchForm: { gap: Spacing.two },
+  twoToneRow: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
+  swatchPreview: { flexDirection: "row", alignItems: "center", gap: Spacing.two },
+  noSwatch: { width: 28, height: 28, borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  paletteGroup: { gap: Spacing.one },
+  palette: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.one },
+  paletteRing: { padding: 2, borderRadius: 999, borderWidth: 2 },
   input: {
     fontSize: 16,
     paddingVertical: Spacing.two,

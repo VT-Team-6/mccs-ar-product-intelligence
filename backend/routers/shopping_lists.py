@@ -15,11 +15,16 @@ class CreateShoppingList(BaseModel):
 
 class AddShoppingListItem(BaseModel):
     product_id: int = Field(gt=0)
-    # The color/size picked on the product page; None means any
+    # The exact color/size picked on the product page; None means any
     variant_id: int | None = Field(default=None, gt=0)
+    # A color picked without a size ("Black, any size")
+    color: str | None = Field(default=None, max_length=40)
+    quantity: int = Field(default=1, ge=1, le=shopping_lists.MAX_QUANTITY)
 
 class UpdateShoppingListItem(BaseModel):
-    is_completed: bool
+    # Either or both: check it off, or change how many
+    is_completed: bool | None = None
+    quantity: int | None = Field(default=None, ge=1, le=shopping_lists.MAX_QUANTITY)
 
 class ScannedProduct(BaseModel):
     product_id: int = Field(gt=0)
@@ -119,34 +124,41 @@ def add_item(
                 list_id,
                 body.product_id,
                 body.variant_id,
+                body.color,
+                body.quantity,
             )
         except shopping_lists.ShoppingListError as error:
             raise _http_error(error) from error
 
-@router.patch("/{list_id}/items/{product_id}")
+@router.patch("/{list_id}/items/{item_id}")
 def update_item(
     list_id: int,
-    product_id: int,
+    item_id: int,
     body: UpdateShoppingListItem,
     user=Depends(auth.require_authenticated_user),
 ):
-    """Manually check or uncheck a product."""
+    """Check or uncheck one row, or change its quantity."""
+    if body.is_completed is None and body.quantity is None:
+        raise HTTPException(status_code=422, detail="Nothing to change")
     with get_connection() as conn:
         try:
-            return shopping_lists.set_item_completion(
-                conn,
-                user["user_id"],
-                list_id,
-                product_id,
-                body.is_completed,
-            )
+            result = None
+            if body.quantity is not None:
+                result = shopping_lists.set_item_quantity(
+                    conn, user["user_id"], list_id, item_id, body.quantity
+                )
+            if body.is_completed is not None:
+                result = shopping_lists.set_item_completion(
+                    conn, user["user_id"], list_id, item_id, body.is_completed
+                )
+            return result
         except shopping_lists.ShoppingListError as error:
             raise _http_error(error) from error
 
-@router.delete("/{list_id}/items/{product_id}")
+@router.delete("/{list_id}/items/{item_id}")
 def delete_item(
     list_id: int,
-    product_id: int,
+    item_id: int,
     user=Depends(auth.require_authenticated_user),
 ):
     """Remove an item and return the updated list."""
@@ -156,7 +168,7 @@ def delete_item(
                 conn,
                 user["user_id"],
                 list_id,
-                product_id,
+                item_id,
             )
         except shopping_lists.ShoppingListError as error:
             raise _http_error(error) from error

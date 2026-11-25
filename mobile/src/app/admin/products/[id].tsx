@@ -204,7 +204,7 @@ export default function ProductScreen() {
         {!product && !error && <ActivityIndicator />}
 
         {product && (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView style={styles.edgeToEdge} contentContainerStyle={[styles.content, styles.edgePadding]}>
             {imageUrl ? (
               <Image
                 source={{ uri: imageUrl }}
@@ -499,6 +499,14 @@ const styles = StyleSheet.create({
   content: {
     gap: Spacing.three,
     paddingBottom: Spacing.four,
+  },
+  // The list reaches the screen edges so the scroll bar sits at the edge,
+  // while its content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
   },
   image: {
     width: "100%",

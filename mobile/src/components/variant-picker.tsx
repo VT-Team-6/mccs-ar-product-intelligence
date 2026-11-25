@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { variantColors, variantSizes, type Variant } from '@/api/variants';
 import { ThemedText } from '@/components/themed-text';
+import { ColorSwatch } from '@/components/ui/color-swatch';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -58,12 +59,11 @@ export function VariantPicker({ variants, color, size, onColor, onSize, hasStore
                     pressed && styles.pressed,
                   ]}>
                   {option.hex ? (
-                    <View
-                      style={[
-                        styles.swatch,
-                        { backgroundColor: option.hex, borderColor: theme.border },
-                        soldOut && styles.soldOut,
-                      ]}
+                    <ColorSwatch
+                      hex={option.hex}
+                      hex2={option.hex2}
+                      size={34}
+                      style={soldOut && styles.soldOut}
                     />
                   ) : (
                     // No swatch color: the name's first letter instead
