@@ -107,13 +107,15 @@ def list_product_history(
 def like_product(
     product_id: int,
     store_id: int | None = Query(default=None),
+    color: str | None = Query(default=None, max_length=40),
     user=Depends(auth.require_authenticated_user),
 ):
-    """Like a product. Repeating this is a no-op and adds no extra history."""
+    """Like a product, in the color being viewed. Repeating it adds no extra
+    history; a different color replaces the saved one."""
     with get_connection() as conn:
         resolved = store_selection.resolve_store_id(conn, user["user_id"], store_id)
         try:
-            return user_products.set_liked(conn, user["user_id"], product_id, True, resolved)
+            return user_products.set_liked(conn, user["user_id"], product_id, True, resolved, color)
         except UserProductError as error:
             raise _http_error(error) from error
 

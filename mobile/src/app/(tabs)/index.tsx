@@ -23,6 +23,7 @@ import { useStore } from "@/store/StoreContext";
 import SignoutButton from "@/components/authentication/SignoutButton";
 import { ShoppingListShortcut } from "@/components/shopping-list-shortcut";
 import { RecentlyViewed } from "@/components/recently-viewed";
+import { ExploreCategory } from "@/components/explore-category";
 
 // The space between the search bar and the tab bar
 const DOCK_GAP = 10;
@@ -30,6 +31,17 @@ const DOCK_GAP = 10;
 // Home: the header with the store picker, Chesty's tip, the shopping list
 // shortcut, and a search bar pinned above the tab bar. The bar opens search,
 // the QR scanner, or Ask Chesty (advanced search).
+// The shoes Explore shows first (the ones with the best photos)
+const EXPLORE_SHOES = [
+  'Timberland 6" Premium Waterproof Boots',
+  "Nike Air Force 1 Low",
+  "Adidas Ultraboost Light",
+  "Aldo Stessy Ballet Flats",
+  "Allbirds Tree Runners",
+  "Jordan 1 Retro High OG",
+  "Asics Gel-Kayano 30",
+];
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
@@ -77,6 +89,8 @@ export default function HomeScreen() {
   // phones, the regular size on short ones
   const { height: screenHeight } = useWindowDimensions();
   const viewedSize = Math.round(Math.min(180, Math.max(96, screenHeight - 664)));
+  // Two Explore rows share that space when signed out, so each is smaller
+  const exploreSize = Math.round(Math.min(110, Math.max(72, (screenHeight - 560) / 2.6)));
 
   // Android Native Tabs already inset this screen above the tab bar.
   const android = Platform.OS === "android";
@@ -193,6 +207,14 @@ export default function HomeScreen() {
 
         {/* Pick up where they left off (signed in, once something's been viewed) */}
         <RecentlyViewed from="/" limit={7} size={viewedSize} />
+
+        {/* Signed out there's no history or list, so show some products to explore */}
+        {!user && (
+          <>
+            <ExploreCategory category="shoes" title="shoes" from="/" size={exploreSize} picks={EXPLORE_SHOES} />
+            <ExploreCategory category="headphones" title="headphones" from="/" size={exploreSize} />
+          </>
+        )}
 
       </View>
 

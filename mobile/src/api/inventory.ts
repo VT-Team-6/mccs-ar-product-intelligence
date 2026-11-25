@@ -33,6 +33,11 @@ export type StoreStockEntry = {
   low_stock?: boolean;
   buyer_user_id?: number | null;
   buyer_email?: string | null;
+  // How many colors/sizes it comes in, and how many are low
+  variant_count?: number;
+  low_variant_count?: number;
+  // How many colors/sizes have their own low-stock level
+  custom_level_count?: number;
 };
 
 type StoreStockPage = {
@@ -136,7 +141,7 @@ export async function updateStock(productId: number, storeId: number, change: St
 export async function approveEntry(
   productId: number,
   storeId: number,
-  values: { price: number; quantity: number },
+  values: { price: number; quantity?: number },
 ) {
   const response = await authenticatedFetch(
     `/api/admin/inventory/${productId}/${storeId}/approve`,
@@ -194,7 +199,10 @@ export async function exportStockCsv(storeId: number): Promise<string> {
 
 export type StockImportChange = {
   product_id: number;
+  variant_id?: number | null;
   name: string;
+  color?: string | null;
+  size?: string | null;
   brand: string | null;
   old_quantity: number;
   new_quantity: number;

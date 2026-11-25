@@ -5,10 +5,13 @@ import RegisterForm from "@/components/authentication/RegisterForm";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
+import { useTheme } from "@/hooks/use-theme";
+
 export default function AuthScreen() {
   const [authMode, setAuthMode] = useState<
     "login" | "register" | "verify" | "passwordReset"
   >("login");
+  const theme = useTheme();
   const [verificationEmail, setVerificationEmail] = useState<string>("");
 
   function toVerification(email: string) {
@@ -17,7 +20,7 @@ export default function AuthScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {authMode === "verify" ? (
         <EmailVerification
           email={verificationEmail}
@@ -46,6 +49,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
-    backgroundColor: "#f8f8f8",
   },
 });

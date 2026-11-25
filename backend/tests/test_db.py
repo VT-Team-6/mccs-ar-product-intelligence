@@ -18,7 +18,7 @@ _SEEDED_NAME = re.compile(r"^\s*\('((?:[^']|'')*)'", re.MULTILINE)
 # Guards against a truncated seed file silently satisfying the comparison in
 # test_seed_data_loaded: both sides of that comparison derive from this file, so
 # losing rows would otherwise go unnoticed. Update this when seeds change.
-EXPECTED_SEED_COUNT = 52
+EXPECTED_SEED_COUNT = 150
 
 
 def _seeded_product_names() -> list[str]:
@@ -28,7 +28,10 @@ def _seeded_product_names() -> list[str]:
     duplicating it as a second hard-coded list that silently goes stale.
     """
     text = PRODUCTS_SEED.read_text(encoding="utf-8")
-    return [name.replace("''", "'") for name in _SEEDED_NAME.findall(text)]
+    names = [name.replace("''", "'") for name in _SEEDED_NAME.findall(text)]
+    # seeds/007-product-variants.sql moves a coffee or shampoo size out of the
+    # name and into its sizes ("..., 12 oz" -> "...")
+    return [re.sub(r", [0-9.]+ (fl )?oz$", "", name) for name in names]
 
 
 def _connection_url(pg):

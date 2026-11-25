@@ -9,13 +9,16 @@ import {
 
 import {
   PRODUCT_CATEGORIES,
+  PRODUCT_FITS,
   type Product,
   type ProductCategory,
+  type ProductFit,
   type ProductInput,
 } from "@/api/products";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { ProductImagePicker } from "@/components/product-image-picker";
+import { ChoiceChip } from "@/components/ui/choice-chip";
 import { BottomTabInset, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { imageUrlProblem } from "@/utils/product-images";
@@ -35,6 +38,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
   const [brand, setBrand] = useState(initial?.brand ?? "");
   const [productType, setProductType] = useState(initial?.product_type ?? "");
   const [category, setCategory] = useState<ProductCategory | null>(initial?.category ?? null);
+  const [fit, setFit] = useState<ProductFit | null>(initial?.fit ?? null);
   const [description, setDescription] = useState(initial?.description ?? "");
   const [imageUrl, setImageUrl] = useState(initial?.image_url ?? "");
   const [verifiedImageUrl, setVerifiedImageUrl] = useState(initial?.image_url ?? "");
@@ -48,6 +52,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
     if (!name.trim()) found.push("Name is required.");
     if (!productType.trim()) found.push("Type is required.");
     if (!category) found.push("Choose a category.");
+    if (category === "shoes" && !fit) found.push("Choose who the shoe is for (Men's, Women's or Kids).");
     const imageProblem = imageUrlProblem(imageUrl);
     if (imageProblem) found.push(imageProblem);
     else if (imageUrl.trim() && imageUrl.trim() !== verifiedImageUrl) {
@@ -64,6 +69,7 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         brand: brand.trim() || null,
         product_type: productType.trim(),
         category,
+        fit: category === "shoes" ? fit : null,
         description: description.trim() || null,
         image_url: imageUrl.trim() || null,
       });
@@ -102,21 +108,37 @@ export function ProductForm({ initial, submitLabel, onSubmit }: Props) {
         </ThemedText>
         <ThemedView style={styles.choices}>
           {PRODUCT_CATEGORIES.map((choice) => (
-            <Pressable
+            <ChoiceChip
               key={choice.value}
+              label={choice.label}
+              selected={choice.value === category}
               onPress={() => setCategory(choice.value)}
-              style={({ pressed }) => pressed && styles.pressed}
-            >
-              <ThemedView
-                type={choice.value === category ? "backgroundSelected" : "backgroundElement"}
-                style={styles.choice}
-              >
-                <ThemedText type="smallBold">{choice.label}</ThemedText>
-              </ThemedView>
-            </Pressable>
+            />
           ))}
         </ThemedView>
       </ThemedView>
+      {/* Shoes only: a men's 7 and a women's 7 are different shoes. Unisex
+          shoes (Crocs, Converse) go under Men's, since they're sized in men's. */}
+      {category === "shoes" && (
+        <ThemedView style={styles.field}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Fit *
+          </ThemedText>
+          <ThemedView style={styles.choices}>
+            {PRODUCT_FITS.map((choice) => (
+              <ChoiceChip
+                key={choice.value}
+                label={choice.label}
+                selected={choice.value === fit}
+                onPress={() => setFit(choice.value)}
+              />
+            ))}
+          </ThemedView>
+          <ThemedText type="small" themeColor="textSecondary">
+            Unisex shoes go under Men&apos;s, since they&apos;re sized in men&apos;s sizes.
+          </ThemedText>
+        </ThemedView>
+      )}
       {/* Price is not a product field: each store sets its own, in Manage
           Inventory/Stock. */}
       <ThemedText type="small" themeColor="textSecondary">
@@ -208,11 +230,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.two,
-  },
-  choice: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.three,
   },
   multiline: {
     minHeight: 96,

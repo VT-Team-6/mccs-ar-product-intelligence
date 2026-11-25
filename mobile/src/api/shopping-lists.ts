@@ -10,7 +10,29 @@ export type ShoppingListItem = {
   brand: string | null;
   product_type: string;
   image_url: string | null;
+  // The color/size the shopper picked, or null for any. variant_color is set
+  // for a color picked without a size too ("Black, any size")
+  variant_id?: number | null;
+  variant_color?: string | null;
+  variant_size?: string | null;
+  // How many, 1 to 99
+  quantity?: number;
 };
+
+export const MAX_LIST_QUANTITY = 99;
+
+// Whether a row is this product with this pick: exact size/color, a color in
+// any size, or neither
+export function samePick(
+  item: ShoppingListItem,
+  productId: number,
+  variantId: number | null,
+  color: string | null,
+): boolean {
+  if (item.product_id !== productId) return false;
+  if (variantId !== null) return (item.variant_id ?? null) === variantId;
+  return !item.variant_id && (item.variant_color ?? null) === color;
+}
 
 // Summary used when selecting a list.
 export type ShoppingListSummary = {
@@ -86,28 +108,50 @@ export async function activateShoppingList(
 }
 
 // Reusable by the product-details implementation.
+// The same product and pick again adds to that row's quantity.
 export async function addShoppingListItem(
   listId: number,
   productId: number,
+  variantId?: number | null,
+  color?: string | null,
+  quantity = 1,
 ): Promise<ShoppingList> {
   const response = await authenticatedFetch(
     `${BASE}/${listId}/items`,
     {
       method: 'POST',
-      body: JSON.stringify({ product_id: productId }),
+      body: JSON.stringify({
+        product_id: productId,
+        variant_id: variantId ?? null,
+        color: variantId ? null : (color ?? null),
+        quantity,
+      }),
     },
   );
   return readResponse(response, 'Could not add product.');
 }
 
-// Manually check or uncheck an item.
+// Change how many of one row.
+export async function setShoppingListItemQuantity(
+  listId: number,
+  itemId: number,
+  quantity: number,
+): Promise<ShoppingList> {
+  const response = await authenticatedFetch(`${BASE}/${listId}/items/${itemId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ quantity }),
+  });
+  return readResponse(response, 'Could not change the quantity.');
+}
+
+// Manually check or uncheck one row (by its shopping_list_item_id).
 export async function setShoppingListItemCompleted(
   listId: number,
-  productId: number,
+  itemId: number,
   isCompleted: boolean,
 ): Promise<ShoppingList> {
   const response = await authenticatedFetch(
-    `${BASE}/${listId}/items/${productId}`,
+    `${BASE}/${listId}/items/${itemId}`,
     {
       method: 'PATCH',
       body: JSON.stringify({ is_completed: isCompleted }),
@@ -116,13 +160,13 @@ export async function setShoppingListItemCompleted(
   return readResponse(response, 'Could not update item.');
 }
 
-// Remove an item from one list.
+// Remove one row (by its shopping_list_item_id) from a list.
 export async function removeShoppingListItem(
   listId: number,
-  productId: number,
+  itemId: number,
 ): Promise<ShoppingList> {
   const response = await authenticatedFetch(
-    `${BASE}/${listId}/items/${productId}`,
+    `${BASE}/${listId}/items/${itemId}`,
     { method: 'DELETE' },
   );
   return readResponse(response, 'Could not remove item.');

@@ -9,6 +9,8 @@ export type MyProduct = Product & {
 // A product in the Likes tab, with when it was liked.
 export type LikedProduct = Product & {
   liked_at: string;
+  // The color it was liked in; image_url is then that color's first photo
+  liked_color?: string | null;
 };
 
 // One interaction event. The same product can appear more than once.
@@ -112,8 +114,12 @@ export async function listProductHistory(options: {
 }
 
 // Both calls are idempotent, so repeating one is harmless.
-export async function likeProduct(productId: number, storeId?: number): Promise<MyProduct> {
-  const response = await authenticatedFetch(withStore(`/api/me/liked-products/${productId}`, storeId), {
+// color: the color being viewed, so Likes shows and opens that colorway
+export async function likeProduct(productId: number, storeId?: number, color?: string | null): Promise<MyProduct> {
+  const path = color
+    ? `/api/me/liked-products/${productId}?color=${encodeURIComponent(color)}`
+    : `/api/me/liked-products/${productId}`;
+  const response = await authenticatedFetch(withStore(path, storeId), {
     method: "PUT",
   });
   return readJson(response, "Could not like the product");

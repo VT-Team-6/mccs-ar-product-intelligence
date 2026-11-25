@@ -285,11 +285,23 @@ function FileButton({ label, onPress, disabled }: { label: string; onPress: () =
 
 function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => void }) {
   const theme = useTheme();
-  const price = item.price === null ? "No price" : `$${item.price.toFixed(2)}`;
+  // A product in sizes/colors shows its lowest price and how many of them are low
+  const options = (item.variant_count ?? 1) > 1;
+  const price = item.price === null ? "No price" : `${options ? "From " : ""}$${item.price.toFixed(2)}`;
+  // Stock and "low" on their own lines, so the right side stays narrow and the
+  // product name has room
+  const low =
+    item.status === "pending" || !item.low_stock
+      ? null
+      : options
+        ? `${item.low_variant_count} of ${item.variant_count} low`
+        : "Low";
   const stock =
     item.status === "pending"
       ? "Needs approval"
-      : `${item.quantity > 0 ? `${item.quantity} in stock` : "Out of stock"}${item.low_stock ? " · Low" : ""}`;
+      : item.quantity > 0
+        ? `${item.quantity} in stock`
+        : "Out of stock";
   const imageUrl = productImageUrl(item);
 
   return (
@@ -315,6 +327,11 @@ function StockRow({ item, onPress }: { item: StoreStockEntry; onPress: () => voi
           <ThemedText type="small" themeColor="textSecondary">
             {stock}
           </ThemedText>
+          {low && (
+            <ThemedText type="small" themeColor="danger">
+              {low}
+            </ThemedText>
+          )}
         </ThemedView>
       </ThemedView>
     </Pressable>

@@ -49,10 +49,21 @@ def get_list(conn: Connection, user_id: int, list_id: int) -> dict:
     items = conn.execute(
         """
         SELECT i.shopping_list_item_id, i.product_id,
-               i.is_completed, i.added_at,
-               p.name, p.brand, p.product_type, p.image_url
+               i.is_completed, i.added_at, i.quantity,
+               p.name, p.brand, p.product_type,
+               i.variant_id,
+               COALESCE(v.color, i.color) AS variant_color, v.size AS variant_size,
+               -- The picked color's first photo, else the main photo
+               COALESCE(
+                   (SELECT pi.image_url FROM product_images pi
+                     WHERE pi.product_id = i.product_id
+                       AND lower(pi.color) = lower(COALESCE(v.color, i.color))
+                     ORDER BY pi.image_id LIMIT 1),
+                   p.image_url
+               ) AS image_url
         FROM shopping_list_items i
         JOIN products p ON p.product_id = i.product_id
+        LEFT JOIN product_variants v ON v.variant_id = i.variant_id
         WHERE i.shopping_list_id = %s
         ORDER BY i.is_completed ASC, i.added_at ASC,
                  i.shopping_list_item_id ASC
@@ -145,11 +156,22 @@ def activate_list(conn: Connection, user_id: int, list_id: int) -> dict:
     )
     return get_list(conn, user_id, list_id)
 
+MAX_QUANTITY = 99
+
+
 def add_item(
-    conn: Connection, user_id: int, list_id: int, product_id: int
+    conn: Connection, user_id: int, list_id: int, product_id: int,
+    variant_id: int | None = None, color: str | None = None, quantity: int = 1,
 ) -> dict:
-    """Add a catalog product once, without resetting existing check-off."""
+    """Add a catalog product in a color/size, without resetting check-off.
+
+    variant_id is the exact color and size picked; color alone is a color in
+    any size; neither is any color and size. The same product with the same
+    pick adds to that row's quantity (up to 99) instead of a second row.
+    """
     _owned_list(conn, user_id, list_id)
+    if not 1 <= quantity <= MAX_QUANTITY:
+        raise ShoppingListError(f"Quantity must be 1 to {MAX_QUANTITY}")
 
     product = conn.execute(
         """
@@ -160,50 +182,82 @@ def add_item(
     ).fetchone()
     if product is None:
         raise ShoppingListError("Product not found", 404)
+    color = (color or "").strip() or None
+    if variant_id is not None:
+        variant = conn.execute(
+            "SELECT color FROM product_variants WHERE variant_id = %s AND product_id = %s",
+            (variant_id, product_id),
+        ).fetchone()
+        if variant is None:
+            raise ShoppingListError("That size or color isn't available for this product", 404)
+        color = variant["color"]
+    elif color is not None:
+        known = conn.execute(
+            "SELECT color FROM product_variants WHERE product_id = %s AND lower(color) = lower(%s) LIMIT 1",
+            (product_id, color),
+        ).fetchone()
+        if known is None:
+            raise ShoppingListError("That color isn't available for this product", 404)
+        color = known["color"]
 
-    inserted = conn.execute(
+    conn.execute(
         """
-        INSERT INTO shopping_list_items (shopping_list_id, product_id)
-        VALUES (%s, %s)
-        ON CONFLICT (shopping_list_id, product_id) DO NOTHING
-        RETURNING shopping_list_item_id
+        INSERT INTO shopping_list_items (shopping_list_id, product_id, variant_id, color, quantity)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (shopping_list_id, product_id, (COALESCE(variant_id, 0)), (COALESCE(lower(color), '')))
+            DO UPDATE SET quantity = LEAST(%s, shopping_list_items.quantity + EXCLUDED.quantity)
         """,
-        (list_id, product_id),
+        (list_id, product_id, variant_id, color, quantity, MAX_QUANTITY),
+    )
+    conn.execute(
+        "UPDATE shopping_lists SET updated_at = NOW() WHERE shopping_list_id = %s",
+        (list_id,),
+    )
+    return get_list(conn, user_id, list_id)
+
+
+def set_item_quantity(
+    conn: Connection, user_id: int, list_id: int, item_id: int, quantity: int
+) -> dict:
+    """Set how many of one row; removing it is a separate call."""
+    _owned_list(conn, user_id, list_id)
+    if not 1 <= quantity <= MAX_QUANTITY:
+        raise ShoppingListError(f"Quantity must be 1 to {MAX_QUANTITY}")
+    updated = conn.execute(
+        "UPDATE shopping_list_items SET quantity = %s"
+        " WHERE shopping_list_id = %s AND shopping_list_item_id = %s RETURNING shopping_list_item_id",
+        (quantity, list_id, item_id),
     ).fetchone()
-
-    if inserted:
-        conn.execute(
-            """
-            UPDATE shopping_lists SET updated_at = NOW()
-            WHERE shopping_list_id = %s
-            """,
-            (list_id,),
-        )
-
+    if updated is None:
+        raise ShoppingListError("That item is not on this list", 404)
+    conn.execute(
+        "UPDATE shopping_lists SET updated_at = NOW() WHERE shopping_list_id = %s",
+        (list_id,),
+    )
     return get_list(conn, user_id, list_id)
 
 def set_item_completion(
     conn: Connection,
     user_id: int,
     list_id: int,
-    product_id: int,
+    item_id: int,
     completed: bool,
 ) -> dict:
-    """Manually check or uncheck exactly one product in an owned list."""
+    """Manually check or uncheck exactly one row (product, color, size) in an owned list."""
     _owned_list(conn, user_id, list_id)
 
     updated = conn.execute(
         """
         UPDATE shopping_list_items
         SET is_completed = %s
-        WHERE shopping_list_id = %s AND product_id = %s
+        WHERE shopping_list_id = %s AND shopping_list_item_id = %s
         RETURNING shopping_list_item_id
         """,
-        (completed, list_id, product_id),
+        (completed, list_id, item_id),
     ).fetchone()
 
     if updated is None:
-        raise ShoppingListError("Product is not on this list", 404)
+        raise ShoppingListError("That item is not on this list", 404)
 
     conn.execute(
         """
@@ -216,22 +270,22 @@ def set_item_completion(
     return get_list(conn, user_id, list_id)
 
 def remove_item(
-    conn: Connection, user_id: int, list_id: int, product_id: int
+    conn: Connection, user_id: int, list_id: int, item_id: int
 ) -> dict:
-    """Remove one item without changing any other item."""
+    """Remove one row without changing any other item."""
     _owned_list(conn, user_id, list_id)
 
     deleted = conn.execute(
         """
         DELETE FROM shopping_list_items
-        WHERE shopping_list_id = %s AND product_id = %s
+        WHERE shopping_list_id = %s AND shopping_list_item_id = %s
         RETURNING shopping_list_item_id
         """,
-        (list_id, product_id),
+        (list_id, item_id),
     ).fetchone()
 
     if deleted is None:
-        raise ShoppingListError("Product is not on this list", 404)
+        raise ShoppingListError("That item is not on this list", 404)
 
     conn.execute(
         """
@@ -247,9 +301,9 @@ def remove_item(
 def complete_active_product(
     conn: Connection, user_id: int, product_id: int
 ) -> bool:
-    """Future scanner integration: complete only a matching active-list item.
+    """Scanner check-off: complete every unchecked row of the product on the active list.
 
-    Returns True if an incomplete matching item was changed.
+    Returns True if at least one row was changed.
     Returns False if no match exists or it was already completed.
     """
     updated = conn.execute(
@@ -262,6 +316,8 @@ def complete_active_product(
           AND l.is_active = TRUE
           AND i.product_id = %s
           AND i.is_completed = FALSE
+        -- A scan names a product, not a color/size, so every row of it on the
+        -- list is checked off (the White and the Black Air Force 1 together)
         RETURNING i.shopping_list_item_id, i.shopping_list_id
         """,
         (user_id, product_id),
@@ -293,11 +349,13 @@ def _active_list(conn: Connection, user_id: int) -> dict | None:
 
 
 def _item_on_list(conn: Connection, list_id: int, product_id: int) -> dict | None:
+    """Whether any row of this product is on the list, and whether all are checked."""
     return conn.execute(
         """
-        SELECT is_completed
+        SELECT bool_and(is_completed) AS is_completed
         FROM shopping_list_items
         WHERE shopping_list_id = %s AND product_id = %s
+        HAVING count(*) > 0
         """,
         (list_id, product_id),
     ).fetchone()

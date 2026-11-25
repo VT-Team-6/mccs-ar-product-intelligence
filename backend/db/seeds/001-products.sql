@@ -126,7 +126,7 @@ WITH additions (name, brand, product_type, description, image_url) AS (
     -- headphones: ASIN B01M0GB8CC; 100 archived reviews; historical ratings 201075.
     ('Apple EarPods with Lightning Connector', 'Apple', 'Headphones', 'Wired earbuds with a Lightning connector, microphone, and inline remote.', 'https://m.media-amazon.com/images/I/41-aexp44tL._AC_SL1200_.jpg'),
     -- headphones: ASIN B08DBDSVBC; 100 archived reviews; historical ratings 49487.
-    ('Sony WH-1000XM4 Wireless Headphones', 'Sony', 'Headphones', 'Over-ear wireless headphones with active noise cancellation and a built-in microphone.', 'https://m.media-amazon.com/images/I/71x8gW79x-L._AC_SL1500_.jpg'),
+    ('Sony WH-1000XM4C Wireless Headphones', 'Sony', 'Headphones', 'Over-ear wireless headphones with active noise cancellation and a built-in microphone.', 'https://m.media-amazon.com/images/I/71x8gW79x-L._AC_SL1500_.jpg'),
     -- headphones: ASIN B0BWK6B2T4; 100 archived reviews; historical ratings 491.
     ('Sony WH-CH520 Wireless Headphones', 'Sony', 'Headphones', 'Lightweight on-ear Bluetooth headphones with a microphone for music and calls.', 'https://m.media-amazon.com/images/I/41JACWT-wWL._AC_SL1200_.jpg'),
     -- headphones: ASIN B00PKTU83U; 100 archived reviews; historical ratings 104579.

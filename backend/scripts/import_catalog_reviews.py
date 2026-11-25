@@ -31,7 +31,9 @@ def find_product(conn, item: dict) -> int | None:
     rows = conn.execute(
         """
         SELECT product_id FROM products
-        WHERE name = %s AND brand IS NOT DISTINCT FROM %s AND product_type = %s
+        -- seeds/007 moves a coffee/shampoo size out of the name into its sizes
+        WHERE name = regexp_replace(%s, ', [0-9.]+ (fl )?oz$', '')
+          AND brand IS NOT DISTINCT FROM %s AND product_type = %s
           AND deleted_at IS NULL
         """,
         (item["name"], item.get("brand"), item["product_type"]),

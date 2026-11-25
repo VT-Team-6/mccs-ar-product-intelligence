@@ -29,12 +29,15 @@ export function BackButton({
   onPress?: () => void;
 }) {
   const router = useRouter();
-  const navigation = useNavigation();
+  const navigation = useNavigation() as unknown as Navigator;
 
   const goBack = () => {
-    // The page right underneath this one in the stack, if any
-    const state = navigation.getState();
-    const below = state && state.index > 0 ? state.routes[state.index - 1] : undefined;
+    // The page right underneath this one, if any. A screen in a folder with
+    // its own stack (like product/) is the only page in that inner stack, so
+    // look outward until a stack has something below: otherwise Back from a
+    // product opened in Ask Chesty would open a new, empty Ask Chesty instead
+    // of going back to the chat.
+    const below = pageBelow(navigation);
     const onlyTabsBelow = !below || below.name === '(tabs)';
 
     if (from && from.startsWith('/') && onlyTabsBelow) {
@@ -102,3 +105,20 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
 });
+
+type Navigator = {
+  getState: () => { type?: string; index: number; routes: { name: string }[] } | undefined;
+  getParent: () => Navigator | undefined;
+};
+
+// The route under this one in the nearest stack that has one (tabs don't count:
+// a tab's neighbour isn't underneath it)
+function pageBelow(navigation: Navigator): { name: string } | undefined {
+  let current: Navigator | undefined = navigation;
+  while (current) {
+    const state = current.getState();
+    if (state && state.type === 'stack' && state.index > 0) return state.routes[state.index - 1];
+    current = current.getParent();
+  }
+  return undefined;
+}

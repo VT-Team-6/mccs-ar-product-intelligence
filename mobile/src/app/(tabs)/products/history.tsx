@@ -41,9 +41,6 @@ const EVENT_LABELS: Record<string, string> = {
   unliked: 'Unliked',
 };
 
-// Interactions that mean the shopper was looking at the product at that store,
-// so the row can say where. A like is not a store visit.
-const STORE_VISITS = new Set(['scanned', 'viewed', 'viewed-from-search', 'viewed-from-recommendation']);
 
 type HistorySection = {
   title: string;
@@ -352,28 +349,15 @@ function HistoryContent() {
                     product={item.product}
                     isLiked={item.product.is_liked}
                     onToggleLike={() => toggleLike(item)}
+                    showDetails={false}
                     // A navy edge marks the products picked for comparing
                     style={selected ? SELECTED_EDGE : undefined}
                     event={`${EVENT_LABELS[item.interaction] ?? item.interaction} · ${formatTime(
                       item.occurred_at,
                     )}`}
-                    // Where the event happened, from the row's own flat fields. The
-              // nested product.store_inventory is today's price, not the event's.
-              // Only the interaction types that mean "was looking at it here"
-              // get the location line; a like is not a store visit.
-              meta={[
-                STORE_VISITS.has(item.interaction) && item.store_name
-                  ? `Viewed at ${item.store_name} location.`
-                  : null,
-                // Past price, explicitly labelled: it can differ from today's
-                // price at the same store, and is null on older events.
-                item.price_at_interaction != null
-                  ? `$${Number(item.price_at_interaction).toFixed(2)} when you were here`
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(' · ') || null}
-              onPress={() =>
+                    // No store or past-price line: it made rows very tall, and a
+                    // product can be viewed from home, not only at a store
+                    onPress={() =>
                       router.push({
                         pathname: '/product/[id]',
                         params: {

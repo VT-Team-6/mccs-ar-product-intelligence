@@ -1,5 +1,5 @@
 import { confirmResetPassword, resetPassword } from "aws-amplify/auth";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -9,11 +9,17 @@ import {
   View,
 } from "react-native";
 
+import { Brand, Colors } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+
 type PasswordResetProps = {
   onBack: () => void;
 };
 
 export default function PasswordReset({ onBack }: PasswordResetProps) {
+  const theme = useTheme();
+  // Colors follow the app theme, so the screen switches with light/dark mode
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const [step, setStep] = useState<"email" | "confirm">("email");
 
   const [email, setEmail] = useState("");
@@ -132,7 +138,7 @@ export default function PasswordReset({ onBack }: PasswordResetProps) {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator />
+            <ActivityIndicator color="#ffffff" />
           ) : (
             <Text style={styles.primaryButtonText}>Reset password</Text>
           )}
@@ -159,7 +165,7 @@ export default function PasswordReset({ onBack }: PasswordResetProps) {
         value={email}
         onChangeText={setEmail}
         placeholder="username@example.com"
-        placeholderTextColor="#999999"
+        placeholderTextColor={theme.textSecondary}
         autoCapitalize="none"
         autoCorrect={false}
         keyboardType="email-address"
@@ -173,7 +179,7 @@ export default function PasswordReset({ onBack }: PasswordResetProps) {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator />
+          <ActivityIndicator color="#ffffff" />
         ) : (
           <Text style={styles.primaryButtonText}>Send reset code</Text>
         )}
@@ -186,94 +192,95 @@ export default function PasswordReset({ onBack }: PasswordResetProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
+const makeStyles = (theme: (typeof Colors)["light" | "dark"]) =>
+  StyleSheet.create({
+    card: {
+      width: "100%",
+      maxWidth: 420,
+      alignSelf: "center",
 
-    backgroundColor: "#f7f7f7",
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
-  },
+      backgroundColor: theme.background,
+      paddingHorizontal: 24,
+      paddingTop: 32,
+      paddingBottom: 16,
+    },
 
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    color: "#171717",
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      textAlign: "center",
+      color: theme.text,
 
-    marginBottom: 4,
-  },
+      marginBottom: 4,
+    },
 
-  subtitle: {
-    fontSize: 11,
-    textAlign: "center",
-    color: "#777777",
+    subtitle: {
+      fontSize: 11,
+      textAlign: "center",
+      color: theme.textSecondary,
 
-    marginBottom: 24,
-  },
+      marginBottom: 24,
+    },
 
-  label: {
-    fontSize: 10,
-    color: "#666666",
+    label: {
+      fontSize: 10,
+      color: theme.textSecondary,
 
-    marginBottom: 4,
-  },
+      marginBottom: 4,
+    },
 
-  input: {
-    height: 42,
+    input: {
+      height: 42,
 
-    borderWidth: 1,
-    borderColor: "#cccccc",
-    borderRadius: 5,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 5,
 
-    backgroundColor: "#ffffff",
-    color: "#181818",
+      backgroundColor: theme.card,
+      color: theme.text,
 
-    paddingHorizontal: 12,
+      paddingHorizontal: 12,
 
-    fontSize: 13,
+      fontSize: 13,
 
-    marginBottom: 12,
-  },
+      marginBottom: 12,
+    },
 
-  error: {
-    fontSize: 11,
-    color: "#b00020",
+    error: {
+      fontSize: 11,
+      color: theme.danger,
 
-    marginBottom: 10,
-  },
+      marginBottom: 10,
+    },
 
-  primaryButton: {
-    height: 44,
+    primaryButton: {
+      height: 44,
 
-    borderRadius: 5,
-    backgroundColor: "#171717",
+      borderRadius: 5,
+      backgroundColor: Brand.navy,
 
-    alignItems: "center",
-    justifyContent: "center",
+      alignItems: "center",
+      justifyContent: "center",
 
-    marginTop: 2,
-  },
+      marginTop: 2,
+    },
 
-  disabledButton: {
-    opacity: 0.6,
-  },
+    disabledButton: {
+      opacity: 0.6,
+    },
 
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: "600",
-  },
+    primaryButtonText: {
+      color: "#ffffff",
+      fontSize: 13,
+      fontWeight: "600",
+    },
 
-  backText: {
-    marginTop: 12,
+    backText: {
+      marginTop: 12,
 
-    textAlign: "center",
-    fontSize: 10,
-    fontWeight: "500",
-    color: "#555555",
-  },
-});
+      textAlign: "center",
+      fontSize: 10,
+      fontWeight: "500",
+      color: theme.link,
+    },
+  });

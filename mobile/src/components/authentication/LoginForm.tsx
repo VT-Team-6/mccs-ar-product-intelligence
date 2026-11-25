@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +10,10 @@ import {
 
 import { useAuth } from "@/auth/AuthContext";
 import { signInWithRedirect } from "aws-amplify/auth";
+
+import { GoogleLogo } from "@/components/ui/google-logo";
+import { Brand, Colors } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 type LoginProps = {
   onToRegistration: () => void;
@@ -23,6 +27,9 @@ export default function LoginForm({
   onToPasswordReset,
 }: LoginProps) {
   const { signIn, continueAsGuest } = useAuth();
+  const theme = useTheme();
+  // Colors follow the app theme, so the screen switches with light/dark mode
+  const styles = useMemo(() => makeStyles(theme), [theme]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -56,6 +63,7 @@ export default function LoginForm({
 
   return (
     <View style={styles.card}>
+      {/* Placeholder for the app logo (being designed; added later) */}
       <View style={styles.logoPlaceholder}>
         <Text style={styles.logoText}>LOGO</Text>
       </View>
@@ -66,9 +74,10 @@ export default function LoginForm({
       </Text>
 
       <Pressable style={styles.secondaryButton} onPress={handleGoogleLogin}>
-        <Text style={styles.secondaryButtonText} onPress={handleGoogleLogin}>
-          ▢ Continue with Google
-        </Text>
+        <View style={styles.googleRow}>
+          <GoogleLogo size={18} />
+          <Text style={styles.secondaryButtonText}>Continue with Google</Text>
+        </View>
       </Pressable>
 
       <View style={styles.dividerContainer}>
@@ -81,7 +90,7 @@ export default function LoginForm({
       <TextInput
         style={styles.input}
         placeholder="username@example.com"
-        placeholderTextColor="#999999"
+        placeholderTextColor={theme.textSecondary}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
@@ -93,7 +102,7 @@ export default function LoginForm({
       <TextInput
         style={styles.input}
         placeholder="••••••••"
-        placeholderTextColor="#999999"
+        placeholderTextColor={theme.textSecondary}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -111,7 +120,7 @@ export default function LoginForm({
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator />
+          <ActivityIndicator color="#ffffff" />
         ) : (
           <Text style={styles.primaryButtonText}>Sign in</Text>
         )}
@@ -145,156 +154,163 @@ export default function LoginForm({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: "100%",
-    maxWidth: 420,
-    alignSelf: "center",
-  },
+const makeStyles = (theme: (typeof Colors)["light" | "dark"]) =>
+  StyleSheet.create({
+    card: {
+      width: "100%",
+      maxWidth: 420,
+      alignSelf: "center",
+    },
 
-  logoPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: 10,
-    backgroundColor: "#eeeeee",
-    alignItems: "center",
-    justifyContent: "center",
-    alignSelf: "center",
-    marginBottom: 12,
-  },
+    logoPlaceholder: {
+      width: 52,
+      height: 52,
+      borderRadius: 10,
+      backgroundColor: theme.backgroundElement,
+      alignItems: "center",
+      justifyContent: "center",
+      alignSelf: "center",
+      marginBottom: 12,
+    },
 
-  logoText: {
-    fontSize: 10,
-    color: "#999999",
-  },
+    logoText: {
+      fontSize: 10,
+      color: theme.textSecondary,
+    },
 
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    color: "#181818",
-  },
+    title: {
+      fontSize: 20,
+      fontWeight: "700",
+      textAlign: "center",
+      color: theme.text,
+    },
 
-  subtitle: {
-    marginTop: 4,
-    marginBottom: 24,
-    fontSize: 12,
-    textAlign: "center",
-    color: "#777777",
-  },
+    subtitle: {
+      marginTop: 4,
+      marginBottom: 24,
+      fontSize: 12,
+      textAlign: "center",
+      color: theme.textSecondary,
+    },
 
-  secondaryButton: {
-    height: 44,
-    borderWidth: 1,
-    borderColor: "#d0d0d0",
-    borderRadius: 6,
-    backgroundColor: "#ffffff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    secondaryButton: {
+      height: 44,
+      borderWidth: 1,
+      borderColor: theme.border,
+      borderRadius: 6,
+      backgroundColor: theme.card,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#222222",
-  },
+    googleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
 
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 18,
-  },
+    secondaryButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: theme.text,
+    },
 
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#dedede",
-  },
+    dividerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginVertical: 18,
+    },
 
-  dividerText: {
-    marginHorizontal: 12,
-    fontSize: 10,
-    color: "#888888",
-  },
+    divider: {
+      flex: 1,
+      height: 1,
+      backgroundColor: theme.border,
+    },
 
-  label: {
-    fontSize: 11,
-    color: "#555555",
-    marginBottom: 5,
-  },
+    dividerText: {
+      marginHorizontal: 12,
+      fontSize: 10,
+      color: theme.textSecondary,
+    },
 
-  input: {
-    height: 42,
-    borderWidth: 1,
-    borderColor: "#cccccc",
-    color: "#181818",
-    borderRadius: 5,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    fontSize: 14,
-  },
+    label: {
+      fontSize: 11,
+      color: theme.textSecondary,
+      marginBottom: 5,
+    },
 
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginTop: -5,
-    marginBottom: 16,
-  },
+    input: {
+      height: 42,
+      borderWidth: 1,
+      borderColor: theme.border,
+      color: theme.text,
+      borderRadius: 5,
+      backgroundColor: theme.card,
+      paddingHorizontal: 12,
+      marginBottom: 12,
+      fontSize: 14,
+    },
 
-  forgotPasswordText: {
-    fontSize: 10,
-    color: "#555555",
-  },
+    forgotPassword: {
+      alignSelf: "flex-end",
+      marginTop: -5,
+      marginBottom: 16,
+    },
 
-  error: {
-    fontSize: 12,
-    color: "#b00020",
-    marginBottom: 10,
-  },
+    forgotPasswordText: {
+      fontSize: 10,
+      color: theme.link,
+    },
 
-  primaryButton: {
-    height: 44,
-    borderRadius: 5,
-    backgroundColor: "#111111",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+    error: {
+      fontSize: 12,
+      color: theme.danger,
+      marginBottom: 10,
+    },
 
-  disabledButton: {
-    opacity: 0.6,
-  },
+    primaryButton: {
+      height: 44,
+      borderRadius: 5,
+      backgroundColor: Brand.navy,
+      alignItems: "center",
+      justifyContent: "center",
+    },
 
-  primaryButtonText: {
-    color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
+    disabledButton: {
+      opacity: 0.6,
+    },
 
-  switchContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 12,
-  },
+    primaryButtonText: {
+      color: "#ffffff",
+      fontSize: 14,
+      fontWeight: "600",
+    },
 
-  switchText: {
-    fontSize: 11,
-    color: "#777777",
-  },
+    switchContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      marginTop: 12,
+    },
 
-  switchLink: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#222222",
-  },
+    switchText: {
+      fontSize: 11,
+      color: theme.textSecondary,
+    },
 
-  guestSection: {
-    marginTop: 100,
-  },
+    switchLink: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: theme.link,
+    },
 
-  guestDescription: {
-    marginTop: 8,
-    textAlign: "center",
-    fontSize: 10,
-    color: "#999999",
-  },
-});
+    guestSection: {
+      marginTop: 100,
+    },
+
+    guestDescription: {
+      marginTop: 8,
+      textAlign: "center",
+      fontSize: 10,
+      color: theme.textSecondary,
+    },
+  });

@@ -24,6 +24,8 @@ export type ReorderProduct = {
   alert_id: number;
   product_id: number;
   name: string;
+  color?: string | null;
+  size?: string | null;
   brand: string | null;
   quantity: number;
   low_stock_threshold: number;
@@ -50,6 +52,64 @@ export async function getReorders(
   return response.json();
 }
 
+// --- One row per product, and every size of the picked ones ------------------
+
+// A product on sale at the store, for the Reorders list
+export type ReorderCatalogProduct = {
+  product_id: number;
+  name: string;
+  brand: string | null;
+  category: string | null;
+  fit: string | null;
+  quantity: number;
+  low_stock_threshold: number;
+  variant_count: number;
+  low_count: number;
+  // Every status any of its sizes has, most urgent first; status is the first
+  statuses: ReorderStatus[];
+  status: ReorderStatus | null;
+  buyer_user_id: number | null;
+  buyer_email: string | null;
+};
+
+export async function getReorderCatalog(
+  storeId: number,
+): Promise<{ products: ReorderCatalogProduct[]; counts: ReorderCounts & { all: number } }> {
+  const response = await authenticatedFetch(`/api/reorders/catalog?store_id=${storeId}`);
+  if (!response.ok) throw await problem(response, "Could not load the products");
+  return response.json();
+}
+
+// One size/color of a product, with its stock and reorder status
+export type ReorderLine = {
+  product_id: number;
+  name: string;
+  brand: string | null;
+  category: string | null;
+  fit: string | null;
+  buyer_user_id: number | null;
+  buyer_email: string | null;
+  variant_id: number;
+  color: string | null;
+  color_hex: string | null;
+  size: string | null;
+  quantity: number;
+  low_stock_threshold: number;
+  low: boolean;
+  alert_id: number | null;
+  status: ReorderStatus | null;
+  suggested_quantity: number;
+  // False while it's already requested or ordered
+  sendable: boolean;
+};
+
+export async function getReorderLines(storeId: number, productIds: number[]): Promise<ReorderLine[]> {
+  const ids = productIds.map((id) => `product_id=${id}`).join("&");
+  const response = await authenticatedFetch(`/api/reorders/lines?store_id=${storeId}&${ids}`);
+  if (!response.ok) throw await problem(response, "Could not load the sizes");
+  return response.json();
+}
+
 // Products that can be sent (needs reorder or unavailable) for one buyer.
 // buyer_user_id is null for products with no buyer.
 export type ReorderGroup = {
@@ -67,7 +127,8 @@ export async function getReorderGroups(storeId: number): Promise<ReorderGroup[]>
 export async function sendOrderRequest(
   storeId: number,
   buyerUserId: number,
-  items: { alert_id: number; quantity: number }[],
+  // A low product's alert, or any size/color by variant_id (to order ahead)
+  items: ({ alert_id: number; quantity: number } | { variant_id: number; quantity: number })[],
   note: string,
   rememberBuyer = false,
 ): Promise<void> {
@@ -117,8 +178,13 @@ export type OrderRequest = {
   message: string;
   summary: OrderSummary;
   items: {
+    // One item per color/size, so the alert is the key
+    alert_id: number;
     product_id: number;
+    variant_id?: number | null;
     name: string;
+    color?: string | null;
+    size?: string | null;
     brand: string | null;
     quantity: number;
     status: ItemStatus;
@@ -191,16 +257,16 @@ export async function getOrderRequest(requestId: number): Promise<OrderRequest> 
   return response.json();
 }
 
-// The buyer marks some products ordered, or unavailable with a reason
+// The buyer marks some items (by alert id: one per color/size) ordered, or unavailable with a reason
 export async function updateOrderItems(
   requestId: number,
-  productIds: number[],
+  alertIds: number[],
   status: "ordered" | "unavailable",
   reason = "",
 ): Promise<OrderRequest> {
   const response = await authenticatedFetch(`/api/order-requests/${requestId}/items`, {
     method: "POST",
-    body: JSON.stringify({ product_ids: productIds, status, reason }),
+    body: JSON.stringify({ alert_ids: alertIds, status, reason }),
   });
   if (!response.ok) throw await problem(response, "Could not update the order request");
   return response.json();

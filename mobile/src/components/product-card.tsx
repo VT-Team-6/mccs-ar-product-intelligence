@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-import { productImageUrl, storePriceLine, type Product } from '@/api/products';
+import { fitLabel, productImageUrl, storePriceLine, type Product } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Brand, Radius, Spacing } from '@/constants/theme';
@@ -20,6 +20,8 @@ export type ProductCardProps = {
   // The current like state, when the caller has one. Omit to hide the heart.
   isLiked?: boolean;
   onToggleLike?: () => void;
+  // false hides the brand/fit/type line and the rating (History keeps rows short)
+  showDetails?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -33,9 +35,10 @@ export function ProductCard({
   badge,
   isLiked,
   onToggleLike,
+  showDetails = true,
   style,
 }: ProductCardProps) {
-  const details = [product.brand, product.product_type].filter(Boolean).join(' · ');
+  const details = [product.brand, fitLabel(product.fit), product.product_type].filter(Boolean).join(' · ');
   const { store, openStoreSelector } = useStore();
   // One shared sheet, reached from the prompt rather than a modal per card.
   const price = storePriceLine(product, store?.store_id ?? null, store?.name ?? null);
@@ -73,10 +76,12 @@ export function ProductCard({
             </ThemedText>
           )}
           <ThemedText type="smallBold">{product.name}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {details}
-          </ThemedText>
-          {product.rating !== null && (
+          {showDetails && (
+            <ThemedText type="small" themeColor="textSecondary">
+              {details}
+            </ThemedText>
+          )}
+          {showDetails && product.rating !== null && (
             <ThemedText type="small" themeColor="textSecondary">
               {`${product.rating.toFixed(1)} rating`}
             </ThemedText>

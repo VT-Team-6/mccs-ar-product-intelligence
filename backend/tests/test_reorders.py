@@ -184,7 +184,7 @@ def test_one_csv_import_sends_one_notification(client, db, staff):
 
     messages = _notifications(client)["messages"]
     assert len(messages) == 1
-    assert messages[0]["subject"].startswith("2 products are low on stock")
+    assert messages[0]["subject"].startswith("2 items are low on stock")
 
 
 def test_products_already_low_are_found_on_startup(client, db, staff):

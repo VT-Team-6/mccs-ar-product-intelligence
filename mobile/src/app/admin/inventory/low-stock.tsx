@@ -1,5 +1,5 @@
-import { Redirect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -52,6 +52,7 @@ export default function LowStockSettingsScreen() {
 function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?: string }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const [items, setItems] = useState<StoreStockEntry[]>([]);
   const [buyers, setBuyers] = useState<StoreBuyer[]>([]);
@@ -84,9 +85,25 @@ function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?:
     }
   }, [storeId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  // Reload when coming back from a product's size levels
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+
+  // A product's own screen for per-color/size levels
+  const openLevels = (item: StoreStockEntry) =>
+    router.push({
+      pathname: "/admin/inventory/levels",
+      params: {
+        storeId: String(storeId),
+        storeName: storeName ?? "",
+        productId: String(item.product_id),
+        productName: item.product_name,
+        level: String(item.low_stock_threshold ?? 10),
+      },
+    } as unknown as Href);
 
   const categories = [...new Set(items.map((item) => item.category).filter((c): c is string => !!c))].sort();
   // The products shown: in the chosen category and matching the search.
@@ -216,6 +233,18 @@ function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?:
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => {
             const isSelected = selected.has(item.product_id);
+            // Colors/sizes: the level is per size, and each can have its own
+            const hasOptions = (item.variant_count ?? 1) > 1;
+            const custom = item.custom_level_count ?? 0;
+            const levelText = hasOptions
+              ? `Low at ${item.low_stock_threshold ?? 10} per size${custom > 0 ? ` · ${custom} custom` : ""}`
+              : `Low at ${item.low_stock_threshold ?? 10}`;
+            const lowCount = item.low_variant_count ?? 0;
+            const stockText = !item.low_stock
+              ? `${item.quantity}`
+              : hasOptions
+                ? `${item.quantity} · ${lowCount} ${lowCount === 1 ? "size" : "sizes"} low`
+                : `${item.quantity} · Low`;
             return (
               <Pressable onPress={() => toggle(item.product_id)} style={({ pressed }) => pressed && styles.pressed}>
                 <ThemedView type={isSelected ? "backgroundSelected" : "backgroundElement"} style={styles.row}>
@@ -223,12 +252,23 @@ function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?:
                   <ThemedView type={isSelected ? "backgroundSelected" : "backgroundElement"} style={styles.rowText}>
                     <ThemedText type="smallBold">{item.product_name}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {`Low at ${item.low_stock_threshold ?? 10} · ${item.buyer_email ?? "No buyer"}`}
+                      {`${levelText} · ${item.buyer_email ?? "No buyer"}`}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor={item.low_stock ? "text" : "textSecondary"}>
+                      {stockText}
                     </ThemedText>
                   </ThemedView>
-                  <ThemedText type="small" themeColor={item.low_stock ? "text" : "textSecondary"}>
-                    {item.low_stock ? `${item.quantity} · Low` : `${item.quantity}`}
-                  </ThemedText>
+                  {hasOptions && (
+                    <Pressable
+                      onPress={() => openLevels(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Levels per size for ${item.product_name}`}
+                      hitSlop={8}
+                      style={({ pressed }) => [styles.sizesLink, pressed && styles.pressed]}
+                    >
+                      <ThemedText type="linkPrimary">Sizes ›</ThemedText>
+                    </Pressable>
+                  )}
                 </ThemedView>
               </Pressable>
             );
@@ -245,6 +285,11 @@ function LowStockSettings({ storeId, storeName }: { storeId: number; storeName?:
           style={[styles.panel, { marginBottom: insets.bottom + Spacing.two }]}
         >
           <ThemedText type="smallBold">{`${selected.size} selected`}</ThemedText>
+          {items.some((item) => selected.has(item.product_id) && (item.variant_count ?? 1) > 1) && (
+            <ThemedText type="small" themeColor="textSecondary">
+              For products with sizes the level is per size. Sizes with their own level keep it.
+            </ThemedText>
+          )}
           <View style={styles.panelRow}>
             <View style={styles.panelField}>
               <ThemedText type="small" themeColor="textSecondary">
@@ -338,6 +383,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     padding: Spacing.three,
     borderRadius: Spacing.three,
+  },
+  sizesLink: {
+    paddingVertical: Spacing.two,
+    paddingLeft: Spacing.two,
   },
   rowText: {
     flex: 1,

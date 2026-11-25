@@ -26,16 +26,40 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { AppButton } from "@/components/ui/app-button";
 import { ScreenHeader } from "@/components/ui/screen-header";
-import { Brand, MaxContentWidth, Radius, Spacing } from "@/constants/theme";
+import { MaxContentWidth, Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { Checkbox } from '@/components/ui/checkbox';
 
 type Item = OrderRequest["items"][number];
 
 function itemStatus(item: Item): string {
   if (item.restocked && item.status !== "unavailable") return "Received";
   if (item.status === "ordered") return "Ordered";
-  if (item.status === "unavailable") return `Unavailable: ${item.reason}`;
+  if (item.status === "unavailable") return "Unavailable";
   return "Pending";
+}
+
+// "Size 9", the color for color-only products, or "Quantity" for neither
+const itemLabel = (item: Item) => (item.size ? `Size ${item.size}` : item.color ?? "Quantity");
+
+// The request's items grouped by product, then color, in the order sent
+type ProductGroup = { productId: number; name: string; colors: { color: string | null; items: Item[] }[] };
+function groupItems(items: Item[]): ProductGroup[] {
+  const products: ProductGroup[] = [];
+  for (const item of items) {
+    let product = products.find((p) => p.productId === item.product_id);
+    if (!product) {
+      product = { productId: item.product_id, name: item.name, colors: [] };
+      products.push(product);
+    }
+    let color = product.colors.find((c) => c.color === (item.color ?? null));
+    if (!color) {
+      color = { color: item.color ?? null, items: [] };
+      product.colors.push(color);
+    }
+    color.items.push(item);
+  }
+  return products;
 }
 
 // One Order Request: the formal message, and each product's status. The buyer
@@ -78,18 +102,30 @@ export default function OrderRequestScreen() {
   // A replacement inherits pending work, never another buyer's completed responses.
   const changeable = (request?.items ?? []).filter((item) => !item.restocked &&
     (item.status === "pending" || item.updated_by === profile?.user_id));
-  const allSelected = changeable.length > 0 && changeable.every((item) => selected.has(item.product_id));
+  const allSelected = changeable.length > 0 && changeable.every((item) => selected.has(item.alert_id));
 
-  const toggle = (productId: number) =>
+  // Check or uncheck a whole product, one color, or one size at once
+  const isChangeable = (item: Item) => changeable.includes(item);
+  const checkState = (items: Item[]): boolean | "some" => {
+    const mine = items.filter(isChangeable);
+    const on = mine.filter((item) => selected.has(item.alert_id)).length;
+    return on === 0 ? false : on === mine.length ? true : "some";
+  };
+  const toggleItems = (items: Item[]) => {
+    const mine = items.filter(isChangeable);
+    const allOn = mine.every((item) => selected.has(item.alert_id));
     setSelected((previous) => {
       const next = new Set(previous);
-      if (next.has(productId)) next.delete(productId);
-      else next.add(productId);
+      for (const item of mine) {
+        if (allOn) next.delete(item.alert_id);
+        else next.add(item.alert_id);
+      }
       return next;
     });
+  };
 
   const toggleAll = () =>
-    setSelected(allSelected ? new Set() : new Set(changeable.map((item) => item.product_id)));
+    setSelected(allSelected ? new Set() : new Set(changeable.map((item) => item.alert_id)));
 
   const mark = async (status: "ordered" | "unavailable") => {
     if (status === "unavailable" && !reason.trim()) {
@@ -104,7 +140,7 @@ export default function OrderRequestScreen() {
       const count = selected.size;
       setRequest(await updateOrderItems(requestId, [...selected], status, reason));
       setMessage(
-        `Marked ${count} product${count === 1 ? "" : "s"} ${status}. The store's managers have been notified.`,
+        `Marked ${count} item${count === 1 ? "" : "s"} ${status}. The store's managers have been notified.`,
       );
       setSelected(new Set());
       setAskingReason(false);
@@ -191,44 +227,115 @@ export default function OrderRequestScreen() {
                 )}
               </View>
 
-              {request.items.map((item) => {
-                const canChange = isBuyer && changeable.includes(item);
-                const isSelected = selected.has(item.product_id);
+              {groupItems(request.items).map((product) => {
+                const productItems = product.colors.flatMap((c) => c.items);
+                const canCheckProduct = isBuyer && productItems.some(isChangeable);
+                const units = productItems.reduce((sum, item) => sum + item.quantity, 0);
+                const hasOptions = productItems.some((item) => item.color || item.size);
                 return (
-                  <Pressable
-                    key={item.product_id}
-                    onPress={() => canChange && toggle(item.product_id)}
-                    disabled={!canChange}
-                  >
-                    <ThemedView
-                      type={isSelected ? "backgroundSelected" : "card"}
-                      style={[styles.item, { borderColor: isSelected ? Brand.navy : theme.border }]}
-                    >
-                      {canChange && <ThemedText type="small">{isSelected ? "☑" : "☐"}</ThemedText>}
+                  <ThemedView key={product.productId} type="card" style={[styles.product, { borderColor: theme.border }]}>
+                    {/* The product: its checkbox picks every size in it */}
+                    <View style={styles.productTop}>
+                      {canCheckProduct && (
+                        <Checkbox
+                          checked={checkState(productItems)}
+                          onPress={() => toggleItems(productItems)}
+                          label={`Select every ${product.name} item`}
+                        />
+                      )}
                       <View style={styles.flex}>
-                        <ThemedText type="smallBold">{item.name}</ThemedText>
-                        <ThemedText
-                          type="small"
-                          themeColor={item.status === "unavailable" ? undefined : "textSecondary"}
-                          style={item.status === "unavailable" && { color: theme.danger }}
-                        >
-                          {itemStatus(item)}
+                        <ThemedText type="smallBold">{product.name}</ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {hasOptions
+                            ? `${productItems.length} item${productItems.length === 1 ? "" : "s"} · ${units} units`
+                            : `${units} units · ${itemStatus(productItems[0])}`}
                         </ThemedText>
-                        {item.updated_by_email && <ThemedText type="small" themeColor="textSecondary">{`Updated by ${item.updated_by_email}`}</ThemedText>}
                       </View>
-                      <ThemedText type="smallBold">{`${item.quantity} units`}</ThemedText>
-                    </ThemedView>
-                  </Pressable>
+                    </View>
+
+                    {hasOptions &&
+                      product.colors.map((group) => {
+                        const canCheckColor = isBuyer && group.items.some(isChangeable);
+                        return (
+                          <View key={group.color ?? "none"} style={styles.colorGroup}>
+                            {/* A color: its checkbox picks all its sizes */}
+                            {group.color && group.items.some((item) => item.size) && (
+                              <View style={styles.colorTop}>
+                                {canCheckColor && (
+                                  <Checkbox
+                                    checked={checkState(group.items)}
+                                    onPress={() => toggleItems(group.items)}
+                                    label={`Select every ${group.color} size`}
+                                  />
+                                )}
+                                <ThemedText type="smallBold" themeColor="textSecondary">{group.color}</ThemedText>
+                              </View>
+                            )}
+                            {group.items.map((item) => {
+                              const canChange = isBuyer && isChangeable(item);
+                              const unavailable = item.status === "unavailable";
+                              return (
+                                <View key={item.alert_id} style={styles.itemRow}>
+                                  {canChange ? (
+                                    <Checkbox
+                                      checked={selected.has(item.alert_id)}
+                                      onPress={() => toggleItems([item])}
+                                      label={`Select ${product.name} ${itemLabel(item)}`}
+                                    />
+                                  ) : (
+                                    isBuyer && <View style={styles.checkboxSpace} />
+                                  )}
+                                  <ThemedText type="small" style={styles.itemName} numberOfLines={1}>
+                                    {itemLabel(item)}
+                                  </ThemedText>
+                                  <ThemedText type="small" themeColor="textSecondary" style={styles.itemUnits}>
+                                    {`${item.quantity} unit${item.quantity === 1 ? "" : "s"}`}
+                                  </ThemedText>
+                                  <ThemedText
+                                    type="small"
+                                    themeColor={unavailable ? undefined : "textSecondary"}
+                                    style={[styles.itemStatus, unavailable && { color: theme.danger }]}
+                                    numberOfLines={1}
+                                  >
+                                    {itemStatus(item)}
+                                  </ThemedText>
+                                </View>
+                              );
+                            })}
+                          </View>
+                        );
+                      })}
+
+                    {/* Reasons and who updated, once per product rather than on every size */}
+                    {[...new Set(productItems.filter((item) => item.status === "unavailable").map((item) => item.reason))].map(
+                      (why) => (
+                        <ThemedText key={why} type="small" style={{ color: theme.danger }}>
+                          {`Unavailable: ${why || "no reason given"}`}
+                        </ThemedText>
+                      ),
+                    )}
+                    {[...new Set(productItems.map((item) => item.updated_by_email).filter(Boolean))].map((email) => (
+                      <ThemedText key={email} type="small" themeColor="textSecondary">
+                        {`Updated by ${email}`}
+                      </ThemedText>
+                    ))}
+                  </ThemedView>
                 );
               })}
 
               {isBuyer && selected.size > 0 && !askingReason && !saving && (
                 <View style={styles.actions}>
-                  <AppButton label={`Mark ordered (${selected.size})`} onPress={() => mark("ordered")} style={styles.flex} />
+                  <AppButton
+                    label={`Mark ordered (${selected.size})`}
+                    onPress={() => mark("ordered")}
+                    size="small"
+                    style={styles.flex}
+                  />
                   <AppButton
                     label={`Unavailable (${selected.size})`}
                     onPress={() => setAskingReason(true)}
                     variant="secondary"
+                    size="small"
                     style={styles.flex}
                   />
                 </View>
@@ -247,8 +354,8 @@ export default function OrderRequestScreen() {
                     style={[styles.reason, { color: theme.text, backgroundColor: theme.background }]}
                   />
                   <View style={styles.actions}>
-                    <AppButton label="Mark unavailable" onPress={() => mark("unavailable")} style={styles.flex} />
-                    <AppButton label="Cancel" onPress={() => setAskingReason(false)} variant="secondary" />
+                    <AppButton label="Mark unavailable" onPress={() => mark("unavailable")} size="small" style={styles.flex} />
+                    <AppButton label="Cancel" onPress={() => setAskingReason(false)} variant="secondary" size="small" />
                   </View>
                 </ThemedView>
               )}
@@ -295,13 +402,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.three,
+  // A product card: heading, then each color's sizes
+  product: {
+    gap: Spacing.two,
     padding: Spacing.three,
     borderRadius: Radius.medium,
     borderWidth: 1,
+  },
+  productTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+  },
+  colorGroup: {
+    gap: Spacing.one,
+  },
+  colorTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+    paddingTop: Spacing.one,
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.three,
+  },
+  // Keeps sizes lined up when some rows have no checkbox
+  checkboxSpace: {
+    width: 24,
+  },
+  itemName: {
+    width: 84,
+  },
+  itemUnits: {
+    width: 72,
+  },
+  itemStatus: {
+    flex: 1,
+    textAlign: "right",
   },
   actions: {
     flexDirection: "row",

@@ -14,6 +14,7 @@ import { useAuth } from "@/auth/AuthContext";
 import {
   canEditProduct,
   deleteProduct,
+  fitLabel,
   getProduct,
   productImageUrl,
   type Product,
@@ -29,8 +30,10 @@ import { QrCodeModal } from "@/components/qr-code-modal";
 import { SendToStoresModal } from "@/components/send-to-stores-modal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useTheme } from "@/hooks/use-theme";
 import { ScreenHeader } from "@/components/ui/screen-header";
 import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { optionsFor } from "@/constants/variants";
 import { confirmAction } from "@/utils/confirm";
 
 export default function ProductScreen() {
@@ -202,7 +205,7 @@ export default function ProductScreen() {
         {!product && !error && <ActivityIndicator />}
 
         {product && (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView style={styles.edgeToEdge} contentContainerStyle={[styles.content, styles.edgePadding]}>
             {imageUrl ? (
               <Image
                 source={{ uri: imageUrl }}
@@ -218,7 +221,8 @@ export default function ProductScreen() {
                 {product.name}
               </ThemedText>
               <ThemedText themeColor="textSecondary">
-                {[product.brand, product.product_type]
+                {/* e.g. "Nike · Sneaker · Men's" */}
+                {[product.brand, product.product_type, fitLabel(product.fit)]
                   .filter(Boolean)
                   .join(" · ")}
               </ThemedText>
@@ -275,6 +279,7 @@ export default function ProductScreen() {
                     setSourceSelectorVisible(true);
                   }}
                   disabled={generatingAnalysis || refreshingReviews}
+                  onCard
                 />
                 {!!reviewSources?.length && (
                   <ActionButton
@@ -283,6 +288,7 @@ export default function ProductScreen() {
                     }
                     onPress={refreshReviews}
                     disabled={refreshingReviews || generatingAnalysis}
+                    onCard
                   />
                 )}
               </ThemedView>
@@ -296,6 +302,7 @@ export default function ProductScreen() {
                   }
                   onPress={handleGenerateAnalysis}
                   disabled={generatingAnalysis || refreshingReviews}
+                  onCard
                 />
               </ThemedView>
 
@@ -306,6 +313,17 @@ export default function ProductScreen() {
             )}
 
             <ThemedView style={styles.actions}>
+              {canEdit && optionsFor(product.category).length > 0 && (
+                <ActionButton
+                  label="Colors & sizes"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/admin/products/options/[id]",
+                      params: { id: String(product.product_id) },
+                    })
+                  }
+                />
+              )}
               {canEdit && (
                 <ActionButton
                   label="Manage images"
@@ -383,12 +401,17 @@ function ActionButton({
   onPress,
   disabled = false,
   destructive = false,
+  onCard = false,
 }: {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
   destructive?: boolean;
+  // For buttons inside a grey card, where the usual grey fill blends in: one
+  // shade lighter than the card, so they read as buttons without standing out
+  onCard?: boolean;
 }) {
+  const theme = useTheme();
   return (
     <Pressable
       onPress={onPress}
@@ -398,7 +421,13 @@ function ActionButton({
         (pressed || disabled) && styles.pressed,
       ]}
     >
-      <ThemedView type="backgroundElement" style={styles.actionView}>
+      <ThemedView
+        type="backgroundElement"
+        style={[
+          styles.actionView,
+          onCard && { backgroundColor: theme.backgroundSelected },
+        ]}
+      >
         <ThemedText
           type="smallBold"
           themeColor={destructive ? "danger" : undefined}
@@ -447,6 +476,8 @@ const styles = StyleSheet.create({
   reviewActions: {
     flexDirection: "row",
     gap: Spacing.two,
+    // Not the page background: it showed in the rounded buttons' corners
+    backgroundColor: "transparent",
   },
   reviewError: {
   },
@@ -470,6 +501,14 @@ const styles = StyleSheet.create({
   content: {
     gap: Spacing.three,
     paddingBottom: Spacing.four,
+  },
+  // The list reaches the screen edges so the scroll bar sits at the edge,
+  // while its content keeps the page's side margins
+  edgeToEdge: {
+    marginHorizontal: -Spacing.four,
+  },
+  edgePadding: {
+    paddingHorizontal: Spacing.four,
   },
   image: {
     width: "100%",

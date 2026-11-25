@@ -18,11 +18,11 @@ from pagination import InvalidCursor, decode_cursor, encode_cursor
 # store_inventory is built by _product_columns() and joins inventory at the
 # resolved store.
 _PRODUCT_COLUMNS = (
-    "p.product_id, p.name, p.brand, p.product_type, p.category, s.average_rating AS rating, "
+    "p.product_id, p.name, p.brand, p.product_type, p.category, p.fit, s.average_rating AS rating, "
     "p.description, p.image_url, p.created_at, p.updated_at"
 )
 _PRODUCT_KEYS = (
-    "product_id", "name", "brand", "product_type", "category",
+    "product_id", "name", "brand", "product_type", "category", "fit",
     "rating", "description", "image_url", "created_at", "updated_at", "store_inventory",
 )
 
@@ -229,7 +229,11 @@ def list_liked_products(
 
     filter_sql, filter_params = _text_filter(query)
     sql_text = sql.SQL("""
-        SELECT {columns}, lit.liked_at
+        SELECT {columns}, lit.liked_at, lit.color AS liked_color,
+               -- The liked color's first photo, shown instead of the main one
+               (SELECT pi.image_url FROM product_images pi
+                 WHERE pi.product_id = p.product_id AND lower(pi.color) = lower(lit.color)
+                 ORDER BY pi.image_id LIMIT 1) AS liked_image
         FROM user_product_likes lit
         JOIN products p ON p.product_id = lit.product_id
         LEFT JOIN product_review_stats s
@@ -260,6 +264,9 @@ def list_liked_products(
 
     sql_text += sql.SQL(f" ORDER BY {_SORT_ORDERS[sort]} LIMIT %s")
     rows, has_more = _page(conn.execute(sql_text, (*params, limit + 1)).fetchall(), limit)
+    for row in rows:
+        if row.get("liked_image"):
+            row["image_url"] = row["liked_image"]
     # return the rows and a cursor for the last row if there is another page, else None
     return rows, _cursor_for(rows[-1], sort, store_id) if has_more else None
 
@@ -377,6 +384,7 @@ def set_liked(
     product_id: int,
     liked: bool,
     store_id: int | None = None,
+    color: str | None = None,
 ) -> dict:
     """Set this user's like state, recording a history event on a real change.
 
@@ -391,12 +399,19 @@ def set_liked(
         (user_id, product_id),
     ).fetchone() is not None
 
+    color = (color or "").strip()[:40] or None
     if liked and not already_liked:
         conn.execute(
-            "INSERT INTO user_product_likes (product_id, user_id) VALUES (%s, %s)",
-            (product_id, user_id),
+            "INSERT INTO user_product_likes (product_id, user_id, color) VALUES (%s, %s, %s)",
+            (product_id, user_id, color),
         )
         _append_history(conn, user_id, product_id, "liked", store_id)
+    elif liked and color:
+        # Liked again while viewing another color: remember that color instead
+        conn.execute(
+            "UPDATE user_product_likes SET color = %s WHERE user_id = %s AND product_id = %s",
+            (color, user_id, product_id),
+        )
     elif not liked and already_liked:
         conn.execute(
             "DELETE FROM user_product_likes WHERE user_id = %s AND product_id = %s",

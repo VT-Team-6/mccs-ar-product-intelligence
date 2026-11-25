@@ -120,7 +120,7 @@ def test_export_lists_the_store_products_with_their_stock(client, db):
 
     rows = _export_rows(client)
 
-    assert list(rows[0].keys()) == ["product_id", "name", "brand", "stock"]
+    assert list(rows[0].keys()) == ["sku", "product_id", "name", "brand", "color", "size", "stock"]
     by_id = {int(row["product_id"]): row for row in rows}
     assert by_id[1]["stock"] == "12"
     assert by_id[2]["stock"] == "20"
@@ -171,7 +171,7 @@ def test_preview_reports_problem_rows(client, db):
     _sign_in_as(client, db, "store_clerk", [1])
     rows = _export_rows(client)
     text = _with_stock(rows, {1: "-3", 2: "lots", 4: "2.5"})
-    text += "999999,Not ours,,4\nabc,Bad id,,4\n"
+    text += ",999999,Not ours,,,,4\n,abc,Bad id,,,,4\n"
 
     body = client.post(PREVIEW, json={"store_id": 1, "csv": text}).json()
 

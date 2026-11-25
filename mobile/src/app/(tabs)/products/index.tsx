@@ -310,11 +310,18 @@ function LikesContent() {
               product={item}
               isLiked
               onToggleLike={() => removeLike(item)}
-              meta={`Liked ${formatLikedDate(item.liked_at)}`}
+              meta={[`Liked ${formatLikedDate(item.liked_at)}`, item.liked_color && `Color: ${item.liked_color}`]
+                .filter(Boolean)
+                .join(' · ')}
               onPress={() =>
                 router.push({
                   pathname: '/product/[id]',
-                  params: { id: String(item.product_id), from: '/products' },
+                  // Opens on the color it was liked in
+                  params: {
+                    id: String(item.product_id),
+                    from: '/products',
+                    ...(item.liked_color ? { color: item.liked_color } : {}),
+                  },
                 })
               }
             />

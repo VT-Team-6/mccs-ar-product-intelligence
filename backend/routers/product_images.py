@@ -13,13 +13,13 @@ from pathlib import Path
 from uuid import uuid4
 import logging
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 import psycopg
 
 from auth import require_permission
 from database import get_connection
 from product_access import require_product_owner
-from schemas import ProductImage, ProductImageCreate
+from schemas import ImageOptionUpdate, ProductImage, ProductImageCreate
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ def _gallery(conn, product_id: int) -> list[dict]:
     """One product's extra images, in the order they were added."""
     return conn.execute(
         """
-        SELECT image_id, image_url
+        SELECT image_id, image_url, color, size
         FROM product_images
         WHERE product_id = %s
         ORDER BY image_id
@@ -126,14 +126,21 @@ def _require_new_url(conn, product_id: int, image_url: str, featured_url: str | 
         )
 
 
-def _insert_image(conn, product_id: int, image_url: str, source: str) -> dict:
+def _clean_option(value: str | None) -> str | None:
+    return " ".join((value or "").split()) or None
+
+
+def _insert_image(
+    conn, product_id: int, image_url: str, source: str,
+    color: str | None = None, size: str | None = None,
+) -> dict:
     return conn.execute(
         """
-        INSERT INTO product_images (product_id, image_url, source)
-        VALUES (%s, %s, %s)
-        RETURNING image_id, image_url
+        INSERT INTO product_images (product_id, image_url, source, color, size)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING image_id, image_url, color, size
         """,
-        (product_id, image_url, source),
+        (product_id, image_url, source, _clean_option(color), _clean_option(size)),
     ).fetchone()
 
 
@@ -200,7 +207,7 @@ def add_product_image(
         featured_url = _lock_gallery(conn, user, product_id)
         _require_new_url(conn, product_id, image.image_url, featured_url)
         try:
-            return _insert_image(conn, product_id, image.image_url, "url")
+            return _insert_image(conn, product_id, image.image_url, "url", image.color, image.size)
         except psycopg.errors.UniqueViolation:
             # Two adds racing on the same link: the constraint decides, and the
             # caller still gets the same answer as the check above.
@@ -218,6 +225,8 @@ def add_product_image(
 async def upload_product_image(
     product_id: int,
     file: UploadFile = File(...),
+    color: str | None = Form(default=None, max_length=40),
+    size: str | None = Form(default=None, max_length=20),
     user=Depends(require_permission("create_products")),
 ) -> dict:
     """Store a photo picked on the admin's device in backend/static/products."""
@@ -253,7 +262,7 @@ async def upload_product_image(
             name = f"product-{product_id}-{uuid4().hex}.{extension}"
             (PRODUCT_IMAGES_DIR / name).write_bytes(content)
             stored = _insert_image(
-                conn, product_id, f"{PUBLIC_IMAGES_PREFIX}{name}", "upload"
+                conn, product_id, f"{PUBLIC_IMAGES_PREFIX}{name}", "upload", color, size
             )
     except Exception:
         if name is not None:
@@ -354,3 +363,26 @@ def delete_product_image(
     if deleted["source"] == "upload" and deleted["image_url"] != featured_url:
         _remove_uploaded_file(deleted["image_url"])
     return {"deleted": True, "image_id": image_id}
+
+
+@admin_router.put("/{product_id}/images/{image_id}/option", response_model=list[ProductImage])
+def set_product_image_option(
+    product_id: int,
+    image_id: int,
+    body: ImageOptionUpdate,
+    user=Depends(require_permission("create_products")),
+) -> list[dict]:
+    """Say which color or size a photo shows (both empty: it's shared by all)."""
+    with get_connection() as conn:
+        _lock_gallery(conn, user, product_id)
+        updated = conn.execute(
+            "UPDATE product_images SET color = %s, size = %s"
+            " WHERE product_id = %s AND image_id = %s RETURNING image_id",
+            (_clean_option(body.color), _clean_option(body.size), product_id, image_id),
+        ).fetchone()
+        if updated is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Image {image_id} not found on product {product_id}",
+            )
+        return _gallery(conn, product_id)

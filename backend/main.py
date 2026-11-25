@@ -7,10 +7,11 @@ from contextlib import asynccontextmanager
 from product_features import refresh_recommendation_data
 from database import get_connection
 import reorders as reorder_alerts
+import secure_text
 
 from fastapi.staticfiles import StaticFiles
 from routers import me, products, scan, search, shopper_products, reviews, analysis, recommendations, stores, inventory, admin, compare, reorders
-from routers import product_images, review_images, shopping_lists
+from routers import product_images, review_images, shopping_lists, variants
 import auth
 
 
@@ -24,8 +25,23 @@ def check_low_stock() -> None:
         print(f"Low stock check skipped: {error}")
 
 
+def encrypt_old_messages() -> None:
+    """Encrypts reorder messages saved before encryption was added."""
+    try:
+        with get_connection() as conn:
+            changed = secure_text.encrypt_existing(conn)
+        if changed:
+            print(f"Encrypted {changed} reorder message field(s) saved before encryption")
+    except secure_text.MissingKey:
+        raise
+    except Exception as error:  # e.g. the database isn't up yet; the next start retries
+        print(f"Encrypting old messages skipped: {error}")
+
+
 @asynccontextmanager
 async def lifespan(app):
+    secure_text.check_key()  # a broken MESSAGE_KEY stops startup; a missing one uses the dev key
+    encrypt_old_messages()
     refresh_recommendation_data()  # build scores (and later the models) when the backend starts
     check_low_stock()  # alerts for products that were already low (e.g. from the seed data)
     yield
@@ -58,7 +74,10 @@ app.include_router(recommendations.router)
 app.include_router(compare.router)
 app.include_router(inventory.product_stock_router)
 app.include_router(inventory.store_stock_router)
+app.include_router(variants.inventory_router)
 app.include_router(inventory.writer_router)
+app.include_router(variants.public_router)
+app.include_router(variants.admin_router)
 app.include_router(admin.router)
 app.include_router(reorders.manager_router)
 app.include_router(reorders.requests_router)

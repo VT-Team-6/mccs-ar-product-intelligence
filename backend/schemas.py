@@ -26,6 +26,8 @@ def validate_product_image_url(value: str | None) -> str | None:
 
 # Must match CATEGORIES in categories.py and the CHECK in migration 013
 ProductCategory = Literal["shoes", "backpacks", "headphones", "shampoo", "coffee"]
+# Who a shoe is sized for (migration 024); shoes only
+ProductFit = Literal["mens", "womens", "kids"]
 
 
 class ProductCreate(BaseModel):
@@ -36,6 +38,7 @@ class ProductCreate(BaseModel):
     image_url: str | None = Field(default=None, max_length=500)
     # Decides which shopping criteria apply (categories.py)
     category: ProductCategory | None = None
+    fit: ProductFit | None = None
     # The store adding the product: it owns it, and the product starts pending
     # there. Required for store admins; the app admin can leave it out to add
     # an MCCS catalog product with no owner.
@@ -53,6 +56,7 @@ class ProductUpdate(BaseModel):
     description: str | None = None
     image_url: str | None = Field(default=None, max_length=500)
     category: ProductCategory | None = None
+    fit: ProductFit | None = None
 
     _validate_image_url = field_validator("image_url")(validate_product_image_url)
 
@@ -81,6 +85,7 @@ class Product(BaseModel):
     brand: str | None
     product_type: str
     category: str | None = None
+    fit: str | None = None
     rating: float | None
     description: str | None
     image_url: str | None
@@ -101,12 +106,17 @@ class ProductImage(BaseModel):
 
     image_id: int
     image_url: str
+    # The color or size the photo shows (see variants.PHOTO_OPTION); None for all
+    color: str | None = None
+    size: str | None = None
 
 
 class ProductImageCreate(BaseModel):
     """A gallery photo to add, by link. Uploads are a separate multipart route."""
 
     image_url: str = Field(min_length=1, max_length=500)
+    color: str | None = Field(default=None, max_length=40)
+    size: str | None = Field(default=None, max_length=20)
 
     _validate_image_url = field_validator("image_url")(validate_product_image_url)
 
@@ -140,6 +150,8 @@ class LikedProduct(Product):
     """A product in the user's Likes tab, with when they liked it."""
 
     liked_at: datetime
+    # The color it was liked in; image_url is then that color's first photo
+    liked_color: str | None = None
 
 
 class LikedProductPage(BaseModel):
@@ -318,6 +330,11 @@ class StaffStoreStockEntry(StoreStockEntry):
     low_stock: bool
     buyer_user_id: int | None
     buyer_email: str | None
+    # How many colors/sizes it comes in, and how many are low
+    variant_count: int = 1
+    low_variant_count: int = 0
+    # How many colors/sizes have their own low-stock level
+    custom_level_count: int = 0
 
 
 class StaffStoreStock(BaseModel):
@@ -421,7 +438,10 @@ class StockImport(BaseModel):
 
 class StockImportChange(BaseModel):
     product_id: int
+    variant_id: int | None = None
     name: str
+    color: str | None = None
+    size: str | None = None
     brand: str | None
     old_quantity: int
     new_quantity: int
@@ -517,7 +537,10 @@ class ReorderProduct(BaseModel):
 
     alert_id: int
     product_id: int
+    variant_id: int | None = None
     name: str
+    color: str | None = None
+    size: str | None = None
     brand: str | None
     quantity: int
     low_stock_threshold: int
@@ -539,6 +562,55 @@ class ReorderList(BaseModel):
     counts: dict[str, int]
 
 
+class ReorderCatalogProduct(BaseModel):
+    """A product on sale at a store, for the Reorders list (one row per product)."""
+
+    product_id: int
+    name: str
+    brand: str | None
+    category: str | None = None
+    fit: str | None = None
+    quantity: int
+    low_stock_threshold: int
+    variant_count: int
+    low_count: int
+    # Every reorder status any of its sizes has, most urgent first; status is the first
+    statuses: list[ReorderStatus]
+    status: ReorderStatus | None
+    buyer_user_id: int | None
+    buyer_email: str | None
+
+
+class ReorderCatalog(BaseModel):
+    products: list[ReorderCatalogProduct]
+    # Products with each status, and "all"
+    counts: dict[str, int]
+
+
+class ReorderLine(BaseModel):
+    """One size/color of a product, for the send screen."""
+
+    product_id: int
+    name: str
+    brand: str | None
+    category: str | None = None
+    fit: str | None = None
+    buyer_user_id: int | None
+    buyer_email: str | None
+    variant_id: int
+    color: str | None
+    color_hex: str | None
+    size: str | None
+    quantity: int
+    low_stock_threshold: int
+    low: bool
+    alert_id: int | None
+    status: ReorderStatus | None
+    suggested_quantity: int
+    # False while it's already requested or ordered
+    sendable: bool
+
+
 class ReorderGroup(BaseModel):
     """Products that can be sent to one buyer. buyer_user_id is None for products with no buyer."""
 
@@ -548,8 +620,17 @@ class ReorderGroup(BaseModel):
 
 
 class OrderRequestSendItem(BaseModel):
-    alert_id: int = Field(gt=0)
+    """A low product's alert_id, or any size/color by variant_id (to order ahead)."""
+
+    alert_id: int | None = Field(default=None, gt=0)
+    variant_id: int | None = Field(default=None, gt=0)
     quantity: int = Field(gt=0, le=100_000)
+
+    @model_validator(mode="after")
+    def _alert_or_variant(self):
+        if (self.alert_id is None) == (self.variant_id is None):
+            raise ValueError("Give an alert_id or a variant_id")
+        return self
 
 
 class OrderRequestSend(BaseModel):
@@ -565,15 +646,21 @@ class OrderRequestSend(BaseModel):
     @field_validator("items")
     @classmethod
     def _each_alert_once(cls, items):
-        if len({item.alert_id for item in items}) != len(items):
+        keys = {(item.alert_id, item.variant_id) for item in items}
+        if len(keys) != len(items):
             raise ValueError("A product is in the request twice")
         return items
 
 
 class OrderRequestUpdate(BaseModel):
-    """The buyer marks some of a request's products ordered or unavailable."""
+    """The buyer marks some of a request's items ordered or unavailable.
 
-    product_ids: list[int] = Field(min_length=1, max_length=2000)
+    alert_ids picks items one color/size at a time; product_ids (older
+    clients) picks every color/size of those products.
+    """
+
+    product_ids: list[int] = Field(default_factory=list, max_length=2000)
+    alert_ids: list[int] | None = Field(default=None, min_length=1, max_length=2000)
     status: Literal["ordered", "unavailable"]
     reason: str = Field(default="", max_length=500)
 
@@ -599,8 +686,12 @@ class OrderRequestSummary(BaseModel):
 
 
 class OrderRequestItem(BaseModel):
+    alert_id: int
     product_id: int
+    variant_id: int | None = None
     name: str
+    color: str | None = None
+    size: str | None = None
     brand: str | None
     quantity: int
     status: Literal["pending", "ordered", "unavailable"]
@@ -687,3 +778,95 @@ class RecentSearch(BaseModel):
 
 class RecentSearchCreate(BaseModel):
     query: str = Field(min_length=1, max_length=200)
+
+
+# --- colors and sizes (variants.py) ------------------------------------------
+
+
+class Variant(BaseModel):
+    """One color/size of a product. Stock fields are for the store asked about."""
+
+    variant_id: int
+    product_id: int
+    color: str | None
+    color_hex: str | None
+    # Second swatch color of a two-tone colorway
+    color_hex_2: str | None = None
+    size: str | None
+    sku: str
+    quantity: int | None = None
+    price: Decimal | None = None
+    in_stock: bool = False
+
+
+class StoreVariant(Variant):
+    """A variant on the staff inventory screen."""
+
+    label: str
+    low_stock: bool
+    # The level this color/size uses, and its own level (None = the product's)
+    low_stock_threshold: int
+    own_low_stock_threshold: int | None = None
+    # selling ("active") or discontinued at this store
+    status: Literal["active", "discontinued"] = "active"
+
+
+class VariantColor(BaseModel):
+    name: str = Field(min_length=1, max_length=40)
+    hex: str | None = Field(default=None, max_length=7)
+    # A second swatch color for a two-tone colorway ("White/Black")
+    hex2: str | None = Field(default=None, max_length=7)
+
+
+class VariantCombination(BaseModel):
+    color: str | None = None
+    size: str | None = None
+
+
+class VariantOptions(BaseModel):
+    """A product's colors and sizes, in display order.
+
+    Every color comes in every size except the combinations in skip.
+    """
+
+    colors: list[VariantColor] = Field(default_factory=list, max_length=12)
+    sizes: list[str] = Field(default_factory=list, max_length=30)
+    skip: list[VariantCombination] = Field(default_factory=list, max_length=400)
+
+
+class VariantLowStockLevel(BaseModel):
+    variant_id: int = Field(gt=0)
+    # None clears its own level so it uses the product's again
+    low_stock_threshold: int | None = Field(default=None, ge=0, le=100_000)
+
+
+class VariantLowStockLevels(BaseModel):
+    """A product's low-stock level and each color/size's own level at a store.
+
+    low_stock_threshold left out keeps the product's level; levels lists only
+    the colors/sizes being changed.
+    """
+
+    low_stock_threshold: int | None = Field(default=None, ge=0, le=100_000)
+    levels: list[VariantLowStockLevel] = Field(default_factory=list, max_length=500)
+
+
+class VariantStatusWrite(BaseModel):
+    """Discontinue (or sell again) some of a product's colors/sizes at a store."""
+
+    variant_ids: list[int] = Field(min_length=1, max_length=500)
+    status: Literal["active", "discontinued"]
+
+
+class VariantStockWrite(BaseModel):
+    """Set one color/size's stock and/or price at a store."""
+
+    quantity: int | None = Field(default=None, ge=0)
+    price: Decimal | None = Field(default=None, ge=0)
+
+
+class ImageOptionUpdate(BaseModel):
+    """Which color or size a photo shows; both None makes it shared."""
+
+    color: str | None = Field(default=None, max_length=40)
+    size: str | None = Field(default=None, max_length=20)

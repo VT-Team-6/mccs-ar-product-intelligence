@@ -14,7 +14,7 @@ import {
 } from "react-native";
 
 import { getComparison, type CompareItem, type ComparisonData } from '@/api/compare';
-import { productImageUrl, storePriceLine, storePriceValue } from '@/api/products';
+import { fitLabel, productImageUrl, storePriceLine, storePriceValue } from '@/api/products';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ScreenHeader } from '@/components/ui/screen-header';
@@ -270,6 +270,18 @@ function ComparisonTable({ items, onOpen }: { items: CompareItem[]; onOpen: (ite
             />
           ))}
         </Row>
+
+        {/* Shoes only: who each pair is sized for */}
+        {items.some((item) => item.product.fit) && (
+          <Row label="Fit">
+            {items.map((item) => (
+              <Cell
+                key={item.product.product_id}
+                value={fitLabel(item.product.fit) ?? "—"}
+              />
+            ))}
+          </Row>
+        )}
 
         <Row label="Type">
           {items.map((item) => (

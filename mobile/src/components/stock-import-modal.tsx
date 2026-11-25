@@ -5,6 +5,7 @@ import { applyStockImport, previewStockImport, type StockImportResult } from "@/
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Spacing } from "@/constants/theme";
+import { VariantLines } from '@/components/variant-lines';
 
 type Props = {
   storeId: number;
@@ -86,9 +87,10 @@ export function StockImportModal({ storeId, storeName, csv, onClose, onImported 
                 ))}
                 {errors.length === 0 &&
                   changes.map((change) => (
-                    <ThemedView key={change.product_id} type="backgroundElement" style={styles.row}>
+                    <ThemedView key={change.variant_id ?? change.product_id} type="backgroundElement" style={styles.row}>
                       <ThemedView type="backgroundElement" style={styles.rowText}>
                         <ThemedText type="smallBold">{change.name}</ThemedText>
+                        <VariantLines color={change.color} size={change.size} />
                         <ThemedText type="small" themeColor="textSecondary">
                           {[change.brand, `ID ${change.product_id}`].filter(Boolean).join(" · ")}
                         </ThemedText>
